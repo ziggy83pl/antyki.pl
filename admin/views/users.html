@@ -1,0 +1,340 @@
+{# admin/views/users.html #}
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Użytkownicy</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="page-header mb-4">
+	<h1><span class="bi bi-people-fill text-primary me-2"></span> {{ 'Users'|lang }}</h1>
+	<p class="text-muted mb-0">{{ 'Here you can see the users. Moderator can edit offers'|lang }}</p>
+</div>
+
+{% include 'alert.tpl' %}
+
+<!-- Filtry wyszukiwania klienta -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+	<form method="get" class="row g-3 align-items-end">
+		<input type="hidden" name="controller" value="users">
+		<input type="hidden" name="search">
+		
+		<div class="col-12 col-sm-6 col-md-3">
+			<label class="form-label small fw-bold text-secondary">{{ 'Username'|lang }}</label>
+			<input type="text" name="username" placeholder="{{ 'Username'|lang }}..." value="{{ get.username }}" class="form-control form-control-sm">
+		</div>
+		<div class="col-12 col-sm-6 col-md-3">
+			<label class="form-label small fw-bold text-secondary">{{ 'Email'|lang }}</label>
+			<input type="text" name="email" placeholder="{{ 'Email'|lang }}..." value="{{ get.email }}" class="form-control form-control-sm">
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">{{ 'Active/2'|lang }}</label>
+			<select name="active" class="form-select form-select-sm">
+				<option value="">{{ 'All users'|lang }}</option>
+				<option value="yes" {% if get.active=='yes' %}selected{% endif %}>{{ 'Yes'|lang }}</option>
+				<option value="no" {% if get.active=='no' %}selected{% endif %}>{{ 'No'|lang }}</option>
+			</select>
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">{{ 'Moderator'|lang }}</label>
+			<select name="moderator" class="form-select form-select-sm">
+				<option value="">{{ 'All users'|lang }}</option>
+				<option value="yes" {% if get.moderator=='yes' %}selected{% endif %}>{{ 'Yes'|lang }}</option>
+				<option value="no" {% if get.moderator=='no' %}selected{% endif %}>{{ 'No'|lang }}</option>
+			</select>
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">Zarejestrowany przez FB</label>
+			<select name="register_fb" class="form-select form-select-sm">
+				<option value="">{{ 'All users'|lang }}</option>
+				<option value="yes" {% if get.register_fb=='yes' %}selected{% endif %}>{{ 'Yes'|lang }}</option>
+				<option value="no" {% if get.register_fb=='no' %}selected{% endif %}>{{ 'No'|lang }}</option>
+			</select>
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">Zarejestrowany przez Google</label>
+			<select name="register_google" class="form-select form-select-sm">
+				<option value="">{{ 'All users'|lang }}</option>
+				<option value="yes" {% if get.register_google=='yes' %}selected{% endif %}>{{ 'Yes'|lang }}</option>
+				<option value="no" {% if get.register_google=='no' %}selected{% endif %}>{{ 'No'|lang }}</option>
+			</select>
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">Oczekuje na weryf.</label>
+			<select name="awaiting_verification" class="form-select form-select-sm">
+				<option value="">Wszyscy</option>
+				<option value="any" {% if get.awaiting_verification=='any' %}selected{% endif %}>Tel. lub Firma</option>
+				<option value="phone" {% if get.awaiting_verification=='phone' %}selected{% endif %}>Tylko Telefon</option>
+				<option value="company" {% if get.awaiting_verification=='company' %}selected{% endif %}>Tylko Firma</option>
+			</select>
+		</div>
+		<div class="col-12 col-sm-8 col-md-4">
+			<label class="form-label small fw-bold text-secondary">{{ 'Registration date'|lang }}</label>
+			<div class="d-flex align-items-center gap-2">
+				<input name="date_from" type="text" placeholder="Od" value="{{ get.date_from }}" class="form-control form-control-sm datepicker">
+				<span class="text-muted">-</span>
+				<input name="date_to" type="text" placeholder="Do" value="{{ get.date_to }}" class="form-control form-control-sm datepicker">
+			</div>
+		</div>
+		<div class="col-6 col-sm-4 col-md-2">
+			<label class="form-label small fw-bold text-secondary">{{ 'Registration IP'|lang }}</label>
+			<input type="text" name="register_ip" placeholder="IP" value="{{ get.register_ip }}" class="form-control form-control-sm">
+		</div>
+		<div class="col-6 col-sm-4 col-md-2 text-end">
+			<button type="submit" class="btn btn-success btn-sm w-100 py-2 text-uppercase fw-bold"><i class="bi bi-search me-1"></i> {{ 'Search'|lang }}</button>
+		</div>
+	</form>
+</div>
+
+{% if users %}
+	<div class="card border-0 shadow-sm rounded-4 p-4">
+		<div class="table-responsive mb-3">
+			<table class="table text-nowrap parent_select_checkbox table-hover border align-middle mb-0" style="font-size: 0.875rem;">
+				<thead>
+					<tr>
+						<th class="text-center" style="width: 40px;"><input type="checkbox" class="select_checkbox form-check-input" title="{{ 'Select all'|lang }}"></th>
+						<th class="text-center" style="width: 80px;">{{ 'ID'|lang }}
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=id" class="bi bi-sort-up-alt text-decoration-none ms-1"></a>
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=id&sort_desc" class="bi bi-sort-down-alt text-decoration-none"></a>
+						</th>
+						<th class="text-center" style="width: 110px;">{{ 'Activate'|lang }}
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=active" class="bi bi-sort-up-alt text-decoration-none ms-1"></a>
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=active&sort_desc" class="bi bi-sort-down-alt text-decoration-none"></a>
+						</th>
+						<th class="text-center" style="width: 120px;">Rejestracja</th>
+						<th>Użytkownik</th>
+						<th class="text-center" style="width: 130px;">Rola
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=moderator" class="bi bi-sort-up-alt text-decoration-none ms-1"></a>
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=moderator&sort_desc" class="bi bi-sort-down-alt text-decoration-none"></a>
+						</th>
+						<th class="text-center" style="width: 130px;">Stan weryfikacji</th>
+						<th class="text-center" style="width: 120px;">Weryfikacja</th>
+						<th class="text-center" style="width: 120px;">Ogłoszenia
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=amount_offers" class="bi bi-sort-up-alt text-decoration-none ms-1"></a>
+							<a href="?{{ pagination.page_url.sort_admin }}&sort=amount_offers&sort_desc" class="bi bi-sort-down-alt text-decoration-none"></a>
+						</th>
+						<th class="text-center" style="width: 130px;">Logowania</th>
+						<th>Aktywacja</th>
+						<th>Dane rejestracji</th>
+						<th class="text-center" style="width: 80px;">Usuń</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for item in users %}
+						<tr>
+							<td class="text-center"><input type="checkbox" name="users[]" value="{{ item.id }}" form="form_selected_users" class="form-check-input"></td>
+							<td class="text-center fw-bold text-secondary">{{ item.id }}</td>
+							
+							<!-- Szybka aktywacja użytkownika AJAX -->
+							<td class="text-center">
+								{% if item.active %}
+									<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i> {{ 'YES'|lang }}</span>
+								{% else %}
+									<a href="#" class="ajax text-decoration-none" data-action="activate_user" data-id="{{ item.id }}" data-token="{{ generateToken('admin_activate_user') }}" title="Konto nieaktywne - kliknij, aby aktywować">
+										<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2 py-1"><i class="bi bi-exclamation-circle me-1"></i> Oczekuje</span>
+									</a>
+								{% endif %}
+							</td>
+							
+							<!-- Odznaka rejestracji (źródło) -->
+							<td class="text-center">
+								{% if item.register_fb %}
+									<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-2 py-1"><i class="bi bi-facebook me-1"></i> FB</span>
+								{% elseif item.register_google %}
+									<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2 py-1"><i class="bi bi-google me-1"></i> Google</span>
+								{% else %}
+									<span class="badge bg-secondary-subtle text-secondary border border-secondary rounded-pill px-2 py-1"><i class="bi bi-envelope me-1"></i> E-mail</span>
+								{% endif %}
+							</td>
+							
+							<td>
+								<div class="fw-bold"><i class="bi bi-person text-secondary me-1"></i><a href="{{ path('profile',0,item.username) }}" target="_blank" class="text-decoration-none text-dark">{{ item.username }}</a></div>
+								<small class="text-muted"><i class="bi bi-envelope-at me-1"></i>{% if _ADMIN_TEST_MODE_ %}TEST{% else %}<a href="mailto:{{ item.email }}" class="text-decoration-none text-muted">{{ item.email }}</a>{% endif %}</small>
+								{% if item.phone %}
+								<br><small class="text-muted"><i class="bi bi-telephone-outbound text-info me-1"></i><a href="tel:{{ item.phone }}" class="text-decoration-none text-muted">{{ item.phone }}</a></small>
+								{% endif %}
+								{% if item.company_name %}
+								<br><small class="text-muted" title="NIP: {{ item.company_nip }}"><i class="bi bi-building text-primary me-1"></i>{{ item.company_name }}</small>
+								{% endif %}
+							</td>
+							
+							<!-- Szybkie przełączanie roli AJAX -->
+							<td class="text-center">
+								{% if item.moderator %}
+									<a href="#" class="ajax text-decoration-none" data-action="unset_moderator" data-id="{{ item.id }}" data-token="{{ generateToken('admin_unset_moderator') }}" title="Moderator - kliknij, aby odebrać uprawnienia">
+										<span class="badge bg-purple-subtle text-purple border border-purple rounded-pill px-2 py-1"><i class="bi bi-shield-check me-1"></i> Moderator</span>
+									</a>
+								{% else %}
+									<a href="#" class="ajax text-decoration-none" data-action="set_moderator" data-id="{{ item.id }}" data-token="{{ generateToken('admin_set_moderator') }}" title="Klient - kliknij, aby nadać prawa moderatora">
+										<span class="badge bg-light text-muted border rounded-pill px-2 py-1"><i class="bi bi-person me-1"></i> Klient</span>
+									</a>
+								{% endif %}
+							</td>
+
+							<!-- Status Weryfikacji -->
+							<td class="text-center">
+								{% if item.verified_email and item.verified_phone %}
+									<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1"><i class="bi bi-shield-check me-1"></i> Zweryfikowany</span>
+								{% else %}
+									<span class="badge bg-warning-subtle text-black border border-warning rounded-pill px-2 py-1"><i class="bi bi-shield-exclamation me-1"></i> Niezweryfikowany</span>
+								{% endif %}
+							</td>
+
+							<!-- Togle weryfikacji AJAX -->
+							<td class="text-center">
+								<div class="d-flex flex-column gap-1 align-items-center">
+									<!-- Email -->
+									{% if item.verified_email %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_email" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_email') }}" title="E-mail zweryfikowany - kliknij, aby cofnąć weryfikację">
+											<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1" style="width: 105px;"><i class="bi bi-envelope-check-fill me-1"></i> E-mail</span>
+										</a>
+									{% else %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_email" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_email') }}" title="E-mail niezweryfikowany - kliknij, aby zweryfikować">
+											<span class="badge bg-warning-subtle text-black border border-warning rounded-pill px-2 py-1 position-relative" style="width: 105px;"><i class="bi bi-envelope me-1"></i> E-mail (brak)</span>
+										</a>
+									{% endif %}
+									<!-- Telefon -->
+									{% if item.verified_phone %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_phone" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_phone') }}" title="Telefon zweryfikowany - kliknij, aby cofnąć weryfikację{% if item.phone %} ({{ item.phone }}){% endif %}">
+											<span class="badge bg-info-subtle text-info border border-info rounded-pill px-2 py-1" style="width: 105px;"><i class="bi bi-telephone-fill me-1"></i> Telefon</span>
+										</a>
+									{% else %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_phone" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_phone') }}" title="Telefon niezweryfikowany - kliknij, aby zweryfikować{% if item.phone %} ({{ item.phone }}){% endif %}">
+											<span class="badge bg-warning-subtle text-black border border-warning rounded-pill px-2 py-1 position-relative" style="width: 105px;"><i class="bi bi-telephone me-1"></i> Telefon (brak)
+												{% if item.phone %}<span class="position-absolute top-0 start-100 translate-middle spinner-grow text-danger" style="width: 12px; height: 12px;" title="Wprowadził/zmienił dane - może oczekiwać na weryfikację"></span>{% endif %}
+											</span>
+										</a>
+									{% endif %}
+									<!-- Firma -->
+									{% if item.verified_company %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_company" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_company') }}" title="Firma zweryfikowana - kliknij, aby cofnąć weryfikację{% if item.company_name %} ({{ item.company_name }}, NIP: {{ item.company_nip }}){% endif %}">
+											<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-2 py-1" style="width: 105px;"><i class="bi bi-building-fill-check me-1"></i> Firma</span>
+										</a>
+									{% else %}
+										<a href="#" class="ajax text-decoration-none" data-action="toggle_verified_company" data-id="{{ item.id }}" data-token="{{ generateToken('admin_toggle_verified_company') }}" title="Firma niezweryfikowana - kliknij, aby zweryfikować{% if item.company_name %} ({{ item.company_name }}, NIP: {{ item.company_nip }}){% endif %}">
+											<span class="badge bg-warning-subtle text-black border border-warning rounded-pill px-2 py-1 position-relative" style="width: 105px;"><i class="bi bi-building me-1"></i> Firma (brak)
+												{% if item.company_name %}<span class="position-absolute top-0 start-100 translate-middle spinner-grow text-danger" style="width: 12px; height: 12px;" title="Wprowadził/zmienił dane - może oczekiwać na weryfikację"></span>{% endif %}
+											</span>
+										</a>
+									{% endif %}
+								</div>
+							</td>
+							
+							<td class="text-center">
+								<span class="badge bg-light text-dark border"><i class="bi bi-folder-fill me-1 text-info"></i>{{ item.amount_offers }}</span>
+								<div class="text-muted mt-1" style="font-size: 0.72rem;">aktywne: <b>{{ item.amount_active_offers }}</b></div>
+							</td>
+							
+							<td class="text-center">
+								<span class="badge bg-light text-dark border"><i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ item.amount_logins }}</span>
+								{% if item.last_login %}
+									<div class="text-muted mt-1" style="font-size: 0.72rem;">{{ item.last_login|date('Y-m-d') }}</div>
+								{% endif %}
+							</td>
+							
+							<td style="font-size: 0.8rem; line-height: 1.4;">
+								{% if item.activation_date %}
+									<div class="text-secondary"><i class="bi bi-calendar-check me-1"></i>{{ item.activation_date|date('Y-m-d') }}</div>
+									<div class="text-muted"><i class="bi bi-laptop me-1"></i><code>{{ item.activation_ip }}</code></div>
+								{% else %}
+									<span class="text-muted small">Brak aktywacji</span>
+								{% endif %}
+							</td>
+							
+							<td style="font-size: 0.8rem; line-height: 1.4;">
+								<div class="text-secondary"><i class="bi bi-calendar-plus me-1"></i>{{ item.date|date('Y-m-d') }}</div>
+								<div class="text-muted"><i class="bi bi-laptop me-1"></i><code>{{ item.register_ip }}</code></div>
+							</td>
+							
+							<td class="text-center">
+								<a href="#" title="{{ 'Delete user'|lang }}" class="btn btn-sm btn-outline-danger px-2 py-1" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}" style="font-size: 0.85rem;"><i class="bi bi-trash"></i></a>
+							</td>
+						</tr>
+
+						<!-- Destrukcyjny modal usuwania użytkownika -->
+						<div class="modal fade" id="remove_{{ item.id }}" tabindex="-1" aria-labelledby="{{ 'Delete user'|lang }}: {{ item.username }}">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ 'Delete user'|lang }}</h5>
+										<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+									</div>
+									<form method="post">
+										<input type="hidden" name="action" value="remove_user">
+										<input type="hidden" name="id" value="{{ item.id }}">
+										<input type="hidden" name="email" value="{{ item.email }}">
+										<input type="hidden" name="register_ip" value="{{ item.register_ip }}">
+										<input type="hidden" name="activation_ip" value="{{ item.activation_ip }}">
+										<input type="hidden" name="token" value="{{ generateToken('admin_remove_user') }}">
+										<div class="modal-body text-start">
+											<p>Czy na pewno chcesz trwale usunąć konto użytkownika: <br><strong class="text-dark">"{{ item.username }}"</strong>?</p>
+											<p class="text-danger fw-bold"><i class="bi bi-info-circle me-1"></i> {{ 'All offers of user will be deleted'|lang }}</p>
+											
+											<div class="mt-3 p-3 bg-light rounded-3 border border-light">
+												<div class="form-check mb-2">
+													<input class="form-check-input" type="checkbox" name="add_email_black_list" id="black_email_{{ item.id }}">
+													<label class="form-check-label" for="black_email_{{ item.id }}">{{ 'Add email to black list'|lang }} ({{ item.email }})</label>
+												</div>
+												<div class="form-check">
+													<input class="form-check-input" type="checkbox" name="add_ip_black_list" id="black_ip_{{ item.id }}">
+													<label class="form-check-label" for="black_ip_{{ item.id }}">{{ 'Add IP to black list'|lang }} ({{ item.register_ip }})</label>
+												</div>
+											</div>
+										</div>
+										<div class="modal-footer">
+											<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ 'Cancel'|lang }}</button>
+											<button type="submit" class="btn btn-danger btn-sm">{{ 'Execute'|lang }}</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		
+		<div class="mt-4 p-3 bg-light rounded-3 border border-light">
+			<h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-info-circle me-1"></i> Legenda statusów:</h6>
+			<div class="d-flex flex-wrap gap-3 small">
+				<div class="d-flex align-items-center"><span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2 py-1 me-2" style="width: 80px;"><i class="bi bi-exclamation-circle me-1"></i> Brak</span> Kolor pomarańczowy oznacza brak weryfikacji.</div>
+				<div class="d-flex align-items-center"><span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1 me-2" style="width: 80px;"><i class="bi bi-envelope-check me-1"></i> E-mail</span> E-mail został pomyślnie zweryfikowany.</div>
+				<div class="d-flex align-items-center"><span class="badge bg-info-subtle text-info border border-info rounded-pill px-2 py-1 me-2" style="width: 80px;"><i class="bi bi-telephone-check me-1"></i> Telefon</span> Numer telefonu zweryfikowany.</div>
+				<div class="d-flex align-items-center"><span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-2 py-1 me-2" style="width: 80px;"><i class="bi bi-building-check me-1"></i> Firma</span> Dane firmy zweryfikowane.</div>
+			</div>
+		</div>
+
+		<div class="d-flex justify-content-between align-items-center flex-wrap mt-3 gap-3">
+			<div class="admin-toolbar">
+				<form method="post" id="form_selected_users" class="d-flex align-items-center gap-2">
+					<input type="hidden" name="token" value="{{ generateToken('admin_action_users') }}">
+					<label class="small text-secondary fw-semibold">{{ 'Selected'|lang }}:</label>
+					<select name="action" required class="form-select form-select-sm" style="width: auto;">
+						<option value="">-- {{ 'select'|lang }} --</option>
+						<option value="remove_users">{{ 'Remove users'|lang }}</option>
+						<option value="activate_users">{{ 'Activate users'|lang }}</option>
+						<option value="set_moderators">{{ 'Set moderator'|lang }}</option>
+						<option value="unset_moderators">{{ 'Unset moderator'|lang }}</option>
+					</select>
+					<button type="submit" class="btn btn-sm btn-danger text-uppercase fw-bold px-3">{{ 'Execute'|lang }}!</button>
+				</form>
+			</div>
+			<div>
+				{% include 'pagination.tpl' %}
+			</div>
+		</div>
+	</div>
+{% else %}
+	<div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+		<i class="bi bi-people text-muted display-1 mb-3"></i>
+		<h4 class="text-danger fw-bold mb-3">{{ 'Nothing found'|lang }}</h4>
+		<p class="text-muted mb-0">Nie znaleziono żadnych użytkowników spełniających wybrane kryteria.</p>
+	</div>
+{% endif %}
+{% endblock %}

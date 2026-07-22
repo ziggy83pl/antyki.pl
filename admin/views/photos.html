@@ -1,0 +1,79 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Moderacja zdjęć</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-shell">
+	<div class="content-card">
+		<div class="content-title page-header">
+			<h1><span class="bi bi-images"></span> Moderacja zdjęć</h1>
+			<p class="mb-0">Przeglądaj wszystkie wgrane zdjęcia i usuwaj nieodpowiednie pliki</p>
+		</div>
+
+		{% if alert_danger %}
+			<div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+				{% for alert in alert_danger %}
+					<div><i class="bi bi-trash-fill me-2"></i>{{ alert }}</div>
+				{% endfor %}
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
+		{% endif %}
+
+		<div class="card border-0 shadow-sm rounded-3 mt-4">
+			<div class="card-body">
+				{% if photos %}
+					<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+						{% for photo in photos %}
+							<div class="col">
+								<div class="card h-100 border border-light shadow-sm text-center p-2 position-relative">
+									<div class="ratio ratio-1x1 overflow-hidden rounded bg-light mb-2">
+										<a href="../upload/photos/{{ photo.folder }}{{ photo.url }}" target="_blank">
+											<img src="../upload/photos/{{ photo.folder }}{{ photo.thumb }}" alt="Photo {{ photo.id }}" class="img-fluid object-fit-cover rounded" style="width: 100%; height: 100%; object-fit: cover;">
+										</a>
+									</div>
+									<div class="small text-truncate text-muted mb-2 px-1" title="{{ photo.offer_name|default('Brak powiązanego ogłoszenia') }}">
+										{% if photo.offer_name %}
+											<a href="{{ path('offer', photo.offer_id, photo.offer_slug) }}" target="_blank" class="text-decoration-none text-secondary">
+												ID: {{ photo.offer_id }} - {{ photo.offer_name }}
+											</a>
+										{% else %}
+											<span class="text-danger">ID: {{ photo.offer_id }} (brak ogłoszenia)</span>
+										{% endif %}
+									</div>
+									<div class="mt-auto">
+										<form method="post" action="" onsubmit="return confirm('Czy na pewno chcesz trwale usunąć to zdjęcie z bazy i dysku?')">
+											<input type="hidden" name="action" value="delete_photo">
+											<input type="hidden" name="id" value="{{ photo.id }}">
+											<input type="hidden" name="token" value="{{ generateToken('admin_delete_photo') }}">
+											<button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill" title="Usuń zdjęcie">
+												<i class="bi bi-trash me-1"></i> Usuń
+											</button>
+										</form>
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+					
+					<!-- Paginacja -->
+					<div class="mt-4">
+						{% include "pagination.tpl" %}
+					</div>
+				{% else %}
+					<div class="text-center py-5 text-muted">
+						<i class="bi bi-images fs-1 d-block mb-3 opacity-50"></i>
+						<h5>Brak zdjęć w bazie danych</h5>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "main.tpl" %}
+
+{% block content %}
+<div class="bg-white border-bottom py-4 mb-5">
+	<div class="container">
+		<h1 class="fw-bold mb-0 text-dark">{{ 'My offers'|lang }}</h1>
+	</div>
+</div>
+
+<div class="container pb-5">
+	<div class="row g-4">
+		<div class="col-lg-3">
+			{% if settings.ads_side_1 %}<div class="ads mb-3">{{ settings.ads_side_1|raw }}</div>{% endif %}
+			
+			<form class="form-search card border-0 shadow-sm p-4 mb-4" method="get" id="form_search_offers">
+				<input type="hidden" name="search">
+				<h5 class="fw-bold mb-3 border-bottom pb-2">{{ 'Search'|lang }}</h5>
+				
+				<div class="mb-3">
+					<label for="active" class="form-label fw-semibold">{{ 'Active'|lang }}:</label>
+					<select name="active" id="active" title="{{ 'Search by active offers'|lang }}" class="form-select">
+						<option value="">{{ 'All'|lang }}</option>
+						<option value="yes" {% if get.active=='yes' %}selected{% endif %}>{{ 'Yes'|lang }}</option>
+						<option value="no" {% if get.active=='no' %}selected{% endif %}>{{ 'No'|lang }}</option>
+					</select>
+				</div>
+				
+				<div class="mb-3">
+					<label for="keywords" class="form-label fw-semibold">{{ 'Keywords'|lang }}: </label>
+					<input class="form-control" type="text" name="keywords" id="keywords" placeholder="{{ 'Enter your keywords...'|lang }}" title="{{ 'Enter your keywords...'|lang }}" value="{{ get.keywords }}">
+					<div class="form-check mt-2">
+						<input class="form-check-input" type="checkbox" name="exact_phrase" id="exact_phrase" {% if get.exact_phrase %}checked{% endif %}>
+						<label class="form-check-label small" for="exact_phrase">{{ 'Exact phrase'|lang }}</label>
+					</div>
+				</div>
+				
+				<div class="d-grid gap-2 mt-4">
+					<button class="btn btn-accent text-uppercase" type="submit"><i class="bi bi-search me-2"></i>{{ 'Search'|lang }}</button>
+				</div>
+			</form>
+			
+			{% if settings.ads_side_2 %}<div class="ads mb-3">{{ settings.ads_side_2|raw }}</div>{% endif %}
+		</div>
+		<div class="col-lg-9">
+			{% include 'offers.tpl' %}
+		</div>
+	</div>
+</div>
+{% endblock %}

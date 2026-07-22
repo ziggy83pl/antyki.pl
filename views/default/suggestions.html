@@ -1,0 +1,263 @@
+{% extends "main.tpl" %}
+
+{% block css %}
+	{{ parent() }}
+	<style>
+		.suggestion-card {
+			border: none;
+			border-radius: 1rem;
+			box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+			margin-bottom: 1.5rem;
+			overflow: hidden;
+			transition: transform 0.2s ease, box-shadow 0.2s ease;
+			background: #fff;
+		}
+		.suggestion-card:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+		}
+		.suggestion-card .card-header {
+			background-color: #f9fafb;
+			border-bottom: 1px solid #f3f4f6;
+			padding: 1rem 1.5rem;
+		}
+		.suggestion-card .card-body {
+			padding: 1.5rem;
+		}
+		.suggestion-card .card-footer {
+			background-color: #fff;
+			border-top: 1px solid #f3f4f6;
+			padding: 1rem 1.5rem;
+		}
+		.vote-btn-active-up {
+			background-color: #198754 !important;
+			color: #fff !important;
+			border-color: #198754 !important;
+		}
+		.vote-btn-active-down {
+			background-color: #dc3545 !important;
+			color: #fff !important;
+			border-color: #dc3545 !important;
+		}
+		.ratio-bar-wrapper {
+			margin-top: 12px;
+		}
+		.ratio-bar-labels {
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.8rem;
+			color: #6c757d;
+			margin-top: 4px;
+		}
+	</style>
+{% endblock %}
+
+{% block javascript %}
+	{{ parent() }}
+	<script>
+		document.addEventListener('DOMContentLoaded', function(){
+			document.querySelectorAll('.vote-btn').forEach(btn => {
+				btn.addEventListener('click', function(e) {
+					e.preventDefault();
+					const suggestionId = this.getAttribute('data-id');
+					const voteVal = this.getAttribute('data-vote');
+					const token = '{{ generateToken("suggestions_vote") }}';
+					
+					const formData = new URLSearchParams();
+					formData.append('action', 'vote');
+					formData.append('suggestion_id', suggestionId);
+					formData.append('vote', voteVal);
+					formData.append('token', token);
+					
+					fetch('{{ path("suggestions") }}', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						},
+						body: formData.toString()
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.status === 'success') {
+							// Update counts
+							document.getElementById('votes_for_count_' + suggestionId).innerText = data.votes_for;
+							document.getElementById('votes_against_count_' + suggestionId).innerText = data.votes_against;
+							
+							// Update percentages in labels
+							document.getElementById('ratio_for_pct_' + suggestionId).innerText = data.ratio_for + '%';
+							document.getElementById('ratio_against_pct_' + suggestionId).innerText = data.ratio_against + '%';
+							
+							// Update Progress Bar widths
+							document.getElementById('ratio_for_bar_' + suggestionId).style.width = data.ratio_for + '%';
+							document.getElementById('ratio_against_bar_' + suggestionId).style.width = data.ratio_against + '%';
+							
+							// Update buttons classes
+							const parent = this.closest('.vote-buttons-group');
+							const upBtn = parent.querySelector('.vote-btn-up');
+							const downBtn = parent.querySelector('.vote-btn-down');
+							
+							upBtn.classList.remove('vote-btn-active-up');
+							downBtn.classList.remove('vote-btn-active-down');
+							
+							if (voteVal === '1') {
+								upBtn.classList.add('vote-btn-active-up');
+							} else {
+								downBtn.classList.add('vote-btn-active-down');
+							}
+						} else {
+							alert(data.message);
+						}
+					})
+					.catch(error => {
+						console.error('Error:', error);
+					});
+				});
+			});
+		});
+	</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="bg-white border-bottom py-4 mb-5" style="margin-top: 105px;">
+	<div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+		<div>
+			<h1 class="fw-bold mb-0 text-dark">{{ 'Suggestions'|lang }}</h1>
+			<p class="text-muted mb-0">Zgłaszaj błędy, propozycje i ulepszenia strony. Głosuj na pomysły społeczności!</p>
+		</div>
+	</div>
+</div>
+
+<div class="container pb-5">
+	
+	{% include 'alert.tpl' %}
+
+	<div class="row">
+		<!-- Left Column: Suggestions List -->
+		<div class="col-lg-8">
+			
+			<h3 class="h5 fw-bold text-dark mb-4"><i class="bi bi-list-stars me-2 text-primary"></i>Pomysły i zgłoszenia społeczności</h3>
+			
+			{% if suggestions %}
+				{% for s in suggestions %}
+					<div class="suggestion-card card">
+						<div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+							<div class="d-flex align-items-center gap-2 small text-muted">
+								<i class="bi bi-person-circle"></i>
+								<span>{{ s.username }}</span>
+								<span>•</span>
+								<span>{{ s.created_at|date("d-m-Y H:i") }}</span>
+							</div>
+							<div class="d-flex gap-1.5">
+								<!-- Type badge -->
+								{% if s.type == 'bug' %}
+									<span class="badge bg-danger-subtle text-danger rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">{{ 'Bug'|lang }}</span>
+								{% elseif s.type == 'improvement' %}
+									<span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">{{ 'Improvement'|lang }}</span>
+								{% else %}
+									<span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">{{ 'New Feature'|lang }}</span>
+								{% endif %}
+
+								<!-- Status badge -->
+								{% if s.status == 'implemented' %}
+									<span class="badge bg-success text-white rounded-pill px-2.5 py-1" style="font-size: 0.75rem;"><i class="bi bi-check2-all me-1"></i> {{ 'Implemented'|lang }}</span>
+								{% else %}
+									<span class="badge bg-info text-white rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">{{ 'Approved'|lang }}</span>
+								{% endif %}
+							</div>
+						</div>
+						<div class="card-body">
+							<h4 class="h5 fw-bold mb-2 text-dark">{{ s.title }}</h4>
+							<p class="text-secondary mb-0 lh-lg" style="white-space: pre-line;">{{ s.description }}</p>
+						</div>
+						
+						<!-- Głosowanie -->
+						<div class="card-footer bg-light">
+							<div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+								<div class="vote-buttons-group d-flex gap-2">
+									{% if user.id %}
+										<button class="btn btn-sm btn-outline-success vote-btn vote-btn-up {% if s.user_vote == 1 %}vote-btn-active-up{% endif %}" data-id="{{ s.id }}" data-vote="1">
+											<i class="bi bi-hand-thumbs-up-fill me-1"></i> {{ 'I am FOR'|lang }}
+										</button>
+										<button class="btn btn-sm btn-outline-danger vote-btn vote-btn-down {% if s.user_vote == -1 %}vote-btn-active-down{% endif %}" data-id="{{ s.id }}" data-vote="-1">
+											<i class="bi bi-hand-thumbs-down-fill me-1"></i> {{ 'I am AGAINST'|lang }}
+										</button>
+									{% else %}
+										<a href="{{ path('login') }}" class="btn btn-sm btn-outline-secondary" title="{{ 'Please log in'|lang }}">
+											<i class="bi bi-lock me-1"></i> Zaloguj się, aby zagłosować
+										</a>
+									{% endif %}
+								</div>
+								
+								<div class="flex-grow-1" style="max-width: 250px;">
+									<div class="progress" style="height: 8px; border-radius: 4px; overflow: hidden; background-color: #e9ecef;">
+										<div class="progress-bar bg-success" role="progressbar" style="width: {{ s.ratio_for }}%" id="ratio_for_bar_{{ s.id }}"></div>
+										<div class="progress-bar bg-danger" role="progressbar" style="width: {{ s.ratio_against }}%" id="ratio_against_bar_{{ s.id }}"></div>
+									</div>
+									<div class="ratio-bar-labels">
+										<span>Za: <strong id="votes_for_count_{{ s.id }}">{{ s.votes_for }}</strong> (<span id="ratio_for_pct_{{ s.id }}">{{ s.ratio_for }}%</span>)</span>
+										<span>Przeciw: <strong id="votes_against_count_{{ s.id }}">{{ s.votes_against }}</strong> (<span id="ratio_against_pct_{{ s.id }}">{{ s.ratio_against }}%</span>)</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+			{% else %}
+				<div class="text-center py-5 bg-white rounded-4 shadow-sm border">
+					<i class="bi bi-lightbulb text-muted" style="font-size: 3rem;"></i>
+					<h4 class="text-secondary mt-3">{{ 'No suggestions found.'|lang }}</h4>
+					<p class="text-muted small">Bądź pierwszym, który zgłosi pomysł lub błąd!</p>
+				</div>
+			{% endif %}
+
+		</div>
+
+		<!-- Right Column: Add Suggestion Form -->
+		<div class="col-lg-4 mt-4 mt-lg-0">
+			{% if user.id %}
+				<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+					<div class="card-header bg-primary text-white py-3 px-4">
+						<h5 class="card-title fw-bold mb-0"><i class="bi bi-plus-circle me-2"></i>{{ 'Report improvement or bug'|lang }}</h5>
+					</div>
+					<div class="card-body p-4">
+						<form method="post" action="{{ path('suggestions') }}">
+							<input type="hidden" name="action" value="add_suggestion">
+							<input type="hidden" name="token" value="{{ generateToken('add_suggestion') }}">
+							
+							<div class="mb-3">
+								<label for="s_type" class="form-label fw-semibold text-dark">{{ 'Suggestion Type'|lang }}</label>
+								<select class="form-select" name="type" id="s_type" required>
+									<option value="feature" {% if input.type == 'feature' or input.type is empty %}selected{% endif %}>{{ 'New Feature'|lang }}</option>
+									<option value="improvement" {% if input.type == 'improvement' %}selected{% endif %}>{{ 'Improvement'|lang }}</option>
+									<option value="bug" {% if input.type == 'bug' %}selected{% endif %}>{{ 'Bug'|lang }}</option>
+								</select>
+							</div>
+							
+							<div class="mb-3">
+								<label for="s_title" class="form-label fw-semibold text-dark">{{ 'Suggestion Title'|lang }}</label>
+								<input type="text" class="form-control" name="title" id="s_title" placeholder="np. Szybkie wyszukiwanie w Łomży..." required value="{{ input.title }}">
+							</div>
+							
+							<div class="mb-4">
+								<label for="s_desc" class="form-label fw-semibold text-dark">{{ 'Suggestion Description'|lang }}</label>
+								<textarea class="form-control" name="description" id="s_desc" rows="6" placeholder="Opisz dokładnie swój pomysł lub błąd strony..." required>{{ input.description }}</textarea>
+							</div>
+							
+							<button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm"><i class="bi bi-send-fill me-2"></i>{{ 'Submit suggestion'|lang }}</button>
+						</form>
+					</div>
+				</div>
+			{% else %}
+				<div class="card border-0 shadow-sm rounded-4 overflow-hidden text-center p-4 bg-light">
+					<i class="bi bi-shield-lock-fill text-primary" style="font-size: 3rem;"></i>
+					<h5 class="fw-bold text-dark mt-3">Zgłoś propozycję</h5>
+					<p class="text-muted small mb-4">{{ 'Please log in to submit suggestions or vote.'|lang }}</p>
+					<a href="{{ path('login') }}?redirect={{ path('suggestions') }}" class="btn btn-primary w-100 py-2.5 fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>{{ 'Log in'|lang }}</a>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,631 @@
+{% extends "main.tpl" %}
+
+{% block content %}
+<div class="page_box pb-0">
+	<div class="bg-light border-bottom py-4 mb-5 shadow-sm">
+		<div class="container">
+			<h1 class="fw-bold mb-0 text-dark text-center text-md-start"><i class="bi bi-person-lock me-2 text-primary"></i>{{ 'Log in'|lang }} / {{ 'Register'|lang }}</h1>
+		</div>
+	</div>
+</div>
+
+<div class="container pb-5">
+	<div class="row g-4 justify-content-center">
+		<div class="col-12 col-lg-6 col-xl-5">
+			<div class="card border-0 shadow rounded-4 p-3 p-sm-4 p-md-5 bg-white" id="login_box">
+				<ul class="nav nav-pills nav-fill p-1 bg-light rounded-3 mb-4" role="tablist">
+					<li class="nav-item" role="presentation">
+						<button id="login-tab" data-bs-target="#login" class="nav-link rounded-2 py-2 {% if tab_active=='login' %}active{% endif %}" data-bs-toggle="tab" type="button" role="tab" aria-controls="login" aria-selected="{% if tab_active=='login' %}true{% else %}false{% endif %}">
+							<i class="bi bi-box-arrow-in-right me-1"></i><span class="d-none d-sm-inline">{{ 'Log in'|lang }}</span><span class="d-sm-none">{{ 'Log in'|lang }}</span>
+						</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button id="register-tab" data-bs-target="#register" class="nav-link rounded-2 py-2 {% if tab_active=='register' %}active{% endif %}" data-bs-toggle="tab" type="button" role="tab" aria-controls="register" aria-selected="{% if tab_active=='register' %}true{% else %}false{% endif %}">
+							<i class="bi bi-person-plus me-1"></i><span class="d-none d-sm-inline">{{ 'Register'|lang }}</span><span class="d-sm-none">{{ 'Register'|lang }}</span>
+						</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button id="reset_password-tab" data-bs-target="#reset_password" class="nav-link rounded-2 py-2 {% if tab_active=='reset_password' %}active{% endif %}" data-bs-toggle="tab" type="button" role="tab" aria-controls="reset_password" aria-selected="{% if tab_active=='reset_password' %}true{% else %}false{% endif %}">
+							<i class="bi bi-key me-1"></i><span class="d-none d-sm-inline">{{ 'Reset password'|lang }}</span><span class="d-sm-none">{{ 'Reset'|lang }}</span>
+						</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button id="magic_link-tab" data-bs-target="#magic_link" class="nav-link rounded-2 py-2 {% if tab_active=='magic_link' %}active{% endif %}" data-bs-toggle="tab" type="button" role="tab" aria-controls="magic_link" aria-selected="{% if tab_active=='magic_link' %}true{% else %}false{% endif %}">
+							<i class="bi bi-link-45deg me-1"></i><span class="d-none d-sm-inline">{{ 'Magic Link'|lang }}</span><span class="d-sm-none">{{ 'Magic Link'|lang }}</span>
+						</button>
+					</li>
+				</ul>
+
+				{% if alert_success or alert_danger %}
+					<div class="mb-3">
+						{% include 'alert.tpl' %}
+					</div>
+				{% endif %}
+
+				<div class="tab-content">
+					<!-- Login Tab -->
+					<div class="tab-pane fade {% if tab_active=='login' %}show active{% endif %}" id="login" role="tabpanel" aria-labelledby="login-tab">
+						{% if form_complete_data %}
+							<form method="post" class="needs-validation">
+								<input type="hidden" name="action" value="complete_data">
+								<input type="hidden" name="token" value="{{ generateToken('complete_data') }}">
+								<h3 class="h4 fw-bold text-dark mb-2">{{ 'Complete data'|lang }}</h3>
+								<p class="text-muted small mb-4">{{ 'To continue, enter the login you want to use on the site'|lang }}</p>
+								
+								<div class="mb-3">
+									<label class="form-label fw-semibold">{{ 'E-mail address'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+										<input type="email" class="form-control border-start-0" name="email" disabled value="{{ form_complete_data.email }}">
+									</div>
+								</div>
+								
+								<div class="mb-3">
+									<label for="complete_username" class="form-label fw-semibold">{{ 'Username'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+										<input type="text" class="form-control border-start-0" id="complete_username" name="username" placeholder="{{ 'Username'|lang }}" required maxlength="64" value="{{ input.username }}" title="{{ 'Enter your username. Use only characters:'|lang }} a-zA-Z0-9-_" pattern="[a-zA-Z0-9-_]+" autocomplete="username">
+									</div>
+								</div>
+								
+								<div class="accordion mb-4" id="accordionOptionalFields">
+									<div class="accordion-item border border-light-subtle shadow-sm rounded overflow-hidden">
+										<h2 class="accordion-header" id="headingOptional">
+											<button class="accordion-button collapsed py-2.5 px-3 bg-light text-dark fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOptional" aria-expanded="false" aria-controls="collapseOptional" style="font-size: 0.9rem;">
+												<i class="bi bi-person-plus me-2 text-primary"></i> {{ 'Complete additional data (Optional)'|lang }}
+											</button>
+										</h2>
+										<div id="collapseOptional" class="accordion-collapse collapse" aria-labelledby="headingOptional" data-bs-parent="#accordionOptionalFields">
+											<div class="accordion-body bg-white p-3">
+												
+												<div class="mb-3">
+													<label for="complete_phone" class="form-label small fw-semibold text-muted mb-1">{{ 'Phone number'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone text-muted"></i></span>
+														<input type="tel" class="form-control border-start-0" id="complete_phone" name="phone" placeholder="{{ 'Phone number'|lang }}" value="{{ input.phone }}" maxlength="32" autocomplete="tel">
+													</div>
+												</div>
+												
+												<div class="mb-3">
+													<label for="complete_address" class="form-label small fw-semibold text-muted mb-1">{{ 'Address / Company Head Office'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-geo-alt text-muted"></i></span>
+														<input type="text" class="form-control border-start-0" id="complete_address" name="address" placeholder="{{ 'Address / Company Head Office'|lang }}" value="{{ input.address }}" maxlength="512" autocomplete="street-address">
+													</div>
+												</div>
+
+												{% if states %}
+													<div class="mb-3">
+														<label for="state_id" class="form-label small fw-semibold text-muted mb-1">{{ 'State'|lang }}</label>
+														<select class="form-select select_state" name="state_id" id="state_id" title="{{ 'Select the appropriate state'|lang }}">
+															<option value="0">-- {{ 'Select state'|lang }} --</option>
+															{% for key,state in states %}
+																<option value="{{ key }}" {% if input.state_id==key %}selected{% endif %}>{{ state.name }}</option>
+															{% endfor %}
+														</select>
+													</div>
+
+													<div class="mb-3">
+														<label class="form-label small fw-semibold text-muted mb-1">{{ 'City'|lang }}</label>
+														<div class="substates-container">
+															<div class="substates substate_0" {% if input.state_id > 0 %}style="display:none"{% endif %}>
+																<select class="form-select" name="state2_id" disabled title="{{ 'Select the appropriate state'|lang }}">
+																	<option value="0">-- {{ 'Select city'|lang }} --</option>
+																</select>
+															</div>
+															{% for key,state in states %}
+																{% if state.states %}
+																	<div class="substates substate_{{ state.id }}" {% if input.state_id!=key %}style="display:none"{% endif %}>
+																		<select class="form-select" name="state2_id" {% if input.state_id!=key %}disabled{% endif %} title="{{ 'Select the appropriate state'|lang }}">
+																			<option value="0">-- {{ 'Select city'|lang }} --</option>
+																			{% for key2,state2 in state.states %}
+																				<option value="{{ state2.id }}" {% if input.state2_id==key2 %}selected{% endif %}>{{ state2.name }}</option>
+																			{% endfor %}
+																		</select>
+																	</div>
+																{% endif %}
+															{% endfor %}
+														</div>
+													</div>
+												{% endif %}
+
+												<div class="mb-3">
+													<label for="complete_company_name" class="form-label small fw-semibold text-muted mb-1">{{ 'Company name'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-building text-muted"></i></span>
+														<input type="text" class="form-control border-start-0" id="complete_company_name" name="company_name" placeholder="{{ 'Company name'|lang }}" value="{{ input.company_name }}" maxlength="255" autocomplete="organization">
+													</div>
+												</div>
+
+												<div class="mb-3">
+													<label for="complete_company_nip" class="form-label small fw-semibold text-muted mb-1">{{ 'Company NIP'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-hash text-muted"></i></span>
+														<input type="text" class="form-control border-start-0" id="complete_company_nip" name="company_nip" placeholder="{{ 'Company NIP'|lang }}" value="{{ input.company_nip }}" maxlength="32">
+													</div>
+												</div>
+
+												<div class="mb-3">
+													<label for="complete_url_website" class="form-label small fw-semibold text-muted mb-1">{{ 'Website'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-globe text-muted"></i></span>
+														<input type="url" class="form-control border-start-0" id="complete_url_website" name="url_website" placeholder="https://..." value="{{ input.url_website }}" maxlength="255" autocomplete="url">
+													</div>
+												</div>
+
+												<div class="mb-3">
+													<label for="complete_url_facebook" class="form-label small fw-semibold text-muted mb-1">{{ 'Profil Facebook'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-facebook text-muted"></i></span>
+														<input type="url" class="form-control border-start-0" id="complete_url_facebook" name="url_facebook" placeholder="https://facebook.com/..." value="{{ input.url_facebook }}" maxlength="255">
+													</div>
+												</div>
+
+												<div class="mb-3">
+													<label for="complete_url_linkedin" class="form-label small fw-semibold text-muted mb-1">{{ 'Profil LinkedIn'|lang }}</label>
+													<div class="input-group">
+														<span class="input-group-text bg-light border-end-0"><i class="bi bi-linkedin text-muted"></i></span>
+														<input type="url" class="form-control border-start-0" id="complete_url_linkedin" name="url_linkedin" placeholder="https://linkedin.com/..." value="{{ input.url_linkedin }}" maxlength="255">
+													</div>
+												</div>
+
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="form-check form-switch mb-4">
+									<input class="form-check-input" type="checkbox" name="rules" id="complete_rules" required {% if input.rules %}checked{% endif %}>
+									<label class="form-check-label small" for="complete_rules">
+										{{ 'Accepts the terms and conditions and the privacy policy'|lang }}
+									</label>
+									<div class="mt-1">
+										<a href="{{ path('rules') }}" title="{{ 'Terms of service'|lang }}" target="_blank" class="small text-decoration-none me-3"><i class="bi bi-file-text me-1"></i>{{ 'Terms of service'|lang }}</a>
+										<a href="{{ path('privacy_policy') }}" title="{{ 'Privacy policy'|lang }}" target="_blank" class="small text-decoration-none"><i class="bi bi-shield-lock me-1"></i>{{ 'Privacy policy'|lang }}</a>
+									</div>
+								</div>
+								
+								<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm btn-submit">{{ 'Save'|lang }}</button>
+							</form>
+						{% else %}
+							<form method="post" action="{{ path('login') }}{% if get.redirect %}?redirect={{ get.redirect }}{% endif %}" class="login-form">
+								<input type="hidden" name="action" value="login">
+								<input type="hidden" name="session_code" value="{{ session_code }}">
+								<h3 class="h4 fw-bold text-dark mb-4">{{ 'Log in'|lang }}</h3>
+								
+								<div class="mb-3">
+									<label for="login_username" class="form-label fw-semibold"><i class="bi bi-person me-1"></i>{{ 'Username / email'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+										<input type="text" class="form-control border-start-0" id="login_username" name="username" placeholder="{{ 'example@example.com'|lang }}" required value="{{ post.username }}" title="{{ 'Enter your username or e-mail'|lang }}" autocomplete="username">
+									</div>
+								</div>
+								
+								<div class="mb-4">
+									<label for="login_password" class="form-label fw-semibold"><i class="bi bi-key me-1"></i>{{ 'Password'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+										<input type="password" class="form-control border-start-0 border-end-0" id="login_password" name="password" placeholder="••••••••" required title="{{ 'Enter your password'|lang }}" autocomplete="current-password">
+										<button class="input-group-text bg-light border-start-0 toggle-password" type="button" data-target="login_password" tabindex="-1" aria-label="Show password">
+											<i class="bi bi-eye text-muted"></i>
+										</button>
+									</div>
+								</div>
+								<div class="form-check mb-4">
+									<input class="form-check-input" type="checkbox" name="remember_me" id="login_remember_me" value="1">
+									<label class="form-check-label small fw-semibold text-muted" for="login_remember_me">
+										{{ 'Remember me'|lang }}
+									</label>
+								</div>
+								
+								<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm mb-3 btn-submit">
+									<span class="btn-text">{{ 'Log in'|lang }}</span>
+									<span class="spinner-border spinner-border-sm d-none btn-spinner" role="status" aria-hidden="true"></span>
+								</button>
+							</form>
+
+							{% if facebook_redirect_uri or google_redirect_uri %}
+								<div class="text-center my-4 text-muted separator position-relative">
+									<hr class="text-muted opacity-25">
+									<span class="bg-white px-3 small position-absolute start-50 translate-middle text-uppercase" style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">{{ 'or log in with'|lang }}</span>
+								</div>
+								<div class="row g-2">
+									{% if facebook_redirect_uri %}
+										<div class="col-12 col-sm-6">
+											<a href="{{ facebook_redirect_uri }}" title="{{ 'Log in by FB'|lang }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 social-btn facebook-btn">
+												<i class="bi bi-facebook fs-5"></i>
+												<span class="small fw-semibold">Facebook</span>
+											</a>
+										</div>
+									{% endif %}
+									{% if google_redirect_uri %}
+										<div class="col-12 col-sm-6">
+											<a href="{{ google_redirect_uri }}" title="{{ 'Log in by Google'|lang }}" class="btn btn-outline-danger w-100 py-2 d-flex align-items-center justify-content-center gap-2 social-btn google-btn">
+												<i class="bi bi-google fs-5"></i>
+												<span class="small fw-semibold">Google</span>
+											</a>
+										</div>
+									{% endif %}
+								</div>
+							{% endif %}
+						{% endif %}
+					</div>
+
+					<!-- Register Tab -->
+					<div class="tab-pane fade {% if tab_active=='register' %}show active{% endif %}" id="register" role="tabpanel" aria-labelledby="register-tab">
+						<form method="post" action="{{ path('login') }}" class="register-form">
+							<input type="hidden" name="action" value="register">
+							<input type="hidden" name="token" value="{{ generateToken('register') }}">
+							<h3 class="h4 fw-bold text-dark mb-4">{{ 'Register'|lang }}</h3>
+							
+							{% if error.email %}
+								<div class="alert alert-danger py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1"></i>{{ error.email }}</div>
+							{% endif %}
+							<div class="mb-3">
+								<label for="register_email" class="form-label fw-semibold">{{ 'E-mail address'|lang }}</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+									<input type="email" class="form-control border-start-0" name="email" id="register_email" placeholder="{{ 'example@example.com'|lang }}" required maxlength="64" value="{{ input.email }}" title="{{ 'Enter your email address'|lang }}" autocomplete="email">
+								</div>
+							</div>
+							
+							{% if error.username %}
+								<div class="alert alert-danger py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1"></i>{{ error.username }}</div>
+							{% endif %}
+							<div class="mb-3">
+								<label for="register_username" class="form-label fw-semibold">{{ 'Username'|lang }}</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+									<input type="text" class="form-control border-start-0" name="username" id="register_username" placeholder="{{ 'Username'|lang }}" required maxlength="64" value="{{ input.username }}" title="{{ 'Enter your username. Use only characters:'|lang }} a-zA-Z0-9-_" pattern="[a-zA-Z0-9-_]+" autocomplete="username">
+								</div>
+							</div>
+							
+							{% if error.password %}
+								<div class="alert alert-danger py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1"></i>{{ error.password }}</div>
+							{% endif %}
+							<div class="mb-3">
+								<label for="register_password" class="form-label fw-semibold">{{ 'Password'|lang }}</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+									<input type="password" class="form-control border-start-0 border-end-0" name="password" id="register_password" placeholder="••••••••" required maxlength="32" value="{{ input.password }}" title="{{ 'Enter your password'|lang }}" autocomplete="new-password">
+									<button class="input-group-text bg-light border-start-0 toggle-password" type="button" data-target="register_password" tabindex="-1" aria-label="Show password">
+										<i class="bi bi-eye text-muted"></i>
+									</button>
+								</div>
+								<div class="password-strength mt-2 d-none">
+									<div class="progress" style="height: 4px;">
+										<div class="progress-bar password-strength-bar" role="progressbar" style="width: 0%"></div>
+									</div>
+									<small class="password-strength-text text-muted"></small>
+								</div>
+							</div>
+							
+							<div class="mb-3">
+								<label for="password_repeat" class="form-label fw-semibold">{{ 'Repeat password'|lang }}</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-end-0"><i class="bi bi-lock-fill text-muted"></i></span>
+									<input type="password" class="form-control border-start-0 border-end-0" name="password_repeat" placeholder="••••••••" id="password_repeat" required maxlength="32" title="{{ 'Here repeat your password'|lang }}" autocomplete="new-password">
+									<button class="input-group-text bg-light border-start-0 toggle-password" type="button" data-target="password_repeat" tabindex="-1" aria-label="Show password">
+										<i class="bi bi-eye text-muted"></i>
+									</button>
+								</div>
+								<div class="password-match-feedback mt-1 small d-none">
+									<span class="text-success"><i class="bi bi-check-circle me-1"></i>Passwords match</span>
+								</div>
+							</div>
+							
+							{% if error.rules %}
+								<div class="alert alert-danger py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1"></i>{{ error.rules }}</div>
+							{% endif %}
+							<div class="form-check form-switch mb-4">
+								<input class="form-check-input" type="checkbox" name="rules" id="register_rules" required {% if input.rules %}checked{% endif %}>
+								<label class="form-check-label small" for="register_rules">
+									{{ 'Accepts the terms and conditions and the privacy policy'|lang }}
+								</label>
+								<div class="mt-1">
+									<a href="{{ path('rules') }}" title="{{ 'Terms of service'|lang }}" target="_blank" class="small text-decoration-none me-3"><i class="bi bi-file-text me-1"></i>{{ 'Terms of service'|lang }}</a>
+									<a href="{{ path('privacy_policy') }}" title="{{ 'Privacy policy'|lang }}" target="_blank" class="small text-decoration-none"><i class="bi bi-shield-lock me-1"></i>{{ 'Privacy policy'|lang }}</a>
+								</div>
+							</div>
+							
+							{% if error.captcha %}
+								<div class="alert alert-danger py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1"></i>{{ error.captcha }}</div>
+							{% endif %}
+							<div class="mb-4">
+								<label for="register_captcha" class="form-label fw-semibold">{{ 'Enter the code Captcha'|lang }}</label>
+								<div class="d-flex align-items-center gap-3">
+									<img src="{{ path('captcha') }}" alt="captcha" class="rounded border captcha-img" style="height: 38px;" data-captcha-src="{{ path('captcha') }}">
+									<div class="input-group flex-grow-1">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-check text-muted"></i></span>
+										<input type="text" class="form-control border-start-0" placeholder="Captcha" title="{{ 'Enter the code Captcha'|lang }}" name="captcha" id="register_captcha" required maxlength="32" autocomplete="off">
+									</div>
+								</div>
+							</div>
+							
+							<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm mb-3 btn-submit">
+								<span class="btn-text">{{ 'Register'|lang }}</span>
+								<span class="spinner-border spinner-border-sm d-none btn-spinner" role="status" aria-hidden="true"></span>
+							</button>
+						</form>
+
+						{% if facebook_redirect_uri or google_redirect_uri %}
+							<div class="text-center my-4 text-muted separator position-relative">
+								<hr class="text-muted opacity-25">
+								<span class="bg-white px-3 small position-absolute start-50 translate-middle text-uppercase" style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">{{ 'or register with'|lang }}</span>
+							</div>
+							<div class="row g-2">
+								{% if facebook_redirect_uri %}
+									<div class="col-12 col-sm-6">
+										<a href="{{ facebook_redirect_uri }}" title="{{ 'Register by FB'|lang }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 social-btn facebook-btn">
+											<i class="bi bi-facebook fs-5"></i>
+											<span class="small fw-semibold">Facebook</span>
+										</a>
+									</div>
+								{% endif %}
+								{% if google_redirect_uri %}
+									<div class="col-12 col-sm-6">
+										<a href="{{ google_redirect_uri }}" title="{{ 'Register by Google'|lang }}" class="btn btn-outline-danger w-100 py-2 d-flex align-items-center justify-content-center gap-2 social-btn google-btn">
+											<i class="bi bi-google fs-5"></i>
+											<span class="small fw-semibold">Google</span>
+										</a>
+									</div>
+								{% endif %}
+							</div>
+						{% endif %}
+					</div>
+
+					<!-- Reset Password Tab -->
+					<div class="tab-pane fade {% if tab_active=='reset_password' %}show active{% endif %}" id="reset_password" role="tabpanel" aria-labelledby="reset_password-tab">
+						{% if form_new_password %}
+							<h3 class="h4 fw-bold text-dark mb-4">{{ 'Enter a new password'|lang }}</h3>
+							<form method="post" class="reset-form">
+								<input type="hidden" name="action" value="new_password">
+								<input type="hidden" name="token" value="{{ generateToken('new_password') }}">
+								<div class="mb-3">
+									<input type="text" class="form-control bg-light" disabled value="{{ form_new_password.username }}">
+								</div>
+								<div class="mb-3">
+									<input type="email" class="form-control bg-light" disabled value="{{ form_new_password.email }}">
+								</div>
+								<div class="mb-3">
+									<label for="new_password" class="form-label fw-semibold">{{ 'Enter a new password'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+										<input type="password" class="form-control border-start-0 border-end-0" id="new_password" name="password" placeholder="••••••••" title="{{ 'Enter here a new password'|lang }}" required value="{{ input.password }}" maxlength="32" autocomplete="new-password">
+										<button class="input-group-text bg-light border-start-0 toggle-password" type="button" data-target="new_password" tabindex="-1" aria-label="Show password">
+											<i class="bi bi-eye text-muted"></i>
+										</button>
+									</div>
+								</div>
+								<div class="mb-4">
+									<label for="new_password_repeat" class="form-label fw-semibold">{{ 'Repeat new password'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-lock-fill text-muted"></i></span>
+										<input type="password" class="form-control border-start-0 border-end-0" id="new_password_repeat" name="password_repeat" placeholder="••••••••" title="{{ 'Repeat new password'|lang }}" required maxlength="32" autocomplete="new-password">
+										<button class="input-group-text bg-light border-start-0 toggle-password" type="button" data-target="new_password_repeat" tabindex="-1" aria-label="Show password">
+											<i class="bi bi-eye text-muted"></i>
+										</button>
+									</div>
+								</div>
+								<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm btn-submit">
+									<span class="btn-text">{{ 'Change password'|lang }}</span>
+									<span class="spinner-border spinner-border-sm d-none btn-spinner" role="status" aria-hidden="true"></span>
+								</button>
+							</form>
+						{% else %}
+							<h3 class="h4 fw-bold text-dark mb-2">{{ 'Reset password'|lang }}</h3>
+							<p class="text-muted small mb-4">{{ 'Enter your email address to reset your password.'|lang }}</p>
+							
+							<form method="post" action="{{ path('login') }}" class="reset-form">
+								<input type="hidden" name="action" value="reset_password">
+								<input type="hidden" name="token" value="{{ generateToken('reset_password') }}">
+								<div class="mb-3">
+									<label for="reset_username" class="form-label fw-semibold">{{ 'Username / email'|lang }}</label>
+									<div class="input-group">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+										<input type="text" class="form-control border-start-0" id="reset_username" name="username" placeholder="{{ 'example@example.com'|lang }}" required maxlength="64" value="{{ input.username }}" autocomplete="username">
+									</div>
+								</div>
+								<div class="mb-4">
+									<label for="reset_captcha" class="form-label fw-semibold">{{ 'Enter the code Captcha'|lang }}</label>
+									<div class="d-flex align-items-center gap-3">
+										<img src="{{ path('captcha') }}" alt="captcha" class="rounded border captcha-img" style="height: 38px;" data-captcha-src="{{ path('captcha') }}">
+										<div class="input-group flex-grow-1">
+											<span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-check text-muted"></i></span>
+											<input type="text" class="form-control border-start-0" placeholder="Captcha" title="{{ 'Enter the code Captcha'|lang }}" name="captcha" id="reset_captcha" required maxlength="32" autocomplete="off">
+										</div>
+									</div>
+								</div>
+								<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm btn-submit">
+									<span class="btn-text">{{ 'Reset password'|lang }}</span>
+									<span class="spinner-border spinner-border-sm d-none btn-spinner" role="status" aria-hidden="true"></span>
+								</button>
+							</form>
+						{% endif %}
+					</div>
+
+					<!-- Magic Link Tab -->
+					<div class="tab-pane fade {% if tab_active=='magic_link' %}show active{% endif %}" id="magic_link" role="tabpanel" aria-labelledby="magic_link-tab">
+						<h3 class="h4 fw-bold text-dark mb-2">{{ 'Log in with Magic Link'|lang }}</h3>
+						<p class="text-muted small mb-4">{{ 'Enter your email address to receive a one-click login link.'|lang }}</p>
+						
+						<form method="post" action="{{ path('login') }}" class="magic-link-form">
+							<input type="hidden" name="action" value="request_magic_link">
+							<input type="hidden" name="token" value="{{ generateToken('request_magic_link') }}">
+							<div class="mb-3">
+								<label for="magic_email" class="form-label fw-semibold">{{ 'E-mail address'|lang }}</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+									<input type="email" class="form-control border-start-0" id="magic_email" name="email" placeholder="{{ 'example@example.com'|lang }}" required maxlength="64" autocomplete="email">
+								</div>
+							</div>
+							<div class="mb-4">
+								<label for="magic_captcha" class="form-label fw-semibold">{{ 'Enter the code Captcha'|lang }}</label>
+								<div class="d-flex align-items-center gap-3">
+									<img src="{{ path('captcha') }}" alt="captcha" class="rounded border captcha-img" style="height: 38px;" data-captcha-src="{{ path('captcha') }}">
+									<div class="input-group flex-grow-1">
+										<span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-check text-muted"></i></span>
+										<input type="text" class="form-control border-start-0" placeholder="Captcha" title="{{ 'Enter the code Captcha'|lang }}" name="captcha" id="magic_captcha" required maxlength="32" autocomplete="off">
+									</div>
+								</div>
+							</div>
+							<button type="submit" class="btn btn-accent w-100 text-uppercase py-2.5 fw-bold shadow-sm btn-submit">
+								<span class="btn-text">{{ 'Send login link'|lang }}</span>
+								<span class="spinner-border spinner-border-sm d-none btn-spinner" role="status" aria-hidden="true"></span>
+							</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-6 col-xl-5 d-none d-lg-flex flex-column justify-content-center">
+			<div class="p-4 bg-white rounded-4 border shadow-sm h-100 d-flex align-items-center">
+				<div class="p-3 w-100 prose-content">
+					{{ settings.login_page|raw }}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. TOGGLE PASSWORD VISIBILITY
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(this.dataset.target);
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+                this.setAttribute('aria-label', 'Hide password');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+                this.setAttribute('aria-label', 'Show password');
+            }
+        });
+    });
+
+    // 2. AUTOFOCUS ON ACTIVE TAB
+    function focusFirstInput(tabPane) {
+        if (!tabPane) return;
+        const firstInput = tabPane.querySelector('input:not([disabled]):not([type="hidden"]), select, textarea');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (activeTab) {
+        focusFirstInput(activeTab);
+    }
+
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', function(e) {
+            const targetPane = document.querySelector(e.target.dataset.bsTarget);
+            focusFirstInput(targetPane);
+        });
+    });
+
+    // 3. PASSWORD STRENGTH METER (Register)
+    const regPassword = document.getElementById('register_password');
+    const strengthContainer = document.querySelector('.password-strength');
+    const strengthBar = document.querySelector('.password-strength-bar');
+    const strengthText = document.querySelector('.password-strength-text');
+
+    if (regPassword && strengthContainer) {
+        regPassword.addEventListener('input', function() {
+            const val = this.value;
+            if (val.length === 0) {
+                strengthContainer.classList.add('d-none');
+                return;
+            }
+            strengthContainer.classList.remove('d-none');
+
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (val.length >= 12) score++;
+            if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+            const widths = ['20%', '40%', '60%', '80%', '100%'];
+            const colors = ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#198754'];
+            const labels = ['Very weak', 'Weak', 'Fair', 'Strong', 'Very strong'];
+
+            const idx = Math.min(score, 4);
+            strengthBar.style.width = widths[idx];
+            strengthBar.style.backgroundColor = colors[idx];
+            strengthText.textContent = labels[idx];
+            strengthText.style.color = colors[idx];
+        });
+    }
+
+    // 4. PASSWORD MATCH VALIDATION (Register)
+    const regPassRepeat = document.getElementById('password_repeat');
+    const matchFeedback = document.querySelector('.password-match-feedback');
+
+    if (regPassword && regPassRepeat && matchFeedback) {
+        function checkMatch() {
+            if (!regPassRepeat.value) {
+                matchFeedback.classList.add('d-none');
+                return;
+            }
+            matchFeedback.classList.remove('d-none');
+            if (regPassword.value === regPassRepeat.value) {
+                matchFeedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Passwords match</span>';
+            } else {
+                matchFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Passwords do not match</span>';
+            }
+        }
+        regPassword.addEventListener('input', checkMatch);
+        regPassRepeat.addEventListener('input', checkMatch);
+    }
+
+    // 5. LAZY LOAD CAPTCHA
+    function loadCaptcha(img) {
+        const src = img.dataset.captchaSrc;
+        if (src && !img.src.includes('data:')) {
+            img.src = src + '?' + Date.now();
+        }
+    }
+
+    document.querySelectorAll('.captcha-img').forEach(function(img) {
+        loadCaptcha(img);
+    });
+
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', function(e) {
+            const targetPane = document.querySelector(e.target.dataset.bsTarget);
+            if (targetPane) {
+                targetPane.querySelectorAll('.captcha-img').forEach(loadCaptcha);
+            }
+        });
+    });
+
+    // 6. SUBMIT BUTTON LOADING STATE
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('.btn-submit');
+            if (btn) {
+                btn.disabled = true;
+                const text = btn.querySelector('.btn-text');
+                const spinner = btn.querySelector('.btn-spinner');
+                if (text) text.classList.add('d-none');
+                if (spinner) spinner.classList.remove('d-none');
+            }
+        });
+    });
+
+    // 7. SMOOTH TAB HEIGHT TRANSITION
+    const tabContent = document.querySelector('.tab-content');
+    if (tabContent) {
+        tabContent.style.transition = 'height 0.3s ease';
+        tabContent.style.overflow = 'hidden';
+    }
+});
+</script>
+{% endblock %}

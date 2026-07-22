@@ -1,0 +1,120 @@
+
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Strona główna</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% macro slideCard(key, item, index) %}
+	<div id="box_slide_{{ key }}" class="card mb-4 shadow-sm border-0 bg-light position-relative">
+		<div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-3 px-3">
+			<h5 class="card-title h6 mb-0 text-secondary fw-bold">
+				<span class="bi bi-card-image text-primary me-2"></span> {{ 'Slide'|lang }}: {{ index }}
+			</h5>
+			<a href="#" title="{{ 'Remove slide'|lang }}" data-id="box_slide_{{ key }}" class="link_remove_slide text-danger fs-5" style="text-decoration: none;">
+				<i class="bi bi-trash" aria-hidden="true"></i>
+				<span class="visually-hidden">{{ 'Remove slide'|lang }}</span>
+			</a>
+		</div>
+		<div class="card-body px-3 pb-3 pt-2">
+			<div class="row g-3">
+				<div class="col-md-4 col-12">
+					<label class="form-label fw-semibold text-muted small mb-1">{{ 'Image'|lang }} (WebP, JPG, PNG)</label>
+					<div class="position-relative text-center border rounded-3 p-2 bg-white d-flex align-items-center justify-content-center" style="height: 150px; overflow: hidden;">
+						<a href="#" class="open_roxy d-block w-100 h-100" data-bs-target="#roxySelectFile">
+							<img data-roxy_name="slide_image[{{ key }}]" src="{% if item.image %}{{ item.image }}{% else %}images/no_image.png{% endif %}" onerror="this.src='images/no_image.png'" alt="{{ 'Slide'|lang }}" loading="lazy" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+						</a>
+					</div>
+					<div class="mt-2">
+						<input type="text" name="slide_image[{{ key }}]" value="{{ item.image }}" placeholder="{{ 'Image URL'|lang }}" class="form-control form-control-sm" required>
+					</div>
+				</div>
+				<div class="col-md-8 col-12 d-flex flex-column justify-content-between">
+					<div class="mb-3">
+						<label for="slide_title_{{ key }}" class="form-label fw-semibold text-muted small mb-1">{{ 'Title'|lang }}</label>
+						<input type="text" name="slide_title[{{ key }}]" id="slide_title_{{ key }}" value="{{ item.title }}" placeholder="{{ 'Enter slide title (e.g. bold heading)'|lang }}" class="form-control">
+					</div>
+					<div class="mb-0">
+						<label for="slide_description_{{ key }}" class="form-label fw-semibold text-muted small mb-1">{{ 'Description'|lang }}</label>
+						<textarea name="slide_description[{{ key }}]" id="slide_description_{{ key }}" rows="3" placeholder="{{ 'Enter slide description / caption text'|lang }}" class="form-control">{{ item.description }}</textarea>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endmacro %}
+
+{% block content %}
+<div class="content-shell">
+	<div class="content-card">
+		<div class="content-title border-bottom pb-3 mb-4">
+			<h1 class="h3 mb-2"><span class="bi bi-pencil-square text-primary me-2"></span> {{ 'Index page'|lang }}</h1>
+			<p class="text-muted mb-0">{{ 'Here you can edit content of page'|lang }}</p>
+		</div>
+
+		{% include 'alert.tpl' %}
+
+		<form method="post" class="row g-3">
+			<input type="hidden" name="action" value="save_index_page">
+			<input type="hidden" name="token" value="{{ generateToken('admin_save_index_page') }}">
+			<div class="col-12 mb-3">
+				<div class="form-check form-switch">
+					<input class="form-check-input" type="checkbox" name="show_modernization_alert" id="show_modernization_alert" role="switch" {% if settings.show_modernization_alert %}checked{% endif %}>
+					<label class="form-check-label fw-semibold" for="show_modernization_alert">Pokaż komunikat o modernizacji strony na stronie głównej</label>
+				</div>
+			</div>
+			<div class="col-12">
+				<label class="form-label">{{ 'Content'|lang }}:</label>
+				<textarea name="index_page" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control">{{ settings.index_page }}</textarea>
+				<script>run_ckeditor('index_page');</script>
+			</div>
+			<div class="col-12 mb-3">
+				<label for="footer_bottom" class="form-label">Stopka na stronie głównej (duży ekran) - część główna:</label>
+				<textarea name="footer_bottom" id="footer_bottom" placeholder="Stopka na stronie głównej (duży ekran)" title="Stopka na stronie głównej (duży ekran)" class="form-control">{{ settings.footer_bottom }}</textarea>
+				<script>run_ckeditor('footer_bottom');</script>
+			</div>
+			<div class="col-12 mb-3">
+				<label for="footer_text" class="form-label">Stopka na stronie głównej (duży ekran) - prawa autorskie i dodatkowe info:</label>
+				<textarea name="footer_text" id="footer_text" placeholder="Prawa autorskie / dodatkowe info" title="Prawa autorskie / dodatkowe info" class="form-control">{{ settings.footer_text }}</textarea>
+				<script>run_ckeditor('footer_text');</script>
+			</div>
+			<div class="col-12">
+				<input type="submit" value="{{ 'Save'|lang }}" class="btn btn-primary text-uppercase">
+			</div>
+		</form>
+	</div>
+
+	<div class="content-card">
+		<div class="content-title border-bottom pb-3 mb-4">
+			<h3 class="h5 mb-2"><span class="bi bi-images text-success me-2"></span> {{ 'Slider'|lang }}</h3>
+			<p class="text-muted mb-0">{{ 'Subtitles add in tag'|lang }}: &lt;div class=&quot;carousel-caption&quot;&gt;&lt;/div&gt;</p>
+		</div>
+		<form method="post" action="" class="mb-3">
+			<input type="hidden" name="action" value="add_slide">
+			<input type="hidden" name="token" value="{{ generateToken('admin_add_slide') }}">
+			<input type="submit" value="{{ 'Add slide'|lang }}" class="btn btn-sm btn-success">
+		</form>
+		{% if slider %}
+			<form method="post">
+				<input type="hidden" name="action" value="save_slides">
+				<input type="hidden" name="token" value="{{ generateToken('admin_save_slides') }}">
+				{% import _self as macros %}
+				<div id="slides-container">
+					{% for key, item in slider %}
+						{{ macros.slideCard(key, item, loop.index) }}
+					{% endfor %}
+				</div>
+				<input type="submit" value="{{ 'Save'|lang }}" class="btn btn-primary text-uppercase">
+			</form>
+		{% else %}
+			<h4 class="text-danger">{{ 'Nothing found'|lang }}</h4>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}

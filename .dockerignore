@@ -1,0 +1,8 @@
+vendor
+node_modules
+tmp
+upload
+images
+uploads
+.git
+.gitignore

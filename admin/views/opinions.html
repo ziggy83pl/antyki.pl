@@ -1,0 +1,113 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Opinie</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+	<h1 class="h2">{{ 'Opinions list'|lang }}</h1>
+</div>
+
+{% include 'alert.tpl' %}
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+	{% if opinions %}
+		<form method="post" id="bulk-opinions-form" onsubmit="return confirm('{{ 'Are you sure you want to delete selected items?'|lang }}');">
+			<input type="hidden" name="action" value="bulk_delete">
+			<input type="hidden" name="token" value="{{ generateToken('admin_bulk_delete_opinions') }}">
+
+			{% if not _ADMIN_TEST_MODE_ %}
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<div>
+					<button type="submit" id="btn-bulk-delete" class="btn btn-danger btn-sm text-uppercase fw-bold" disabled>
+						<i class="bi bi-trash-fill me-1"></i> {{ 'Delete selected'|lang }} (<span id="selected-count">0</span>)
+					</button>
+				</div>
+			</div>
+			{% endif %}
+
+			<div class="table-responsive">
+				<table class="table table-hover border align-middle mb-0">
+					<thead>
+						<tr>
+							{% if not _ADMIN_TEST_MODE_ %}
+							<th scope="col" style="width: 3%;"><input type="checkbox" id="check-all" class="form-check-input"></th>
+							{% endif %}
+							<th scope="col" style="width: 5%;">ID</th>
+							<th scope="col" style="width: 15%;">{{ 'Author'|lang }}</th>
+							<th scope="col" style="width: 15%;">{{ 'User'|lang }}</th>
+							<th scope="col" style="width: 15%;">{{ 'Rating'|lang }}</th>
+							<th scope="col" style="width: 32%;">{{ 'Comment'|lang }}</th>
+							<th scope="col" style="width: 10%;">{{ 'Date'|lang }}</th>
+							<th scope="col" style="width: 5%;" class="text-center">{{ 'Action'|lang }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for item in opinions %}
+							<tr>
+								{% if not _ADMIN_TEST_MODE_ %}
+								<td><input type="checkbox" name="ids[]" value="{{ item.id }}" class="opinion-checkbox form-check-input"></td>
+								{% endif %}
+								<td>{{ item.id }}</td>
+								<td>
+									{% if item.author_username %}
+										<a href="{{ settings.base_url }}/profil/{{ item.author_username }}" target="_blank">{{ item.author_username }}</a>
+									{% else %}
+										<span class="text-muted small">Guest/Deleted</span>
+									{% endif %}
+								</td>
+								<td>
+									{% if item.target_username %}
+										<a href="{{ settings.base_url }}/profil/{{ item.target_username }}" target="_blank">{{ item.target_username }}</a>
+									{% else %}
+										<span class="text-muted small">Deleted</span>
+									{% endif %}
+								</td>
+								<td>
+									<span class="text-warning" role="img" aria-label="{{ item.rating }} / 5">
+										{% for star in 1..5 %}
+											{% if item.rating >= star %}
+												<i class="bi bi-star-fill" aria-hidden="true"></i>
+											{% else %}
+												<i class="bi bi-star" aria-hidden="true"></i>
+											{% endif %}
+										{% endfor %}
+									</span>
+								</td>
+								<td><span class="small text-muted text-wrap d-inline-block" style="max-width: 400px;">{{ item.comment|nl2br }}</span></td>
+								<td class="text-muted small">{{ item.date|date("d-m-Y") }}</td>
+								<td class="text-center">
+									{% if not _ADMIN_TEST_MODE_ %}
+										<form method="post" onsubmit="return confirm('{{ 'Are you sure you want to delete this?'|lang }}');" class="d-inline">
+											<input type="hidden" name="action" value="delete">
+											<input type="hidden" name="id" value="{{ item.id }}">
+											<input type="hidden" name="token" value="{{ generateToken('admin_delete_opinion') }}">
+											<button type="submit" title="{{ 'Delete'|lang }}" class="btn btn-danger btn-sm rounded-circle">
+												<i class="bi bi-trash" aria-hidden="true"></i>
+												<span class="visually-hidden">{{ 'Delete'|lang }}</span>
+											</button>
+										</form>
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</form>
+		{% include 'pagination.tpl' %}
+	{% else %}
+		<div class="text-center py-5">
+			<i class="bi bi-chat-right-text fs-1 text-muted d-block mb-2"></i>
+			<p class="text-muted mb-0">{{ 'No opinions yet'|lang }}</p>
+		</div>
+	{% endif %}
+</div>
+{% endblock %}

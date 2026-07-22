@@ -1,0 +1,408 @@
+{% extends "main.tpl" %}
+
+{% block extra_head %}
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' cdn.jsdelivr.net; img-src 'self' data:;">
+{% endblock %}
+
+{% block wrapper %}
+<style>
+	html, body {
+		overflow: hidden !important;
+		margin: 0;
+		padding: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	/* === AURORA CANVAS TŁO === */
+	#aurora-canvas {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	.login-page-container {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-family: 'Inter', sans-serif;
+		z-index: 10;
+		overflow: hidden;
+		margin: 0;
+		padding: 1.5rem 0;
+		/* Tło transparent — zorza z canvas jest widoczna */
+		background: transparent;
+	}
+
+	.login-wrapper {
+		position: relative;
+		z-index: 10;
+		width: 100%;
+		max-width: 420px;
+		padding: 1.5rem;
+	}
+
+	.login-card {
+		background: rgba(8, 18, 36, 0.60);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		border: 1px solid rgba(255, 255, 255, 0.09);
+		border-radius: 1.5rem;
+		box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+		transition: transform 0.3s ease;
+		position: relative;
+	}
+
+	/* Gradientowa linia na górze karty — zieleń → fiolet */
+	.login-card::before {
+		content: '';
+		position: absolute;
+		top: -1px;
+		left: 1.8rem;
+		right: 1.8rem;
+		height: 2px;
+		border-radius: 2px;
+		background: linear-gradient(90deg, transparent, #34d399 25%, #818cf8 75%, transparent);
+		opacity: 0.9;
+		pointer-events: none;
+	}
+
+	.login-card:hover {
+		transform: translateY(-2px);
+	}
+
+	.logo-text {
+		font-size: 2.2rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		color: #ffffff;
+		text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+	}
+	.logo-accent {
+		color: #34d399;
+		text-shadow: 0 0 18px rgba(52, 211, 153, 0.7);
+	}
+
+	.form-label {
+		color: #012112;
+		font-weight: 500;
+		font-size: 0.85rem;
+		opacity: 0.85;
+	}
+
+	.form-control {
+		background: rgba(142, 235, 213, 0.6) !important;
+		border: 1px solid rgba(255, 255, 255, 0.08) !important;
+		color: #f0fdf4 !important;
+		border-radius: 0.75rem;
+		padding: 0.75rem 1rem;
+		transition: all 0.2s ease;
+	}
+	.form-control:focus {
+		border-color: #818cf8 !important;
+		box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.30), 0 0 0 4px rgba(129, 140, 248, 0.18) !important;
+		background: rgba(53, 193, 160, 0.85) !important;
+	}
+
+	.input-group-text-btn {
+		background: rgba(2, 44, 34, 0.6) !important;
+		border: 1px solid rgba(255, 255, 255, 0.08) !important;
+		border-left: none !important;
+		color: #a7f3d0 !important;
+		border-radius: 0 0.75rem 0.75rem 0;
+		transition: all 0.2s ease;
+		opacity: 0.8;
+	}
+	.input-group-text-btn:hover {
+		color: #f0fdf4 !important;
+		opacity: 1;
+	}
+
+	.btn-login {
+		background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+		border: none;
+		border-radius: 0.75rem;
+		padding: 0.8rem;
+		font-weight: 600;
+		font-size: 0.95rem;
+		box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+		transition: all 0.2s ease;
+		color: #ffffff;
+	}
+	.btn-login:hover {
+		background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+		transform: translateY(-1px);
+		box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+	}
+
+	.login-footer {
+		position: relative;
+		margin-top: 1rem;
+		text-align: center;
+		z-index: 5;
+	}
+	.login-footer p {
+		color: #6ee7b7;
+		font-size: 0.8rem;
+		opacity: 0.6;
+	}
+
+	.captcha-badge {
+		background: rgba(245, 158, 11, 0.15);
+		color: #fbbf24;
+		border: 1px solid rgba(245, 158, 11, 0.2);
+		font-family: monospace;
+		font-size: 1.1rem !important;
+		letter-spacing: 0.05em;
+		padding: 0.35em 0.75em !important;
+		border-radius: 0.5rem;
+	}
+</style>
+
+<!-- CANVAS ZORZY POLARNEJ — musi być PRZED .login-page-container -->
+<canvas id="aurora-canvas"></canvas>
+
+<div class="login-page-container">
+
+	<div class="login-wrapper">
+		<div class="card login-card p-4">
+			<div class="card-body text-center p-0">
+
+
+				<form method="post" class="text-start">
+					<input type="hidden" name="action" value="login">
+					<input type="hidden" name="session_code" value="{{ session_code }}">
+					
+					<!-- Honeypot -->
+					<input type="text" name="website" value="" style="display:none" tabindex="-1" autocomplete="off">
+
+					{% if alert_danger %}
+						<div class="alert alert-danger border-0 rounded-3 mb-3 small d-flex align-items-center" role="alert" id="login-alert" aria-live="assertive">
+							<i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
+							<div>
+								{% for alert in alert_danger %}
+									{{ alert }}{% if not loop.last %}<br>{% endif %}
+								{% endfor %}
+							</div>
+						</div>
+					{% endif %}
+
+					{% if twofa_pending %}
+						<!-- 2FA Verification Screen -->
+						<div class="mb-4 text-center">
+							<h4 class="text-white mb-2 fw-bold"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Weryfikacja 2FA</h4>
+							
+							{% if twofa_setup %}
+								<div class="p-3 mb-3 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+									<p class="text-white-50 small mb-2">Zeskanuj poniższy kod QR w aplikacji Google Authenticator lub dodaj klucz ręcznie:</p>
+									<img src="{{ twofa_qr_url }}" alt="2FA QR Code" class="img-fluid rounded mb-2 shadow" style="max-width: 160px; background: white; padding: 5px;">
+									<div class="p-2 bg-dark rounded text-mono small text-white select-all" style="word-break: break-all; font-family: monospace; font-size: 11px;">
+										Klucz: <strong class="text-warning">{{ twofa_secret }}</strong>
+									</div>
+								</div>
+							{% else %}
+								<p class="text-white-50 small">Wprowadź 6-cyfrowy kod wygenerowany przez aplikację uwierzytelniającą.</p>
+							{% endif %}
+						</div>
+
+						<div class="mb-4">
+							<label for="twofa_code" class="form-label" style="color: #ffffff; opacity: 0.85;">Kod weryfikacyjny (TOTP)</label>
+							<div class="input-group">
+								<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-key-fill"></i></span>
+								<input type="text" class="form-control border-start-0 text-center fs-4 fw-bold" name="twofa_code" placeholder="000000" id="twofa_code" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required autofocus style="border-radius: 0 0.75rem 0.75rem 0; letter-spacing: 0.2em; color: #34d399 !important;">
+							</div>
+						</div>
+
+						<!-- CAPTCHA (po 3 błędnych próbach) -->
+						{% if failed_attempts >= 3 %}
+						<div class="mb-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);">
+							<label for="captcha" class="form-label d-flex justify-content-between align-items-center mb-2">
+								<span class="text-warning fw-semibold"><i class="bi bi-shield-exclamation me-1"></i> Weryfikacja anty-bot:</span>
+								<span class="badge captcha-badge">{{ captcha_challenge }}</span>
+							</label>
+							<input type="number" class="form-control text-center fs-5 fw-bold" name="captcha" id="captcha" placeholder="Wpisz wynik działania" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required>
+						</div>
+						{% endif %}
+
+						<button type="submit" class="btn btn-login w-100 mt-2" id="submitBtn">
+							<i class="bi bi-check-circle me-1"></i> Potwierdź i zaloguj
+						</button>
+						<div class="text-center mt-3">
+							<a href="?" class="text-decoration-none small" style="color: #a7f3d0;"><i class="bi bi-arrow-left"></i> Anuluj logowanie</a>
+						</div>
+					
+					{% else %}
+						<!-- Standard Login Screen -->
+						<!-- Pole: login -->
+						<div class="mb-3">
+							<label for="username" class="form-label">Nazwa użytkownika</label>
+							<div class="input-group">
+								<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-person-fill"></i></span>
+								<input type="text" class="form-control border-start-0" name="username" placeholder="Wpisz login" id="username" autocomplete="username" autocapitalize="off" spellcheck="false" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required autofocus style="border-radius: 0 0.75rem 0.75rem 0;">
+							</div>
+						</div>
+
+						<!-- Pole: hasło -->
+						<div class="mb-4">
+							<label for="password" class="form-label">Hasło dostępu</label>
+							<div class="input-group">
+								<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-lock-fill"></i></span>
+								<input type="password" class="form-control border-start-0 border-end-0" name="password" placeholder="Wpisz hasło" id="password" autocomplete="current-password" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required>
+								<button class="btn input-group-text-btn" type="button" id="togglePassword">
+									<i class="bi bi-eye"></i>
+								</button>
+							</div>
+						</div>
+
+						<!-- CAPTCHA (po 3 błędnych próbach) -->
+						{% if failed_attempts >= 3 %}
+						<div class="mb-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);">
+							<label for="captcha" class="form-label d-flex justify-content-between align-items-center mb-2">
+								<span class="text-warning fw-semibold"><i class="bi bi-shield-exclamation me-1"></i> Weryfikacja anty-bot:</span>
+								<span class="badge captcha-badge">{{ captcha_challenge }}</span>
+							</label>
+							<input type="number" class="form-control text-center fs-5 fw-bold" name="captcha" id="captcha" placeholder="Wpisz wynik działania" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required>
+						</div>
+						{% endif %}
+
+						<button type="submit" class="btn btn-login w-100 mt-2" id="submitBtn">
+							<i class="bi bi-box-arrow-in-right me-1"></i> Zaloguj się
+						</button>
+					{% endif %}
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="login-footer">
+		<p class="mb-0">Admin Panel v2.2 &copy; 2026. Wszystkie prawa zastrzeżone.</p>
+		<p class="mb-0 mt-1" style="color:#e25e0c;opacity:0.7;font-size:0.72rem;"><i class="bi bi-shield-lock-fill me-1"></i>Panel chroniony przez AI Claude Firewall</p>
+	</div>
+</div>
+
+<script>
+/* ============================================================
+   AURORA BOREALIS — animowane tło zorzy polarnej
+   Mix: zieleń + fiolet + tirkis
+   ============================================================ */
+(function () {
+	const canvas = document.getElementById('aurora-canvas');
+	const ctx = canvas.getContext('2d');
+	let W, H, tick = 0;
+
+	function resize() {
+		W = canvas.width  = window.innerWidth;
+		H = canvas.height = window.innerHeight;
+	}
+	resize();
+	window.addEventListener('resize', resize);
+
+	/* Definicje fal zorzy — każda ma inny kolor, prędkość i pozycję */
+	const waves = [
+		{ rgb: [52,  211, 153], speed: 0.0007, amp: 0.22, freq: 1.2, phase: 0.0,  yRel: 0.35 },
+		{ rgb: [99,  102, 241], speed: 0.0009, amp: 0.18, freq: 0.9, phase: 2.1,  yRel: 0.50 },
+		{ rgb: [20,  184, 166], speed: 0.0006, amp: 0.20, freq: 1.5, phase: 1.0,  yRel: 0.28 },
+		{ rgb: [167, 243, 208], speed: 0.0011, amp: 0.14, freq: 1.8, phase: 3.5,  yRel: 0.62 },
+		{ rgb: [139, 92,  246], speed: 0.0008, amp: 0.16, freq: 1.1, phase: 0.8,  yRel: 0.43 },
+		{ rgb: [45,  212, 191], speed: 0.0010, amp: 0.12, freq: 2.0, phase: 4.2,  yRel: 0.20 },
+		{ rgb: [16,  185, 129], speed: 0.0005, amp: 0.10, freq: 0.7, phase: 5.1,  yRel: 0.70 },
+	];
+
+	function drawWave(w, t) {
+		const [r, g, b] = w.rgb;
+		const steps = 140;
+
+		/* Pulsujące centrum w osi X */
+		const cx = (Math.sin(t * w.speed * 0.4 + w.phase) * 0.3 + 0.5) * W;
+		const cy = H * w.yRel;
+		const radius = W * 0.70;
+
+		/* Radialny gradient — zorza świeci od centrum */
+		const alpha = 0.17 + 0.07 * Math.sin(t * w.speed * 2.5 + w.phase);
+		const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+		grad.addColorStop(0,   `rgba(${r},${g},${b},${alpha.toFixed(3)})`);
+		grad.addColorStop(0.45,`rgba(${r},${g},${b},${(alpha * 0.35).toFixed(3)})`);
+		grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+
+		/* Kształt fali */
+		ctx.beginPath();
+		for (let i = 0; i <= steps; i++) {
+			const x = (i / steps) * W;
+			const noise =
+				Math.sin(i * w.freq * 0.08 + t * w.speed * 3.0 + w.phase)       * H * w.amp * 0.50 +
+				Math.sin(i * w.freq * 0.15 + t * w.speed * 1.7 + w.phase * 1.3) * H * w.amp * 0.30 +
+				Math.sin(i * w.freq * 0.04 + t * w.speed * 2.3)                  * H * w.amp * 0.20;
+			const y = H * w.yRel + noise;
+			(i === 0) ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+		}
+		ctx.lineTo(W, H);
+		ctx.lineTo(0, H);
+		ctx.closePath();
+		ctx.fillStyle = grad;
+		ctx.fill();
+	}
+
+	function frame() {
+		tick++;
+		ctx.clearRect(0, 0, W, H);
+
+		/* Ciemne granatowe tło */
+		const bg = ctx.createLinearGradient(0, 0, 0, H);
+		bg.addColorStop(0, '#040d1a');
+		bg.addColorStop(1, '#071424');
+		ctx.fillStyle = bg;
+		ctx.fillRect(0, 0, W, H);
+
+		/* Fale zorzy — tryb screen daje efekt świetlny */
+		ctx.globalCompositeOperation = 'screen';
+		waves.forEach(w => drawWave(w, tick));
+		ctx.globalCompositeOperation = 'source-over';
+
+		requestAnimationFrame(frame);
+	}
+	frame();
+})();
+
+/* ============================================================
+   ORYGINALNE SKRYPTY PANELU (bez zmian)
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
+	const togglePassword = document.getElementById('togglePassword');
+	const password       = document.getElementById('password');
+	const form           = document.querySelector('form');
+	const submitBtn      = document.getElementById('submitBtn');
+
+	if (togglePassword && password) {
+		togglePassword.addEventListener('click', function () {
+			const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+			password.setAttribute('type', type);
+			const icon = this.querySelector('i');
+			if (type === 'text') {
+				icon.classList.remove('bi-eye');
+				icon.classList.add('bi-eye-slash');
+			} else {
+				icon.classList.remove('bi-eye-slash');
+				icon.classList.add('bi-eye');
+			}
+		});
+	}
+
+	if (form && submitBtn) {
+		form.addEventListener('submit', function () {
+			submitBtn.disabled = true;
+			submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Zaloguj...';
+		});
+	}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,787 @@
+{% extends "main.tpl" %}
+
+{% block css %}
+	{{ parent() }}
+	<style>
+		/* CKEditor 5 modern styling for settings */
+		.ck-editor__editable_inline {
+			min-height: 180px;
+			border-radius: 0 0 0.75rem 0.75rem !important;
+			border: 1px solid #e5e7eb !important;
+			border-top: none !important;
+			background-color: #fff !important;
+		}
+		.ck-toolbar {
+			border-radius: 0.75rem 0.75rem 0 0 !important;
+			background: #f9fafb !important;
+			border-color: #e5e7eb !important;
+		}
+		.ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
+			border-color: #e5e7eb !important;
+		}
+		.ck.ck-editor__main>.ck-editor__editable.ck-focused {
+			border-color: #2563eb !important;
+			box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+		}
+		.settings-card {
+			border: none;
+			border-radius: 1rem;
+			box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+			margin-bottom: 2rem;
+			overflow: hidden;
+		}
+		.settings-card .card-header {
+			background-color: #f8f9fa;
+			border-bottom: 1px solid #e9ecef;
+			font-weight: 600;
+			padding: 1rem 1.5rem;
+		}
+		.settings-card .card-body {
+			padding: 2rem;
+		}
+		.avatar-wrapper {
+			position: relative;
+			display: inline-block;
+		}
+		.avatar-wrapper img {
+			width: 150px;
+			height: 150px;
+			object-fit: cover;
+			border-radius: 50%;
+			border: 4px solid #fff;
+			box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+		}
+	</style>
+{% endblock %}
+
+{% block javascript %}
+	{{ parent() }}
+	<script src="https://cdn.ckeditor.com/ckeditor5/35.4.0/classic/ckeditor.js"></script>
+	<script src="https://cdn.ckeditor.com/ckeditor5/35.4.0/classic/translations/pl.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function(){
+			if (typeof ClassicEditor !== 'undefined' && document.querySelector('#description')) {
+				ClassicEditor
+					.create(document.querySelector('#description'), {
+						language: 'pl'
+					})
+					.then(editor => {
+						const form = document.querySelector('#description').closest('form');
+						if (form) {
+							form.addEventListener('submit', function() {
+								document.querySelector('#description').value = editor.getData();
+							});
+						}
+					})
+					.catch(error => {
+						console.error(error);
+					});
+			}
+
+			// Auto scroll to ad order form if order_ad parameter is present
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.has('order_ad') || urlParams.has('slot')) {
+				const orderSection = document.getElementById('order_ad_section');
+				if (orderSection) {
+					setTimeout(() => {
+						orderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}, 200);
+				}
+			}
+
+			// Ad Location Targeting Selectors logic
+			const locationTypeSelect = document.getElementById('ad_location_type');
+			const locationSelectors = document.getElementById('ad_location_selectors');
+			const cityRow = document.getElementById('ad_city_row');
+			const stateAdSelect = document.getElementById('ad_state_id');
+
+			function updateAdLocationFields() {
+				if (!locationTypeSelect) return;
+				const type = locationTypeSelect.value;
+				if (type === 'all') {
+					if (locationSelectors) locationSelectors.style.display = 'none';
+					if (cityRow) cityRow.style.display = 'none';
+					if (stateAdSelect) stateAdSelect.required = false;
+				} else if (type === 'state') {
+					if (locationSelectors) locationSelectors.style.display = '';
+					if (cityRow) cityRow.style.display = 'none';
+					if (stateAdSelect) stateAdSelect.required = true;
+				} else if (type === 'city') {
+					if (locationSelectors) locationSelectors.style.display = '';
+					if (cityRow) cityRow.style.display = '';
+					if (stateAdSelect) stateAdSelect.required = true;
+				}
+			}
+
+			if (locationTypeSelect) {
+				locationTypeSelect.addEventListener('change', updateAdLocationFields);
+				updateAdLocationFields();
+			}
+
+			if (stateAdSelect) {
+				stateAdSelect.addEventListener('change', function() {
+					const val = this.value;
+					document.querySelectorAll('.substates_ad').forEach(sub => {
+						sub.style.display = 'none';
+						sub.querySelectorAll('select').forEach(sel => sel.disabled = true);
+					});
+					const targetSub = document.querySelector('.substate_ad_' + val);
+					if (targetSub) {
+						targetSub.style.display = '';
+						targetSub.querySelectorAll('select').forEach(sel => sel.disabled = false);
+					}
+				});
+
+				if (stateAdSelect.value) {
+					const val = stateAdSelect.value;
+					const targetSub = document.querySelector('.substate_ad_' + val);
+					if (targetSub) {
+						targetSub.style.display = '';
+						targetSub.querySelectorAll('select').forEach(sel => sel.disabled = false);
+					}
+				}
+			}
+		});
+
+		// Password visibility toggle
+		document.querySelectorAll('.password-toggle-btn').forEach(function(btn) {
+			btn.addEventListener('click', function() {
+				var targetId = this.getAttribute('data-target');
+				var input = document.getElementById(targetId);
+				var icon = this.querySelector('i');
+				if (input.type === 'password') {
+					input.type = 'text';
+					icon.classList.remove('bi-eye');
+					icon.classList.add('bi-eye-slash');
+				} else {
+					input.type = 'password';
+					icon.classList.remove('bi-eye-slash');
+					icon.classList.add('bi-eye');
+				}
+			});
+		});
+	</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page_box background_grey py-5">
+	<div class="container">
+
+		<div class="text-center mb-5">
+			<h2 class="fw-bold mb-2" style="margin-top: 80px;"><i class="bi bi-gear me-2 text-primary"></i>{{ 'Settings'|lang }}</h2>
+			<p class="text-muted lead">{{ 'Here you can edit your account data'|lang }}</p>
+		</div>
+
+		{% include 'alert.tpl' %}
+
+		<div class="row">
+			<div class="col-lg-4 mb-4 mb-lg-0">
+				<!-- Statistics Sidebar -->
+				<div class="settings-card card">
+					<div class="card-header d-flex align-items-center">
+						<i class="bi bi-bar-chart-fill me-2 text-primary"></i> {{ 'Statistics'|lang }}
+					</div>
+					<div class="card-body p-4">
+						<div class="text-center mb-4">
+							<div class="avatar-wrapper mb-3">
+								<img src="{% if user.avatar %}upload/avatars/{{ user.avatar }}{% else %}{{ settings.base_url }}/views/{{ settings.template }}/images/no_image.png{% endif %}" alt="{{ 'Avatar'|lang }}" loading="lazy">
+							</div>
+							<h4 class="mb-0">{{ user.username }}</h4>
+							<p class="text-muted">{{ user.email }}</p>
+						</div>
+
+						<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+							<span class="text-muted"><i class="bi bi-calendar3 me-2"></i>{{ 'Date of registration'|lang }}</span>
+							<span class="fw-semibold">{{ user.date|date("d-m-Y") }}</span>
+						</div>
+						<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+							<span class="text-muted"><i class="bi bi-card-list me-2"></i>{{ 'Number of offers'|lang }}</span>
+							<span class="badge bg-primary rounded-pill">{{ user.number_offers }}</span>
+						</div>
+						<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+							<span class="text-muted"><i class="bi bi-box-arrow-in-right me-2"></i>{{ 'Number of logins'|lang }}</span>
+							<span class="fw-semibold">{{ user.number_login }}</span>
+						</div>
+						{% if user.last_login %}
+						<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+							<span class="text-muted"><i class="bi bi-clock-history me-2"></i>{{ 'Last login'|lang }}</span>
+							<span class="fw-semibold">{{ user.last_login|date("d-m-Y H:i") }}</span>
+						</div>
+						{% endif %}
+						{% if user.last_reset_password %}
+						<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+							<span class="text-muted"><i class="bi bi-key me-2"></i>{{ 'Last reset password'|lang }}</span>
+							<span class="fw-semibold">{{ user.last_reset_password|date("d-m-Y H:i") }}</span>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+
+			<div class="col-lg-8">
+
+				<!-- Avatar Card -->
+				<div class="settings-card card">
+					<div class="card-header d-flex align-items-center">
+						<i class="bi bi-person-bounding-box me-2 text-primary"></i> {{ 'Avatar'|lang }}
+					</div>
+					<div class="card-body">
+						<form class="form-horizontal" method="post" enctype="multipart/form-data">
+							<input type="hidden" name="action" value="save_avatar">
+							<input type="hidden" name="token" value="{{ generateToken('save_avatar') }}">
+
+							<div class="row align-items-center">
+								<div class="col-md-8 mb-3 mb-md-0">
+									<input class="form-control" type="file" name="avatar" accept="image/jpeg, image/png, image/webp, .jpg, .jpeg, .png, .webp" required>
+								</div>
+								<div class="col-md-4 text-md-end">
+									<button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload me-2"></i>{{ 'Save'|lang }}</button>
+									{% if user.avatar %}
+										<button type="button" data-bs-toggle="modal" data-bs-target="#remove_avatar" class="btn btn-outline-danger mt-2 mt-md-0 ms-md-2" title="{{ 'Remove avatar'|lang }}"><i class="bi bi-trash"></i></button>
+									{% endif %}
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+			<!-- Username Change Card -->
+			<div class="settings-card card">
+				<div class="card-header d-flex align-items-center">
+					<i class="bi bi-pencil-square me-2 text-primary"></i> Zmiana nazwy użytkownika
+				</div>
+				<div class="card-body">
+					<div class="alert alert-warning d-flex align-items-start gap-2 mb-4" style="border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.3); background: rgba(255, 193, 7, 0.08);">
+						<i class="bi bi-exclamation-triangle-fill text-warning fs-5 mt-1"></i>
+						<div>
+							<h6 class="alert-heading fw-bold mb-1" style="color: #664d03;">Ważna informacja</h6>
+							<span style="color: #664d03;">
+								Zmiana nazwy użytkownika spowoduje również zmianę danych logowania. Po zmianie będziesz musiał logować się przy użyciu nowej nazwy użytkownika (lub adresu e-mail).
+								Twoja obecna nazwa użytkownika to: <strong class="text-dark">{{ user.username }}</strong>
+							</span>
+						</div>
+					</div>
+					<form class="form-horizontal" method="post">
+						<input type="hidden" name="action" value="change_username">
+						<input type="hidden" name="token" value="{{ generateToken('change_username') }}">
+
+						<div class="row mb-3">
+							<label for="new_username" class="col-md-4 col-form-label text-md-end">Nowa nazwa użytkownika</label>
+							<div class="col-md-6">
+								<div class="input-group">
+									<span class="input-group-text"><i class="bi bi-person"></i></span>
+									<input type="text" class="form-control" name="new_username" id="new_username" placeholder="Wpisz nową nazwę użytkownika" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" required value="{{ input.new_username }}" title="Użyj 3-30 znaków alfanumerycznych lub podkreślników">
+								</div>
+								<div class="form-text text-muted small">Dozwolone znaki: litery, cyfry, podkreślnik. Min 3, max 30 znaków.</div>
+							</div>
+						</div>
+
+						<div class="row mb-4">
+							<label for="captcha_username" class="col-md-4 col-form-label text-md-end">Kod zabezpieczający</label>
+							<div class="col-md-6">
+								<div class="input-group">
+									<span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+									<input type="text" class="form-control" name="captcha" id="captcha_username" placeholder="Wpisz kod z obrazka" required autocomplete="off">
+								</div>
+								<div class="mt-2">
+									<img src="{{ path('captcha') }}?t={{ 'now'|date('U') }}" alt="captcha" class="rounded" style="height: 40px; cursor: pointer;" onclick="this.src='{{ path('captcha') }}?t='+Date.now()" title="Kliknij, aby odświeżyć">
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-md-6 offset-md-4">
+								<button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-2"></i>Zmień nazwę użytkownika</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+				<!-- Password Change Card -->
+				<div class="settings-card card">
+					<div class="card-header d-flex align-items-center">
+						<i class="bi bi-shield-lock me-2 text-primary"></i> Zmiana hasła
+					</div>
+					<div class="card-body">
+						<form class="form-horizontal" method="post">
+							<input type="hidden" name="action" value="change_password">
+							<input type="hidden" name="token" value="{{ generateToken('change_password') }}">
+
+							<div class="row mb-3">
+								<label for="old_password" class="col-md-4 col-form-label text-md-end">Obecne hasło</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-key"></i></span>
+										<input type="password" class="form-control password-toggle-field" name="old_password" placeholder="••••••••" id="old_password" maxlength="32" required title="Obecne hasło">
+										<button class="btn btn-outline-secondary password-toggle-btn" type="button" data-target="old_password" title="Pokaż/ukryj hasło"><i class="bi bi-eye"></i></button>
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="new_password" class="col-md-4 col-form-label text-md-end">Nowe hasło</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-lock"></i></span>
+										<input type="password" class="form-control password-toggle-field" name="new_password" placeholder="••••••••" id="new_password" maxlength="32" required title="Nowe hasło">
+										<button class="btn btn-outline-secondary password-toggle-btn" type="button" data-target="new_password" title="Pokaż/ukryj hasło"><i class="bi bi-eye"></i></button>
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-4">
+								<label for="repeat_new_password" class="col-md-4 col-form-label text-md-end">Powtórz nowe hasło</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+										<input type="password" class="form-control password-toggle-field" name="repeat_new_password" placeholder="••••••••" id="repeat_new_password" maxlength="32" required title="Powtórz nowe hasło">
+										<button class="btn btn-outline-secondary password-toggle-btn" type="button" data-target="repeat_new_password" title="Pokaż/ukryj hasło"><i class="bi bi-eye"></i></button>
+									</div>
+								</div>
+							</div>
+
+							<div class="row">
+								<div class="col-md-6 offset-md-4">
+									<button type="submit" class="btn btn-primary"><i class="bi bi-shield-check me-2"></i>Zmień hasło</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Description Card -->
+				<div class="settings-card card">
+					<div class="card-header d-flex align-items-center">
+						<i class="bi bi-card-text me-2 text-primary"></i> {{ 'Description'|lang }}
+					</div>
+					<div class="card-body">
+						<p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i> {{ 'The description will be displayed on the profile page'|lang }}</p>
+						<form class="form-horizontal" method="post">
+							<input type="hidden" name="action" value="save_description">
+							<input type="hidden" name="token" value="{{ generateToken('save_description') }}">
+							<div class="mb-4">
+								<textarea id="description" name="description" class="form-control">{{ user.description }}</textarea>
+							</div>
+							<button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>{{ 'Save'|lang }}</button>
+						</form>
+					</div>
+				</div>
+
+				<!-- Global User Data Form -->
+				<form method="post" id="settings_form">
+					<input type="hidden" name="action" value="save_user_data">
+					<input type="hidden" name="token" value="{{ generateToken('save_user_data') }}">
+
+					<!-- Personal Data Card -->
+					<div class="settings-card card mb-4">
+						<div class="card-header d-flex align-items-center">
+							<i class="bi bi-person-vcard me-2 text-primary"></i> {{ 'Personal data'|lang }}
+						</div>
+						<div class="card-body">
+							<p class="text-muted small mb-4"><i class="bi bi-info-circle me-1"></i> {{ 'The following data will automatically supplement the offer posting form'|lang }}</p>
+
+							<div class="row mb-3">
+								<label for="phone" class="col-md-3 col-form-label text-md-end">{{ 'Phone'|lang }}</label>
+								<div class="col-md-7">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-telephone"></i></span>
+										<input type="text" class="form-control" name="phone" placeholder="{{ '+12 345 678 901'|lang }}" id="phone" maxlength="32" value="{{ user.phone }}" title="{{ 'Enter the phone number'|lang }}">
+										{% if settings.enable_verification_badges %}
+											{% if user.verified_phone %}
+												<span class="input-group-text bg-success-subtle text-success border-success-subtle" title="Zweryfikowany"><i class="bi bi-patch-check-fill"></i></span>
+											{% else %}
+												<span class="input-group-text bg-warning-subtle text-warning border-warning-subtle" title="Niezweryfikowany"><i class="bi bi-exclamation-triangle-fill"></i></span>
+											{% endif %}
+										{% endif %}
+									</div>
+
+									{% if settings.enable_verification_badges and not user.verified_phone and user.phone %}
+										<div class="alert alert-info mt-2 mb-0 p-3 small" style="border-radius: 12px; border: 1px solid rgba(13, 202, 240, 0.2); background: rgba(13, 202, 240, 0.05);">
+											<div class="d-flex align-items-start gap-2">
+												<i class="bi bi-info-circle-fill text-info fs-5 mt-0.5"></i>
+												<div>
+													<h6 class="alert-heading fw-bold mb-1" style="color: #055160;">Weryfikacja numeru telefonu</h6>
+													Aby uzyskać odznakę <strong>Zweryfikowany telefon</strong>, wykonaj szybki przelew na telefon BLIK w kwocie <strong>1 PLN</strong> na numer administratora: <strong>{{ settings.admin_phone }}</strong>.<br>
+													W tytule przelewu podaj dokładnie: <strong class="user-select-all text-dark font-monospace">Weryfikacja telefonu, ID: {{ user.id }}</strong>.<br>
+													Po zaksięgowaniu i weryfikacji danych, administrator zatwierdzi Twój numer telefonu.
+												</div>
+											</div>
+										</div>
+									{% endif %}
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="add_address" class="col-md-3 col-form-label text-md-end">{{ 'Address'|lang }}</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+										<input type="text" class="form-control getCoordinates" name="address" placeholder="{{ '1600 Pennsylvania Avenue NW, Washington, D.C. 20500'|lang }}" id="add_address" maxlength="512" value="{{ user.address }}" title="{{ 'Enter the address'|lang }}">
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-4">
+								{% if states %}
+									<label for="state_id" class="col-md-3 col-form-label text-md-end">{{ 'State'|lang }}</label>
+									<div class="col-md-4 mb-2 mb-md-0">
+										<select class="form-select select_state" name="state_id" id="state_id" title="{{ 'Select the appropriate state'|lang }}">
+											<option value="">{{ '-- select --'|lang }}</option>
+											{% for key,state in states %}
+												<option value="{{ key }}" {% if user.state_id==key %}selected{% endif %}>{{ state.name }}</option>
+											{% endfor %}
+										</select>
+									</div>
+									{% for key,state in states %}
+										{% if state.states %}
+											<div class="col-md-5 substates substate_{{ state.id }}" {% if user.state_id!=key %}style="display:none"{% endif %}>
+												<select class="form-select" name="state2_id" title="{{ 'Select the appropriate state'|lang }}" {% if user.state_id!=key %}disabled{% endif %}>
+													<option value="">{{ '-- select --'|lang }}</option>
+													{% for key2,state2 in state.states %}
+														<option value="{{ state2.id }}" {% if user.state2_id==key2 %}selected{% endif %}>{{ state2.name }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										{% endif %}
+									{% endfor %}
+								{% endif %}
+							</div>
+						</div>
+					</div>
+
+					<!-- Privacy Settings Card -->
+					<div class="settings-card card mb-4">
+						<div class="card-header d-flex align-items-center">
+							<i class="bi bi-shield-check me-2 text-primary"></i> Ustawienia Prywatności
+						</div>
+						<div class="card-body">
+							<div class="form-check form-switch mb-3">
+								<input class="form-check-input" type="checkbox" role="switch" id="hide_phone" name="hide_phone" value="1" {% if user.hide_phone %}checked{% endif %}>
+								<label class="form-check-label" for="hide_phone">Ukryj mój numer telefonu w profilu publicznym</label>
+							</div>
+							<div class="form-check form-switch">
+								<input class="form-check-input" type="checkbox" role="switch" id="hide_email" name="hide_email" value="1" {% if user.hide_email %}checked{% endif %}>
+								<label class="form-check-label" for="hide_email">Ukryj mój adres e-mail w profilu publicznym</label>
+							</div>
+						</div>
+					</div>
+
+					<!-- Social Media Card -->
+					<div class="settings-card card mb-4">
+						<div class="card-header d-flex align-items-center">
+							<i class="bi bi-globe me-2 text-primary"></i> Media Społecznościowe
+						</div>
+						<div class="card-body">
+							<div class="row mb-3">
+								<label for="url_website" class="col-md-3 col-form-label text-md-end">Strona WWW</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+										<input type="url" class="form-control" name="url_website" id="url_website" placeholder="https://..." maxlength="255" value="{{ user.url_website }}">
+									</div>
+								</div>
+							</div>
+							<div class="row mb-3">
+								<label for="url_facebook" class="col-md-3 col-form-label text-md-end">Facebook</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-facebook"></i></span>
+										<input type="url" class="form-control" name="url_facebook" id="url_facebook" placeholder="https://facebook.com/..." maxlength="255" value="{{ user.url_facebook }}">
+									</div>
+								</div>
+							</div>
+							<div class="row mb-3">
+								<label for="url_linkedin" class="col-md-3 col-form-label text-md-end">LinkedIn</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-linkedin"></i></span>
+										<input type="url" class="form-control" name="url_linkedin" id="url_linkedin" placeholder="https://linkedin.com/in/..." maxlength="255" value="{{ user.url_linkedin }}">
+									</div>
+								</div>
+							</div>
+							<div class="row mb-3">
+								<label for="url_youtube" class="col-md-3 col-form-label text-md-end">YouTube</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-youtube"></i></span>
+										<input type="url" class="form-control" name="url_youtube" id="url_youtube" placeholder="https://youtube.com/@..." maxlength="255" value="{{ user.url_youtube }}">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Company Data Card -->
+					<div class="settings-card card mb-4">
+						<div class="card-header d-flex align-items-center">
+							<i class="bi bi-building me-2 text-primary"></i> Dane Firmowe (B2B)
+						</div>
+						<div class="card-body">
+							<div class="row mb-3">
+								<label for="company_name" class="col-md-3 col-form-label text-md-end">Nazwa firmy</label>
+								<div class="col-md-9">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+										<input type="text" class="form-control" name="company_name" id="company_name" placeholder="Jan Kowalski Sp. z o.o." maxlength="255" value="{{ user.company_name }}">
+										{% if settings.enable_verification_badges and user.company_name %}
+											{% if user.verified_company %}
+												<span class="input-group-text bg-success-subtle text-success border-success-subtle" title="Zweryfikowany"><i class="bi bi-patch-check-fill"></i></span>
+											{% else %}
+												<span class="input-group-text bg-warning-subtle text-warning border-warning-subtle" title="Niezweryfikowany"><i class="bi bi-exclamation-triangle-fill"></i></span>
+											{% endif %}
+										{% endif %}
+									</div>
+								</div>
+							</div>
+							<div class="row mb-3">
+								<label for="company_nip" class="col-md-3 col-form-label text-md-end">NIP</label>
+								<div class="col-md-5">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-hash"></i></span>
+										<input type="text" class="form-control" name="company_nip" id="company_nip" placeholder="1234567890" maxlength="32" value="{{ user.company_nip }}">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Notifications Card -->
+					<div class="settings-card card mb-4">
+						<div class="card-header d-flex align-items-center">
+							<i class="bi bi-bell me-2 text-primary"></i> Powiadomienia
+						</div>
+						<div class="card-body">
+							<div class="form-check mb-3">
+								<input class="form-check-input" type="checkbox" id="notify_newsletter" name="notify_newsletter" value="1" {% if user.notify_newsletter or user.notify_newsletter is null %}checked{% endif %}>
+								<label class="form-check-label" for="notify_newsletter">Chcę otrzymywać newsletter z nowościami</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" id="notify_messages" name="notify_messages" value="1" {% if user.notify_messages or user.notify_messages is null %}checked{% endif %}>
+								<label class="form-check-label" for="notify_messages">Powiadom mnie, gdy ktoś odpowie na moje ogłoszenie</label>
+							</div>
+						</div>
+					</div>
+
+					<!-- Save All Button -->
+					<div class="text-end mb-5">
+						<button type="submit" class="btn btn-primary btn-lg shadow-sm"><i class="bi bi-save me-2"></i>Zapisz ustawienia profilu</button>
+					</div>
+				</form>
+
+
+
+				<!-- Ad Order Card -->
+				<div class="settings-card card shadow-sm mb-4" id="order_ad_section">
+					<div class="card-header d-flex align-items-center bg-light">
+						<i class="bi bi-megaphone-fill me-2 text-primary"></i> {{ 'Order advertisement'|lang }}
+					</div>
+					<div class="card-body">
+						<p class="text-muted small mb-4">
+							<i class="bi bi-info-circle me-1"></i> {{ 'Fill out the form below to order a banner. The administrator will receive your request along with the uploaded banner image and verify it.'|lang }}
+						</p>
+
+						<form class="form-horizontal" method="post" enctype="multipart/form-data" action="{{ path('settings') }}#order_ad_section">
+							<input type="hidden" name="action" value="order_ad">
+							<input type="hidden" name="token" value="{{ generateToken('order_ad') }}">
+
+							<div class="row mb-3">
+								<label for="ad_slot" class="col-md-4 col-form-label text-md-end">{{ 'Banner Position'|lang }}</label>
+								<div class="col-md-6">
+									<select class="form-select" name="slot" id="ad_slot" required>
+										<option value="">-- {{ 'select'|lang }} --</option>
+										<option value="ads_1" {% if get.slot == 'ads_1' or get.slot == 'top_leaderboard' %}selected{% endif %}>[A] {{ 'Top Banner'|lang }} (728x90) — Górny pod nagłówkiem</option>
+										<option value="ads_2" {% if get.slot == 'ads_2' or get.slot == 'mid_leaderboard' %}selected{% endif %}>[B] {{ 'Index Middle Banner'|lang }} (728x90) — Środkowy na stronie głównej</option>
+										<option value="ads_3" {% if get.slot == 'ads_3' or get.slot == 'bottom_leaderboard' %}selected{% endif %}>[C] {{ 'Index Bottom Banner'|lang }} (728x90) — Dolny na stronie głównej</option>
+										<option value="ads_4" {% if get.slot == 'ads_4' or get.slot == 'footer_leaderboard' %}selected{% endif %}>[D] {{ 'Footer Banner'|lang }} (728x90) — W stopce strony</option>
+										<option value="ads_side_1" {% if get.slot == 'ads_side_1' or get.slot == 'sidebar_side_1' %}selected{% endif %}>[E] {{ 'Sidebar Top Banner'|lang }} (300x250) — Panel boczny górny</option>
+										<option value="ads_side_2" {% if get.slot == 'ads_side_2' or get.slot == 'sidebar_side_2' %}selected{% endif %}>[F] {{ 'Sidebar Bottom Banner'|lang }} (160x600) — Panel boczny dolny</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="ad_url" class="col-md-4 col-form-label text-md-end">{{ 'Target URL'|lang }}</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-link"></i></span>
+										<input type="url" class="form-control" name="ad_url" id="ad_url" placeholder="https://..." required value="{{ input.ad_url }}">
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="ad_location_type" class="col-md-4 col-form-label text-md-end">{{ 'Target Location'|lang }}</label>
+								<div class="col-md-6">
+									<select class="form-select" name="ad_location_type" id="ad_location_type" required>
+										<option value="all" {% if input.ad_location_type == 'all' or input.ad_location_type is null %}selected{% endif %}>{{ 'Cała Polska'|lang }}</option>
+										<option value="state" {% if input.ad_location_type == 'state' %}selected{% endif %}>{{ 'Wybrane Województwo'|lang }}</option>
+										<option value="city" {% if input.ad_location_type == 'city' %}selected{% endif %}>{{ 'Wybrane Miasto'|lang }}</option>
+									</select>
+								</div>
+							</div>
+
+							<div id="ad_location_selectors" style="display: none;">
+								<div class="row mb-3">
+									<label for="ad_state_id" class="col-md-4 col-form-label text-md-end">{{ 'State'|lang }}</label>
+									<div class="col-md-6">
+										<select class="form-select select_state_ad" name="ad_state_id" id="ad_state_id">
+											<option value="">{{ '-- select --'|lang }}</option>
+											{% for key,state in states %}
+												<option value="{{ key }}" {% if input.ad_state_id==key %}selected{% endif %}>{{ state.name }}</option>
+											{% endfor %}
+										</select>
+									</div>
+								</div>
+
+								<div class="row mb-3" id="ad_city_row" style="display: none;">
+									<label class="col-md-4 col-form-label text-md-end">{{ 'City'|lang }}</label>
+									<div class="col-md-6">
+										{% for key,state in states %}
+											{% if state.states %}
+												<div class="substates_ad substate_ad_{{ state.id }}" style="display:none">
+													<select class="form-select" name="ad_state2_id" disabled>
+														<option value="">{{ '-- select --'|lang }}</option>
+														{% for key2,state2 in state.states %}
+															<option value="{{ state2.id }}" {% if input.ad_state2_id==key2 %}selected{% endif %}>{{ state2.name }}</option>
+														{% endfor %}
+													</select>
+												</div>
+											{% endif %}
+										{% endfor %}
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="ad_start" class="col-md-4 col-form-label text-md-end">{{ 'Start Date'|lang }}</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+										<input type="date" class="form-control" name="ad_start" id="ad_start" required value="{{ input.ad_start|default('now'|date('Y-m-d')) }}">
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<label for="ad_end" class="col-md-4 col-form-label text-md-end">{{ 'End Date'|lang }}</label>
+								<div class="col-md-6">
+									<div class="input-group">
+										<span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+										<input type="date" class="form-control" name="ad_end" id="ad_end" required value="{{ input.ad_end }}">
+									</div>
+								</div>
+							</div>
+
+							<div class="row mb-4">
+								<label for="ad_file" class="col-md-4 col-form-label text-md-end">{{ 'Upload Banner'|lang }}</label>
+								<div class="col-md-6">
+									<input type="file" class="form-control" name="attachment" id="ad_file" accept="image/jpeg, image/png, image/webp" required>
+									<div class="form-text text-muted small">{{ 'Allowed file types: JPG, PNG, WEBP. Max size: 5MB.'|lang }}</div>
+								</div>
+							</div>
+
+							<div class="row">
+								<div class="col-md-6 offset-md-4">
+									<button type="submit" class="btn btn-primary"><i class="bi bi-send me-2"></i>{{ 'Submit Order'|lang }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+{% if user.avatar %}
+	<div class="modal fade" id="remove_avatar" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header border-0">
+					<h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle text-danger me-2"></i>{{ 'Remove avatar'|lang }}</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<form method="post">
+					<input type="hidden" name="action" value="remove_avatar">
+					<input type="hidden" name="token" value="{{ generateToken('remove_avatar') }}">
+					<div class="modal-body text-center py-4">
+						<p class="mb-0 fs-5">{{ 'Are you sure you want to delete the avatar?'|lang }}</p>
+					</div>
+					<div class="modal-footer border-0 justify-content-center pb-4">
+						<button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'Cancel'|lang }}</button>
+						<button type="submit" class="btn btn-danger"><i class="bi bi-trash me-2"></i>{{ 'Remove avatar'|lang }}</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+{% endif %}
+
+	<!-- Warning modal for verification reset -->
+	<div class="modal fade" id="verification_reset_warning" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header border-0">
+					<h5 class="modal-title fw-bold text-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Utrata odznaki weryfikacyjnej</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body py-3">
+					<p class="mb-0 fs-6">
+						Uwaga! Wykryto zmianę numeru telefonu lub danych firmy (Nazwa/NIP). Zapisanie tych zmian spowoduje automatyczne <strong>wycofanie odznak weryfikacji</strong> (weryfikacja telefonu i/lub weryfikacja firmy). Aby odzyskać odznaki, konieczne będzie ponowne zgłoszenie danych administratorowi.
+					</p>
+					<p class="mt-2 mb-0 fw-semibold text-danger">Czy na pewno chcesz zapisać te zmiany?</p>
+				</div>
+				<div class="modal-footer border-0 justify-content-center pb-4">
+					<button type="button" class="btn btn-light" data-bs-dismiss="modal">Anuluj</button>
+					<button type="button" id="confirm_save_settings" class="btn btn-warning"><i class="bi bi-save me-2"></i>Zapisz i utrać weryfikację</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		var form = document.getElementById('settings_form');
+		if (!form) return;
+
+		var initialPhone = "{{ user.phone|escape('js') }}";
+		var initialCompanyName = "{{ user.company_name|escape('js') }}";
+		var initialCompanyNip = "{{ user.company_nip|escape('js') }}";
+
+		var verifiedPhone = {% if user.verified_phone %}true{% else %}false{% endif %};
+		var verifiedCompany = {% if user.verified_company %}true{% else %}false{% endif %};
+		var enableVerificationBadges = {% if settings.enable_verification_badges %}true{% else %}false{% endif %};
+
+		var forceSubmit = false;
+
+		form.addEventListener('submit', function(e) {
+			if (forceSubmit) return;
+
+			var currentPhone = document.getElementById('phone').value.trim();
+			var currentCompanyName = document.getElementById('company_name').value.trim();
+			var currentCompanyNip = document.getElementById('company_nip').value.trim();
+
+			var phoneChanged = currentPhone !== initialPhone;
+			var companyChanged = currentCompanyName !== initialCompanyName || currentCompanyNip !== initialCompanyNip;
+
+			var phoneResetWillHappen = enableVerificationBadges && verifiedPhone && phoneChanged;
+			var companyResetWillHappen = enableVerificationBadges && verifiedCompany && companyChanged;
+
+			if (phoneResetWillHappen || companyResetWillHappen) {
+				e.preventDefault();
+				var warningModal = new bootstrap.Modal(document.getElementById('verification_reset_warning'));
+				warningModal.show();
+
+				document.getElementById('confirm_save_settings').onclick = function() {
+					forceSubmit = true;
+					form.submit();
+				};
+			}
+		});
+	});
+	</script>
+
+{% endblock %}

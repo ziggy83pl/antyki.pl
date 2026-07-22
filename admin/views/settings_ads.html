@@ -1,0 +1,323 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Ustawienia / Reklamy</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}	
+<div class="page-header mb-4">
+	<h1><span class="bi bi-megaphone"></span> {{ 'Ads settings'|lang }}</h1>
+	<p class="text-muted">Zarządzaj reklamami w postaci obrazków. Dodaj odnośnik, wybierz daty wyświetlania i włącz/wyłącz reklamę.</p>
+</div>
+
+{% include 'alert.tpl' %}
+
+<form method="post" class="form" role="form" enctype="multipart/form-data">
+	<input type="hidden" name="action" value="save_settings_ads">
+	<input type="hidden" name="token" value="{{ generateToken('admin_save_settings_ads') }}">
+	
+	{% set main_ad_details = {
+		1: { 'letter': 'A', 'desc': 'Górny banner pod nagłówkiem' },
+		2: { 'letter': 'B', 'desc': 'Środkowy banner na stronie głównej' },
+		3: { 'letter': 'C', 'desc': 'Dolny banner na stronie głównej' },
+		4: { 'letter': 'D', 'desc': 'Banner w stopce strony' }
+	} %}
+	
+	<div class="row">
+		{% for i in 1..4 %}
+		<div class="col-md-6 mb-4">
+			<div class="card h-100 shadow-sm border-0">
+				<div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+					<div class="d-flex align-items-center gap-2 flex-wrap">
+						<h5 class="mb-0 d-flex align-items-center gap-2">
+							<span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; font-size: 0.85rem;">{{ main_ad_details[i].letter }}</span>
+							<span>Reklama główna {{ i }} <small class="text-muted fs-7 font-normal d-block" style="font-weight: normal; font-size: 0.75rem;">({{ main_ad_details[i].desc }})</small></span>
+						</h5>
+						{% set prefix = 'ads_' ~ i %}
+						{% set is_active = attribute(settings, prefix ~ '_active') %}
+						{% set image = attribute(settings, prefix ~ '_image') %}
+						{% set start = attribute(settings, prefix ~ '_start') %}
+						{% set end = attribute(settings, prefix ~ '_end') %}
+						{% set today = "now"|date("Y-m-d") %}
+						{% set is_date_valid = (start == '' or start <= today) and (end == '' or end >= today) %}
+						{% if is_active %}
+							{% if image and is_date_valid %}
+								<span class="badge bg-success rounded-pill px-2.5 py-1 text-white fs-7" style="font-size: 0.75rem;"><i class="bi bi-check-circle-fill me-1"></i> Wykupiona / Wynajęta</span>
+							{% else %}
+								<span class="badge bg-warning rounded-pill px-2.5 py-1 text-dark fs-7" style="font-size: 0.75rem;"><i class="bi bi-exclamation-circle-fill me-1"></i> Miejsce wolne (Placeholder)</span>
+							{% endif %}
+						{% else %}
+							<span class="badge bg-secondary rounded-pill px-2.5 py-1 text-white fs-7" style="font-size: 0.75rem;"><i class="bi bi-dash-circle-fill me-1"></i> Wyłączona (Czeka na włączenie)</span>
+						{% endif %}
+					</div>
+					<div class="form-check form-switch fs-5 mb-0">
+						<input class="form-check-input" type="checkbox" role="switch" name="ads_{{ i }}_active" id="ads_{{ i }}_active" value="1" {% if attribute(settings, 'ads_' ~ i ~ '_active') %}checked{% endif %}>
+						<label class="form-check-label visually-hidden" for="ads_{{ i }}_active">{{ 'Active'|lang }}</label>
+					</div>
+				</div>
+				<div class="card-body bg-light">
+					<div class="mb-3">
+						<label class="form-label text-muted small">Obecny obrazek:</label>
+						<div>
+						{% if attribute(settings, 'ads_' ~ i ~ '_image') %}
+							<img src="../upload/ads/{{ attribute(settings, 'ads_' ~ i ~ '_image') }}" alt="Ad {{ i }}" loading="lazy" class="img-fluid rounded mb-2" style="max-height: 100px;">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" name="ads_{{ i }}_delete_image" value="1" id="ads_{{ i }}_delete">
+								<label class="form-check-label text-danger" for="ads_{{ i }}_delete">Usuń obrazek</label>
+							</div>
+						{% else %}
+							<span class="text-muted">Brak obrazka</span>
+						{% endif %}
+						</div>
+					</div>
+					<div class="mb-3">
+						<label for="ads_{{ i }}_file" class="form-label text-muted small">Wgraj nowy obrazek (JPG, PNG, WEBP):</label>
+						<input type="file" name="ads_{{ i }}_file" id="ads_{{ i }}_file" class="form-control" accept="image/jpeg, image/png, image/webp">
+					</div>
+					<div class="mb-3">
+						<label for="ads_{{ i }}_url" class="form-label text-muted small">URL po kliknięciu:</label>
+						<input type="url" name="ads_{{ i }}_url" id="ads_{{ i }}_url" class="form-control" placeholder="https://..." value="{{ attribute(settings, 'ads_' ~ i ~ '_url') }}">
+					</div>
+					
+					<div class="mb-3">
+						<label for="ads_{{ i }}_location_type" class="form-label text-muted small">Targetowanie lokalizacji:</label>
+						<select class="form-select select_location_type_admin" name="ads_{{ i }}_location_type" id="ads_{{ i }}_location_type" data-prefix="ads_{{ i }}">
+							<option value="all" {% if attribute(settings, 'ads_' ~ i ~ '_location_type') == 'all' or attribute(settings, 'ads_' ~ i ~ '_location_type') is empty %}selected{% endif %}>Cała Polska</option>
+							<option value="state" {% if attribute(settings, 'ads_' ~ i ~ '_location_type') == 'state' %}selected{% endif %}>Wybrane województwo</option>
+							<option value="city" {% if attribute(settings, 'ads_' ~ i ~ '_location_type') == 'city' %}selected{% endif %}>Wybrane miasto</option>
+						</select>
+					</div>
+
+					<div class="row ads_{{ i }}_geo_group mb-3" style="display: none;">
+						<div class="col-6">
+							<label for="ads_{{ i }}_state_id" class="form-label text-muted small">Województwo:</label>
+							<select class="form-select select_state_ad_admin" name="ads_{{ i }}_state_id" id="ads_{{ i }}_state_id" data-prefix="ads_{{ i }}">
+								<option value="">-- wybierz --</option>
+								{% for key,state in states %}
+									<option value="{{ key }}" {% if attribute(settings, 'ads_' ~ i ~ '_state_id') == key %}selected{% endif %}>{{ state.name }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-6 ads_{{ i }}_city_col" style="display: none;">
+							<label class="form-label text-muted small">Miasto:</label>
+							{% for key,state in states %}
+								{% if state.states %}
+									<div class="substates_ad_admin substate_ad_admin_ads_{{ i }} substate_ad_admin_ads_{{ i }}_{{ state.id }}" style="display:none">
+										<select class="form-select" name="ads_{{ i }}_state2_id" disabled>
+											<option value="">-- wybierz --</option>
+											{% for key2,state2 in state.states %}
+												<option value="{{ state2.id }}" {% if attribute(settings, 'ads_' ~ i ~ '_state2_id') == state2.id %}selected{% endif %}>{{ state2.name }}</option>
+											{% endfor %}
+										</select>
+									</div>
+								{% endif %}
+							{% endfor %}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-6">
+							<label for="ads_{{ i }}_start" class="form-label text-muted small">Wyświetlaj od:</label>
+							<input type="date" name="ads_{{ i }}_start" id="ads_{{ i }}_start" class="form-control" value="{{ attribute(settings, 'ads_' ~ i ~ '_start') }}">
+						</div>
+						<div class="col-6">
+							<label for="ads_{{ i }}_end" class="form-label text-muted small">Wyświetlaj do:</label>
+							<input type="date" name="ads_{{ i }}_end" id="ads_{{ i }}_end" class="form-control" value="{{ attribute(settings, 'ads_' ~ i ~ '_end') }}">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+
+		{% set side_ad_details = {
+			1: { 'letter': 'E', 'desc': 'Panel boczny górny' },
+			2: { 'letter': 'F', 'desc': 'Panel boczny dolny' }
+		} %}
+
+		{% for i in 1..2 %}
+		<div class="col-md-6 mb-4">
+			<div class="card h-100 shadow-sm border-0">
+				<div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+					<div class="d-flex align-items-center gap-2 flex-wrap">
+						<h5 class="mb-0 d-flex align-items-center gap-2">
+							<span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; font-size: 0.85rem;">{{ side_ad_details[i].letter }}</span>
+							<span>Reklama boczna {{ i }} <small class="text-muted fs-7 font-normal d-block" style="font-weight: normal; font-size: 0.75rem;">({{ side_ad_details[i].desc }})</small></span>
+						</h5>
+						{% set prefix = 'ads_side_' ~ i %}
+						{% set is_active = attribute(settings, prefix ~ '_active') %}
+						{% set image = attribute(settings, prefix ~ '_image') %}
+						{% set start = attribute(settings, prefix ~ '_start') %}
+						{% set end = attribute(settings, prefix ~ '_end') %}
+						{% set today = "now"|date("Y-m-d") %}
+						{% set is_date_valid = (start == '' or start <= today) and (end == '' or end >= today) %}
+						{% if is_active %}
+							{% if image and is_date_valid %}
+								<span class="badge bg-success rounded-pill px-2.5 py-1 text-white fs-7" style="font-size: 0.75rem;"><i class="bi bi-check-circle-fill me-1"></i> Wykupiona / Wynajęta</span>
+							{% else %}
+								<span class="badge bg-warning rounded-pill px-2.5 py-1 text-dark fs-7" style="font-size: 0.75rem;"><i class="bi bi-exclamation-circle-fill me-1"></i> Miejsce wolne (Placeholder)</span>
+							{% endif %}
+						{% else %}
+							<span class="badge bg-secondary rounded-pill px-2.5 py-1 text-white fs-7" style="font-size: 0.75rem;"><i class="bi bi-dash-circle-fill me-1"></i> Wyłączona (Czeka na włączenie)</span>
+						{% endif %}
+					</div>
+					<div class="form-check form-switch fs-5 mb-0">
+						<input class="form-check-input" type="checkbox" role="switch" name="ads_side_{{ i }}_active" id="ads_side_{{ i }}_active" value="1" {% if attribute(settings, 'ads_side_' ~ i ~ '_active') %}checked{% endif %}>
+						<label class="form-check-label visually-hidden" for="ads_side_{{ i }}_active">{{ 'Active'|lang }}</label>
+					</div>
+				</div>
+				<div class="card-body bg-light">
+					<div class="mb-3">
+						<label class="form-label text-muted small">Obecny obrazek:</label>
+						<div>
+						{% if attribute(settings, 'ads_side_' ~ i ~ '_image') %}
+							<img src="../upload/ads/{{ attribute(settings, 'ads_side_' ~ i ~ '_image') }}" alt="Ad side {{ i }}" loading="lazy" class="img-fluid rounded mb-2" style="max-height: 100px;">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" name="ads_side_{{ i }}_delete_image" value="1" id="ads_side_{{ i }}_delete">
+								<label class="form-check-label text-danger" for="ads_side_{{ i }}_delete">Usuń obrazek</label>
+							</div>
+						{% else %}
+							<span class="text-muted">Brak obrazka</span>
+						{% endif %}
+						</div>
+					</div>
+					<div class="mb-3">
+						<label for="ads_side_{{ i }}_file" class="form-label text-muted small">Wgraj nowy obrazek (JPG, PNG, WEBP):</label>
+						<input type="file" name="ads_side_{{ i }}_file" id="ads_side_{{ i }}_file" class="form-control" accept="image/jpeg, image/png, image/webp">
+					</div>
+					<div class="mb-3">
+						<label for="ads_side_{{ i }}_url" class="form-label text-muted small">URL po kliknięciu:</label>
+						<input type="url" name="ads_side_{{ i }}_url" id="ads_side_{{ i }}_url" class="form-control" placeholder="https://..." value="{{ attribute(settings, 'ads_side_' ~ i ~ '_url') }}">
+					</div>
+					
+					<div class="mb-3">
+						<label for="ads_side_{{ i }}_location_type" class="form-label text-muted small">Targetowanie lokalizacji:</label>
+						<select class="form-select select_location_type_admin" name="ads_side_{{ i }}_location_type" id="ads_side_{{ i }}_location_type" data-prefix="ads_side_{{ i }}">
+							<option value="all" {% if attribute(settings, 'ads_side_' ~ i ~ '_location_type') == 'all' or attribute(settings, 'ads_side_' ~ i ~ '_location_type') is empty %}selected{% endif %}>Cała Polska</option>
+							<option value="state" {% if attribute(settings, 'ads_side_' ~ i ~ '_location_type') == 'state' %}selected{% endif %}>Wybrane województwo</option>
+							<option value="city" {% if attribute(settings, 'ads_side_' ~ i ~ '_location_type') == 'city' %}selected{% endif %}>Wybrane miasto</option>
+						</select>
+					</div>
+
+					<div class="row ads_side_{{ i }}_geo_group mb-3" style="display: none;">
+						<div class="col-6">
+							<label for="ads_side_{{ i }}_state_id" class="form-label text-muted small">Województwo:</label>
+							<select class="form-select select_state_ad_admin" name="ads_side_{{ i }}_state_id" id="ads_side_{{ i }}_state_id" data-prefix="ads_side_{{ i }}">
+								<option value="">-- wybierz --</option>
+								{% for key,state in states %}
+									<option value="{{ key }}" {% if attribute(settings, 'ads_side_' ~ i ~ '_state_id') == key %}selected{% endif %}>{{ state.name }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-6 ads_side_{{ i }}_city_col" style="display: none;">
+							<label class="form-label text-muted small">Miasto:</label>
+							{% for key,state in states %}
+								{% if state.states %}
+									<div class="substates_ad_admin substate_ad_admin_ads_side_{{ i }} substate_ad_admin_ads_side_{{ i }}_{{ state.id }}" style="display:none">
+										<select class="form-select" name="ads_side_{{ i }}_state2_id" disabled>
+											<option value="">-- wybierz --</option>
+											{% for key2,state2 in state.states %}
+												<option value="{{ state2.id }}" {% if attribute(settings, 'ads_side_' ~ i ~ '_state2_id') == state2.id %}selected{% endif %}>{{ state2.name }}</option>
+											{% endfor %}
+										</select>
+									</div>
+								{% endif %}
+							{% endfor %}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-6">
+							<label for="ads_side_{{ i }}_start" class="form-label text-muted small">Wyświetlaj od:</label>
+							<input type="date" name="ads_side_{{ i }}_start" id="ads_side_{{ i }}_start" class="form-control" value="{{ attribute(settings, 'ads_side_' ~ i ~ '_start') }}">
+						</div>
+						<div class="col-6">
+							<label for="ads_side_{{ i }}_end" class="form-label text-muted small">Wyświetlaj do:</label>
+							<input type="date" name="ads_side_{{ i }}_end" id="ads_side_{{ i }}_end" class="form-control" value="{{ attribute(settings, 'ads_side_' ~ i ~ '_end') }}">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+
+	<div class="mb-5 mt-3 d-flex justify-content-end">
+		<button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
+			<i class="bi bi-save me-2"></i>{{ 'Save changes'|lang }}
+		</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block javascript %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function initGeoSelectors(prefix) {
+        const typeSelect = document.getElementById(prefix + '_location_type');
+        const geoGroup = document.querySelector('.' + prefix + '_geo_group');
+        const stateSelect = document.getElementById(prefix + '_state_id');
+        const cityCol = document.querySelector('.' + prefix + '_city_col');
+        
+        if (!typeSelect || !geoGroup || !stateSelect || !cityCol) return;
+        
+        function updateFields() {
+            const type = typeSelect.value;
+            if (type === 'all') {
+                geoGroup.style.display = 'none';
+            } else if (type === 'state') {
+                geoGroup.style.display = '';
+                cityCol.style.display = 'none';
+            } else if (type === 'city') {
+                geoGroup.style.display = '';
+                cityCol.style.display = '';
+            }
+        }
+        
+        typeSelect.addEventListener('change', updateFields);
+        updateFields();
+        
+        stateSelect.addEventListener('change', function() {
+            const stateVal = this.value;
+            // Hide all substates for this prefix
+            document.querySelectorAll('.substate_ad_admin_' + prefix).forEach(sub => {
+                sub.style.display = 'none';
+                sub.querySelectorAll('select').forEach(sel => sel.disabled = true);
+            });
+            // Show substate for selected state
+            const targetSub = document.querySelector('.substate_ad_admin_' + prefix + '_' + stateVal);
+            if (targetSub) {
+                targetSub.style.display = '';
+                targetSub.querySelectorAll('select').forEach(sel => sel.disabled = false);
+            }
+        });
+        
+        // Trigger initial state change to pre-fill active city if any
+        if (stateSelect.value) {
+            const stateVal = stateSelect.value;
+            const targetSub = document.querySelector('.substate_ad_admin_' + prefix + '_' + stateVal);
+            if (targetSub) {
+                targetSub.style.display = '';
+                targetSub.querySelectorAll('select').forEach(sel => sel.disabled = false);
+            }
+        }
+    }
+    
+    // Init for ads_1..4
+    for (let i = 1; i <= 4; i++) {
+        initGeoSelectors('ads_' + i);
+    }
+    // Init for ads_side_1..2
+    for (let i = 1; i <= 2; i++) {
+        initGeoSelectors('ads_side_' + i);
+    }
+});
+</script>
+{% endblock %}

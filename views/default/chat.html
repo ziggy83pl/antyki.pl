@@ -1,0 +1,604 @@
+{% extends "main.tpl" %}
+
+{% block content %}
+<style>
+.chat-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(225, 230, 239, 0.8);
+    overflow: hidden;
+}
+
+.chat-sidebar {
+    border-right: 1px solid rgba(225, 230, 239, 0.8);
+    background: #f8fafc;
+}
+
+.chat-rooms-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.chat-room-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    padding: 16px;
+    border-bottom: 1px solid rgba(225, 230, 239, 0.5);
+    transition: all 0.2s ease;
+}
+
+.chat-room-link:hover {
+    background-color: rgba(239, 246, 255, 0.6);
+}
+
+.chat-room-link.active {
+    background-color: #eff6ff;
+    border-left: 4px solid var(--bs-primary, #0d6efd);
+}
+
+.chat-room-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #475569;
+}
+
+.chat-room-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-room-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.chat-room-last-msg {
+    color: #64748b;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-room-meta {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.chat-room-badge {
+    background-color: #ef4444;
+    color: white;
+    font-weight: bold;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+/* Thread Pane */
+.chat-thread-container {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.chat-thread-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(225, 230, 239, 0.8);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f8fafc;
+}
+
+.chat-message-row {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message-row.sent {
+    align-items: flex-end;
+}
+
+.chat-message-row.received {
+    align-items: flex-start;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+    word-break: break-word;
+}
+
+.chat-message-row.sent .chat-bubble {
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message-row.received .chat-bubble {
+    background: white;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(225, 230, 239, 0.6);
+}
+
+.chat-message-meta {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+.chat-input-area {
+    padding: 16px;
+    background: white;
+    border-top: 1px solid rgba(225, 230, 239, 0.8);
+}
+
+.chat-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+    padding: 40px;
+    text-align: center;
+}
+
+.chat-empty-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+}
+</style>
+
+<div class="bg-white border-bottom py-4 mb-4">
+    <div class="container">
+        <h1 class="fw-bold mb-0 text-dark">{{ 'Inbox'|lang }}</h1>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="chat-container">
+        <div class="row g-0">
+            <!-- Sidebar / Conversations List -->
+            <div class="col-md-4 chat-sidebar {% if active_room %}d-none d-md-block{% else %}d-block{% endif %}">
+                <div class="p-3 border-bottom bg-white d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0 text-dark">{{ 'Conversations'|lang }}</h5>
+                </div>
+                <div class="chat-rooms-list">
+                    {% if rooms is empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-chat-left-dots d-block fs-2 mb-2"></i>
+                            {{ 'No active chats'|lang }}
+                        </div>
+                    {% else %}
+                        {% for room in rooms %}
+                            <a href="{{ path('chat') }}?room_id={{ room.id }}" class="chat-room-link {% if active_room.id == room.id %}active{% endif %}">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if room.other_avatar %}
+                                        <img src="{{ settings.base_url }}/upload/avatars/{{ room.other_avatar }}" alt="{{ room.other_username }}" class="chat-room-avatar">
+                                    {% else %}
+                                        <div class="chat-room-avatar">
+                                            {{ room.other_username|slice(0, 1)|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="chat-room-info">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="chat-room-name">{{ room.other_username ?: 'Użytkownik' }}</div>
+                                            <div class="chat-room-meta">{{ room.last_message_date ? room.last_message_date|date('H:i') : '' }}</div>
+                                        </div>
+                                        <div class="chat-room-last-msg">
+                                            {{ room.last_message ?: 'Rozpocznij konwersację'|lang }}
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mt-1">
+                                            <span class="badge bg-light text-dark text-truncate small max-w-100" style="max-width: 150px;">
+                                                {{ 'Listing'|lang }}: {{ room.offer_name }}
+                                            </span>
+                                            {% if room.unread_count > 0 %}
+                                                <span class="chat-room-badge">{{ room.unread_count }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Thread Pane -->
+            <div class="col-md-8 {% if active_room %}d-block{% else %}d-none d-md-block{% endif %}">
+                {% if active_room %}
+                    <div class="chat-thread-container">
+                        <!-- Thread Header -->
+                        <div class="chat-thread-header">
+                            <div class="d-flex align-items-center gap-3">
+                                <a href="{{ path('chat') }}" class="btn btn-outline-secondary btn-sm d-md-none me-2">
+                                    <i class="bi bi-arrow-left"></i> {{ 'Back'|lang }}
+                                </a>
+                                {% if active_room.other_avatar %}
+                                    <img src="{{ settings.base_url }}/upload/avatars/{{ active_room.other_avatar }}" alt="{{ active_room.other_username }}" class="chat-room-avatar" style="width: 40px; height: 40px;">
+                                {% else %}
+                                    <div class="chat-room-avatar" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                        {{ active_room.other_username|slice(0, 1)|upper }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-dark">{{ active_room.other_username ?: 'Użytkownik' }}</h6>
+                                    <small class="text-muted">
+                                        {{ 'Listing'|lang }}: 
+                                        <a href="{{ path('offer') }}/{{ active_room.offer_id }},{{ active_room.offer_slug }}" target="_blank" class="text-decoration-none">
+                                            {{ active_room.offer_name }}
+                                        </a>
+                                    </small>
+                                </div>
+                            </div>
+                            {% if active_room.offer_price %}
+                                <div class="fw-bold text-primary">
+                                    {{ active_room.offer_price|showCurrency }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Messages List -->
+                        <div class="chat-messages-area" id="chat-messages-area">
+                            {% if messages is empty %}
+                                <div class="chat-empty-state">
+                                    <i class="bi bi-chat-quote chat-empty-icon"></i>
+                                    <h5>{{ 'No messages yet'|lang }}</h5>
+                                    <p class="small text-muted">{{ 'Start a conversation'|lang }}</p>
+                                </div>
+                            {% else %}
+                                {% for msg in messages %}
+                                    <div class="chat-message-row {% if msg.sender_id == user_id %}sent{% else %}received{% endif %}" data-msg-id="{{ msg.id }}">
+                                        <div class="chat-bubble">
+                                            {{ msg.message|nl2br }}
+                                        </div>
+                                        <div class="chat-message-meta">
+                                            {{ msg.created_at|date('H:i') }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Message Input Form -->
+                        <div class="chat-input-area">
+                            <form id="chat-input-form" method="post" action="{{ path('chat') }}">
+                                <input type="hidden" name="action" value="send_message">
+                                <input type="hidden" name="room_id" value="{{ active_room.id }}">
+                                <input type="hidden" name="token" value="{{ generateToken('send_message') }}">
+                                <div class="input-group">
+                                    <textarea name="message" id="chat-message-input" rows="1" class="form-control border-end-0 py-2 px-3" placeholder="{{ 'Type your message here...'|lang }}" required style="resize: none; border-radius: 8px 0 0 8px;"></textarea>
+                                    <button type="submit" class="btn btn-primary px-4" style="border-radius: 0 8px 8px 0;">
+                                        <i class="bi bi-send-fill me-2"></i>{{ 'Send'|lang }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Empty Slate / Welcome Screen -->
+                    <div class="chat-empty-state" style="height: 600px;">
+                        <i class="bi bi-chat-left-text chat-empty-icon"></i>
+                        <h4>{{ 'Inbox'|lang }}</h4>
+                        <p class="text-muted">{{ 'Select a conversation to start chatting'|lang }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if active_room %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const messagesArea = document.getElementById("chat-messages-area");
+    const inputForm = document.getElementById("chat-input-form");
+    const messageInput = document.getElementById("chat-message-input");
+    const roomId = "{{ active_room.id }}";
+    let lastMsgId = 0;
+    let sseSource = null;
+    let sseLastReceivedAt = Date.now();
+    let fallbackInterval = null;
+
+    // Scroll chat to bottom initially
+    function scrollChatToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+    scrollChatToBottom();
+
+    // Get the highest message ID currently on screen
+    function updateLastMsgId() {
+        const rows = messagesArea.querySelectorAll(".chat-message-row");
+        if (rows.length > 0) {
+            lastMsgId = parseInt(rows[rows.length - 1].getAttribute("data-msg-id"), 10) || 0;
+        }
+    }
+    updateLastMsgId();
+
+    // Textarea auto-resize
+    messageInput.addEventListener("input", function() {
+        this.style.height = "auto";
+        this.style.height = (this.scrollHeight) + "px";
+    });
+
+    // Enter key submits the form
+    messageInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            inputForm.dispatchEvent(new Event("submit"));
+        }
+    });
+
+    // Render new messages received from SSE or polling
+    function renderMessages(messages) {
+        if (!messages || messages.length === 0) return;
+
+        const emptySlate = messagesArea.querySelector(".chat-empty-state");
+        if (emptySlate) {
+            messagesArea.innerHTML = "";
+        }
+
+        messages.forEach(msg => {
+            if (messagesArea.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+
+            const isSelf = String(msg.sender_id) === "{{ user_id }}";
+
+            // Remove the oldest pending local message if we render a real message from ourselves
+            if (isSelf) {
+                const pending = messagesArea.querySelector(".pending-msg");
+                if (pending) {
+                    pending.remove();
+                }
+            }
+
+            const row = document.createElement("div");
+            row.className = `chat-message-row ${isSelf ? 'sent' : 'received'}`;
+            row.setAttribute("data-msg-id", msg.id);
+
+            const msgTime = msg.created_at.substring(11, 16);
+            row.innerHTML = `
+                <div class="chat-bubble">
+                    ${msg.message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="chat-message-meta">
+                    ${msgTime}
+                </div>
+            `;
+            messagesArea.appendChild(row);
+        });
+
+        updateLastMsgId();
+        scrollChatToBottom();
+    }
+
+    // Handle form submit via AJAX with optimistic rendering
+    inputForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (text === "") return;
+
+        const formData = new FormData(this);
+        formData.set("action", "send_chat_message");
+
+        // Optimistically clean input
+        messageInput.value = "";
+        messageInput.style.height = "auto";
+
+        // Optimistically render message locally
+        const tempId = "temp-" + Date.now();
+        const row = document.createElement("div");
+        row.className = "chat-message-row sent pending-msg";
+        row.setAttribute("data-msg-id", tempId);
+        row.style.opacity = "0.6";
+
+        const now = new Date();
+        const msgTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+        row.innerHTML = `
+            <div class="chat-bubble">
+                ${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>')}
+            </div>
+            <div class="chat-message-meta">
+                ${msgTime}
+            </div>
+        `;
+
+        const emptySlate = messagesArea.querySelector(".chat-empty-state");
+        if (emptySlate) {
+            messagesArea.innerHTML = "";
+        }
+
+        messagesArea.appendChild(row);
+        scrollChatToBottom();
+
+        fetch("{{ settings.base_url }}/php/ajax.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status) {
+                // Immediately poll to show own message (SSE won't send to sender)
+                pollNewMessages();
+            } else {
+                alert(data.info || "Error sending message");
+                const pending = messagesArea.querySelector(`[data-msg-id="${tempId}"]`);
+                if (pending) pending.remove();
+            }
+        })
+        .catch(err => {
+            console.error("Error sending message via AJAX", err);
+            const pending = messagesArea.querySelector(`[data-msg-id="${tempId}"]`);
+            if (pending) pending.remove();
+        });
+    });
+
+    // Polling fallback function
+    function pollNewMessages() {
+        const params = new URLSearchParams();
+        params.append("action", "poll_chat_messages");
+        params.append("room_id", roomId);
+        params.append("last_id", lastMsgId);
+
+        fetch("{{ settings.base_url }}/php/ajax.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status && data.messages && data.messages.length > 0) {
+                renderMessages(data.messages);
+            }
+        })
+        .catch(err => console.error("Error polling messages", err));
+    }
+
+    let sseReconnectTimeout = null;
+    let sseMonitorInterval = null;
+
+    // Start fallback polling (used when SSE unavailable or broken)
+    function startFallbackPolling() {
+        if (fallbackInterval) return;
+        console.info("Chat: starting fallback polling (10s interval)");
+        fallbackInterval = setInterval(pollNewMessages, 10000);
+    }
+
+    function stopFallbackPolling() {
+        if (fallbackInterval) {
+            clearInterval(fallbackInterval);
+            fallbackInterval = null;
+        }
+    }
+
+    // SSE connection
+    function startSSE() {
+        if (!window.EventSource) {
+            console.warn("Chat: EventSource not supported, using fallback polling");
+            startFallbackPolling();
+            return;
+        }
+
+        const sseUrl = "{{ settings.base_url }}/php/chat_sse.php?room_id=" + roomId + "&last_id=" + lastMsgId;
+        sseSource = new EventSource(sseUrl);
+
+        sseSource.onmessage = function(event) {
+            sseLastReceivedAt = Date.now();
+            try {
+                const data = JSON.parse(event.data);
+                if (data.status && data.messages && data.messages.length > 0) {
+                    renderMessages(data.messages);
+                } else if (data.info === "stream_end") {
+                    // Server ended stream after ~2min, reconnect
+                    sseSource.close();
+                    sseSource = null;
+                    if (!document.hidden) {
+                        if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+                        sseReconnectTimeout = setTimeout(startSSE, 500);
+                    }
+                }
+            } catch(e) {
+                console.warn("Chat SSE parse error:", e);
+            }
+        };
+
+        sseSource.onerror = function() {
+            console.warn("Chat: SSE error/disconnect");
+            sseSource.close();
+            sseSource = null;
+            // Fallback to polling if SSE is broken for 30+ seconds
+            startFallbackPolling();
+            // Try to reconnect SSE after 30s
+            if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+            sseReconnectTimeout = setTimeout(function() {
+                if (!sseSource && !document.hidden) {
+                    stopFallbackPolling();
+                    startSSE();
+                }
+            }, 30000);
+        };
+    }
+
+    function startMonitorInterval() {
+        if (sseMonitorInterval) return;
+        sseMonitorInterval = setInterval(function() {
+            if (sseSource && (Date.now() - sseLastReceivedAt) > 30000) {
+                console.warn("Chat: SSE silent for 30s, enabling fallback polling");
+                startFallbackPolling();
+            }
+        }, 10000);
+    }
+
+    function stopMonitorInterval() {
+        if (sseMonitorInterval) {
+            clearInterval(sseMonitorInterval);
+            sseMonitorInterval = null;
+        }
+    }
+
+    function startChatSystem() {
+        if (document.hidden) return;
+        startSSE();
+        startMonitorInterval();
+    }
+
+    function stopChatSystem() {
+        if (sseSource) {
+            sseSource.close();
+            sseSource = null;
+        }
+        stopFallbackPolling();
+        stopMonitorInterval();
+        if (sseReconnectTimeout) {
+            clearTimeout(sseReconnectTimeout);
+            sseReconnectTimeout = null;
+        }
+    }
+
+    // Visibility Listener
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+            console.info("Chat: Tab hidden. Stopping connection & intervals to save resources.");
+            stopChatSystem();
+        } else {
+            console.info("Chat: Tab visible. Reconnecting and polling immediately.");
+            startChatSystem();
+            pollNewMessages();
+        }
+    });
+
+    // Kick off SSE
+    startChatSystem();
+});
+</script>
+{% endif %}
+{% endblock %}

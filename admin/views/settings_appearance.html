@@ -1,0 +1,754 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">{{ 'Home'|lang }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ 'Settings / Appearance'|lang }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{# ===== MACROS ===== #}
+{% macro image_field(name, label, value, help_text='') %}
+<div class="mb-3 row image-upload-field" data-field-name="{{ name }}">
+    <label for="{{ name }}" class="col-sm-2 col-form-label">{{ label|lang }}:</label>
+    <div class="col-sm-10">
+        <div class="d-flex align-items-start gap-3">
+            <div class="image-preview-wrapper position-relative">
+                <a href="#" class="open_roxy d-block" data-bs-target="#roxySelectFile" data-field="{{ name }}">
+                    <img id="preview_{{ name }}" 
+                         data-roxy_name="{{ name }}" 
+                         src="{% if value %}{{ value }}{% else %}images/no_image.png{% endif %}" 
+                         onerror="this.src='images/no_image.png'" 
+                         alt="{{ label|lang }}" 
+                         loading="lazy" 
+                         class="img-thumbnail"
+                         style="max-height: 120px; max-width: 200px; object-fit: contain; cursor: pointer;">
+                </a>
+                <div class="image-overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center rounded">
+                    <span class="text-white small">{{ 'Click to change'|lang }}</span>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <div class="input-group mb-2">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="text" 
+                           id="{{ name }}" 
+                           name="{{ name }}" 
+                           value="{{ value }}" 
+                           placeholder="{{ 'Image path or URL'|lang }}" 
+                           title="{{ label|lang }}" 
+                           class="form-control image-path-input"
+                           data-preview-target="preview_{{ name }}">
+                    <button type="button" class="btn btn-outline-secondary upload-btn" data-field="{{ name }}" title="{{ 'Upload new image'|lang }}">
+                        <i class="bi bi-cloud-upload"></i> {{ 'Upload'|lang }}
+                    </button>
+                    <button type="button" class="btn btn-outline-danger clear-image-btn" data-field="{{ name }}" title="{{ 'Clear'|lang }}" {% if not value %}style="display:none;"{% endif %}>
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                {% if help_text %}
+                <div class="form-text text-muted">{{ help_text|lang }}</div>
+                {% endif %}
+                <input type="file" class="d-none file-input" data-field="{{ name }}" accept="image/*">
+                <div class="upload-progress mt-2 d-none">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted upload-status">{{ 'Uploading...'|lang }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro color_field(name, label, value) %}
+<div class="mb-3 row">
+    <label for="{{ name }}" class="col-sm-2 col-form-label">{{ label|lang }}:</label>
+    <div class="col-sm-10">
+        <div class="input-group" style="max-width: 200px;">
+            <input type="color" 
+                   id="{{ name }}_picker" 
+                   value="{{ value|default('#0d6efd') }}" 
+                   class="form-control form-control-color"
+                   style="width: 50px; padding: 0.25rem;">
+            <input type="text" 
+                   id="{{ name }}" 
+                   name="{{ name }}" 
+                   value="{{ value }}" 
+                   placeholder="#0d6efd" 
+                   class="form-control"
+                   pattern="^#[a-fA-F0-9]{6}$"
+                   maxlength="7">
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro checkbox_field(name, label, checked, help_text='') %}
+<div class="form-check mb-2">
+    <input type="checkbox" 
+           id="{{ name }}" 
+           name="{{ name }}" 
+           class="form-check-input" 
+           title="{{ label|lang }}" 
+           {% if checked %}checked{% endif %}>
+    <label class="form-check-label" for="{{ name }}">
+        {{ label|lang }}
+        {% if help_text %}
+        <small class="text-muted d-block">{{ help_text|lang }}</small>
+        {% endif %}
+    </label>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1"><span class="bi bi-palette"></span> {{ 'Appearance settings'|lang }}</h1>
+            <p class="text-muted mb-0">{{ 'Customize the look and feel of your website'|lang }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="?controller=admin&action=settings_history" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history"></i> {{ 'History'|lang }}
+            </a>
+            <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#previewModal">
+                <i class="bi bi-eye"></i> {{ 'Preview'|lang }}
+            </button>
+        </div>
+    </div>
+</div>
+
+{% include 'alert.tpl' %}
+
+<form method="post" id="appearanceForm" class="row g-3" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="save_settings_appearance">
+    <input type="hidden" name="token" value="{{ generateToken('admin_save_settings_appearance') }}">
+
+    {# ===== TEMPLATE ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-layout-text-window-reverse"></i> {{ 'Template'|lang }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 row">
+                    <label for="template" class="col-sm-2 col-form-label">{{ 'Active template'|lang }}:</label>
+                    <div class="col-sm-10">
+                        <select name="template" id="template" title="{{ 'Template'|lang }}" required class="form-select" style="max-width: 300px;">
+                            {% for item in templates %}
+                                <option value="{{ item }}" {% if item == settings.template %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">{{ 'Choose from available themes'|lang }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== BRANDING & IMAGES ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#brandingSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-image"></i> {{ 'Branding & Images'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="brandingSection">
+                <div class="card-body">
+                    {{ _self.image_field('logo', 'Logo', settings.logo, 'Recommended size: 300x100px, transparent PNG') }}
+                    {{ _self.image_field('logo_facebook', 'Logo - Facebook / Open Graph', settings.logo_facebook, 'Recommended size: 1200x630px for social sharing') }}
+                    {{ _self.image_field('watermark', 'Watermark', settings.watermark, 'Applied to uploaded images. Use PNG with transparency.') }}
+                    {{ _self.image_field('favicon', 'Favicon', settings.favicon, 'ICO, PNG or SVG. Recommended: 32x32px or multi-size ICO') }}
+                    {{ _self.image_field('apple_touch_icon', 'Apple Touch Icon', settings.apple_touch_icon, 'PNG, 180x180px for iOS devices') }}
+                    {{ _self.image_field('og_image', 'Default Open Graph Image', settings.og_image, 'Used when no image is set for a page. 1200x630px') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== COLORS & THEME ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#colorsSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-palette-fill"></i> {{ 'Colors & Theme'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="colorsSection">
+                <div class="card-body">
+                    {{ _self.color_field('primary_color', 'Primary color', settings.primary_color) }}
+                    {{ _self.color_field('secondary_color', 'Secondary color', settings.secondary_color) }}
+
+                    <div class="mb-3 row">
+                        <label for="font_family" class="col-sm-2 col-form-label">{{ 'Font family'|lang }}:</label>
+                        <div class="col-sm-10">
+                            <select name="font_family" id="font_family" class="form-select" style="max-width: 300px;">
+                                {% for key, name in font_families %}
+                                    <option value="{{ key }}" {% if settings.font_family == key %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {{ _self.checkbox_field('enable_dark_mode', 'Enable dark mode toggle', settings.enable_dark_mode, 'Allow users to switch between light and dark themes') }}
+
+                    <div id="darkModeOptions" class="ms-4 mt-2 {% if not settings.enable_dark_mode %}d-none{% endif %}">
+                        {{ _self.color_field('dark_mode_primary', 'Dark mode primary color', settings.dark_mode_primary) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== SEARCH BOX SETTINGS ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#searchSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-search"></i> {{ 'Search Box'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="searchSection">
+                <div class="card-body">
+                    <p class="text-muted mb-3">{{ 'Select which filters should appear in the search box'|lang }}</p>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_category', 'Categories', settings.search_box_category) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_address', 'Address', settings.search_box_address) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_distance', 'Distance', settings.search_box_distance) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_keywords', 'Keywords', settings.search_box_keywords) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_price', 'Price', settings.search_box_price) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_state', 'State', settings.search_box_state) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_type', 'Type', settings.search_box_type) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ _self.checkbox_field('search_box_options', 'Options', settings.search_box_options) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== PAGE DISPLAY ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#displaySection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-display"></i> {{ 'Page Display'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="displaySection">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ _self.checkbox_field('show_breadcrumbs', 'Show breadcrumbs', settings.show_breadcrumbs) }}
+                            {{ _self.checkbox_field('index_box_subcategories', 'Show category box on index page', settings.index_box_subcategories) }}
+                            {{ _self.checkbox_field('show_number_offers_in_categories', 'Show number of offers in categories', settings.show_number_offers_in_categories) }}
+                            {{ _self.checkbox_field('show_filters_sidebar', 'Show filters sidebar', settings.show_filters_sidebar) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ _self.checkbox_field('show_contact_form_offer', 'Contact form on offer page', settings.show_contact_form_offer) }}
+                            {{ _self.checkbox_field('show_contact_form_profile', 'Contact form on profile page', settings.show_contact_form_profile) }}
+                            {{ _self.checkbox_field('show_map_on_list', 'Show map on listings page', settings.show_map_on_list) }}
+                            {{ _self.checkbox_field('lazy_load_images', 'Lazy load images', settings.lazy_load_images, 'Improves page loading speed') }}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="items_per_page" class="form-label">{{ 'Items per page'|lang }}:</label>
+                                <select name="items_per_page" id="items_per_page" class="form-select" style="max-width: 150px;">
+                                    {% for num in items_per_page_options %}
+                                        <option value="{{ num }}" {% if settings.items_per_page == num %}selected{% endif %}>{{ num }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="grid_columns" class="form-label">{{ 'Grid columns'|lang }}:</label>
+                                <select name="grid_columns" id="grid_columns" class="form-select" style="max-width: 150px;">
+                                    {% for key, label in grid_columns_options %}
+                                        <option value="{{ key }}" {% if settings.grid_columns == key %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== SEO & META ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#seoSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-globe"></i> {{ 'SEO & Meta Tags'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="seoSection">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="meta_title" class="form-label">{{ 'Default page title'|lang }}:</label>
+                        <input type="text" id="meta_title" name="meta_title" value="{{ settings.meta_title }}" class="form-control" maxlength="70">
+                        <div class="form-text"><span class="char-count" data-max="70">0</span>/70 {{ 'characters'|lang }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meta_description" class="form-label">{{ 'Meta description'|lang }}:</label>
+                        <textarea id="meta_description" name="meta_description" class="form-control" rows="2" maxlength="160">{{ settings.meta_description }}</textarea>
+                        <div class="form-text"><span class="char-count" data-max="160">0</span>/160 {{ 'characters'|lang }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meta_keywords" class="form-label">{{ 'Meta keywords'|lang }}:</label>
+                        <input type="text" id="meta_keywords" name="meta_keywords" value="{{ settings.meta_keywords }}" class="form-control" placeholder="keyword1, keyword2, keyword3">
+                    </div>
+
+                    <hr>
+
+                    {{ _self.checkbox_field('enable_pwa', 'Enable Progressive Web App (PWA)', settings.enable_pwa, 'Allows users to install your site as an app') }}
+
+                    <div id="pwaOptions" class="ms-4 mt-2 {% if not settings.enable_pwa %}d-none{% endif %}">
+                        <div class="mb-3">
+                            <label for="manifest_name" class="form-label">{{ 'App name'|lang }}:</label>
+                            <input type="text" id="manifest_name" name="manifest_name" value="{{ settings.manifest_name }}" class="form-control" maxlength="50">
+                        </div>
+                        <div class="mb-3">
+                            <label for="manifest_short_name" class="form-label">{{ 'Short app name'|lang }}:</label>
+                            <input type="text" id="manifest_short_name" name="manifest_short_name" value="{{ settings.manifest_short_name }}" class="form-control" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== RODO / GDPR ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#rodoSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> {{ 'Privacy & GDPR'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="rodoSection">
+                <div class="card-body">
+                    {{ _self.checkbox_field('rodo_alert', 'Show personal data processing message (GDPR)', settings.rodo_alert) }}
+
+                    <div class="mb-3 mt-3">
+                        <label for="rodo_alert_text" class="form-label">{{ 'GDPR alert content'|lang }}:</label>
+                        <textarea name="rodo_alert_text" id="rodo_alert_text" title="{{ 'Content of alert about processing personal data'|lang }}" class="form-control ckeditor-field" rows="5">{{ settings.rodo_alert_text }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== FOOTER ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#footerSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-layout-text-window"></i> {{ 'Footer Content'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="footerSection">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="footer_top" class="form-label">{{ 'Footer - top'|lang }}:</label>
+                        <textarea name="footer_top" id="footer_top" title="{{ 'Footer - top'|lang }}" class="form-control ckeditor-field" rows="5">{{ settings.footer_top }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="footer_bottom_textarea" class="form-label">{{ 'Footer - bottom'|lang }}:</label>
+                        <textarea id="footer_bottom_textarea" name="footer_bottom" title="{{ 'Footer - bottom'|lang }}" class="form-control ckeditor-field" rows="5">{{ settings.footer_bottom }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== CUSTOM CODE ===== #}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#codeSection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-code-slash"></i> {{ 'Custom Code'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="codeSection">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="code_style" class="form-label">{{ 'Additional CSS'|lang }}:</label>
+                        <textarea name="code_style" id="code_style" title="{{ 'Additional CSS'|lang }}" class="form-control font-monospace" rows="8" style="font-size: 13px;">{{ settings.code_style }}</textarea>
+                        <div class="form-text text-muted">{{ 'Custom styles will be added after theme CSS'|lang }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code_head" class="form-label">{{ 'Additional code in HEAD'|lang }}:</label>
+                        <textarea name="code_head" id="code_head" title="{{ 'Additional code in the HEAD'|lang }}" class="form-control font-monospace" rows="6" style="font-size: 13px;">{{ settings.code_head }}</textarea>
+                        <div class="form-text text-muted">{{ 'Analytics, meta tags, etc.'|lang }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code_body" class="form-label">{{ 'Additional code in BODY (end)'|lang }}:</label>
+                        <textarea name="code_body" id="code_body" title="{{ 'Additional code in the BODY'|lang }}" class="form-control font-monospace" rows="6" style="font-size: 13px;">{{ settings.code_body }}</textarea>
+                        <div class="form-text text-muted">{{ 'Chat widgets, scripts, etc.'|lang }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== RECENT HISTORY ===== #}
+    {% if settings_history|length > 0 %}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#historySection" style="cursor: pointer;">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> {{ 'Recent Changes'|lang }}</h5>
+                <i class="bi bi-chevron-up"></i>
+            </div>
+            <div class="collapse show" id="historySection">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ 'Date'|lang }}</th>
+                                    <th>{{ 'Admin'|lang }}</th>
+                                    <th>{{ 'Changes'|lang }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in settings_history %}
+                                <tr>
+                                    <td class="text-nowrap">{{ entry.created_at }}</td>
+                                    <td>{{ entry.admin_name|default('Unknown') }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {% set changes = entry.changes %}
+                                            {% for key, change in changes %}
+                                                <span class="badge bg-light text-dark border">{{ key }}</span>
+                                            {% endfor %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ===== SAVE BUTTON ===== #}
+    <div class="col-12 sticky-bottom bg-white py-3 border-top" style="z-index: 1020;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                <i class="bi bi-info-circle"></i> {{ 'Remember to clear browser cache after saving'|lang }}
+            </div>
+            <div class="d-flex gap-2">
+                <button type="reset" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i> {{ 'Reset'|lang }}
+                </button>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> {{ 'Save changes'|lang }}
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+{# ===== PREVIEW MODAL ===== #}
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ 'Theme Preview'|lang }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6>{{ 'Colors'|lang }}</h6>
+                        <div class="d-flex gap-2 mb-3">
+                            <div class="color-preview-box rounded" style="width: 40px; height: 40px; background: {{ settings.primary_color|default('#0d6efd') }};" title="{{ 'Primary'|lang }}"></div>
+                            <div class="color-preview-box rounded" style="width: 40px; height: 40px; background: {{ settings.secondary_color|default('#6c757d') }};" title="{{ 'Secondary'|lang }}"></div>
+                        </div>
+
+                        <h6>{{ 'Typography'|lang }}</h6>
+                        <p style="font-family: {{ settings.font_family|default('system-ui') }};">
+                            {{ 'Sample text in selected font'|lang }}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>{{ 'Active features'|lang }}</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>{{ 'Dark mode'|lang }}</span>
+                                <span class="badge bg-{{ settings.enable_dark_mode ? 'success' : 'secondary' }}">{{ settings.enable_dark_mode ? 'ON' : 'OFF' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>{{ 'PWA'|lang }}</span>
+                                <span class="badge bg-{{ settings.enable_pwa ? 'success' : 'secondary' }}">{{ settings.enable_pwa ? 'ON' : 'OFF' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>{{ 'Lazy loading'|lang }}</span>
+                                <span class="badge bg-{{ settings.lazy_load_images ? 'success' : 'secondary' }}">{{ settings.lazy_load_images ? 'ON' : 'OFF' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ parent() }}
+<script>
+(function() {
+    'use strict';
+
+    // ===== CKEditor initialization =====
+    document.querySelectorAll('.ckeditor-field').forEach(function(el) {
+        if (typeof run_ckeditor === 'function') {
+            run_ckeditor(el.id, 400);
+        }
+    });
+
+    // ===== Color picker sync =====
+    document.querySelectorAll('input[type="color"]').forEach(function(picker) {
+        var textInput = document.getElementById(picker.id.replace('_picker', ''));
+        if (textInput) {
+            picker.addEventListener('input', function() {
+                textInput.value = this.value;
+            });
+            textInput.addEventListener('input', function() {
+                if (/^#[a-fA-F0-9]{6}$/.test(this.value)) {
+                    picker.value = this.value;
+                }
+            });
+        }
+    });
+
+    // ===== Character counters =====
+    document.querySelectorAll('.char-count').forEach(function(counter) {
+        var input = counter.closest('.mb-3').querySelector('input, textarea');
+        if (input) {
+            var updateCount = function() {
+                counter.textContent = input.value.length;
+                if (input.value.length > parseInt(counter.dataset.max)) {
+                    counter.classList.add('text-danger');
+                } else {
+                    counter.classList.remove('text-danger');
+                }
+            };
+            input.addEventListener('input', updateCount);
+            updateCount();
+        }
+    });
+
+    // ===== Conditional sections =====
+    function toggleSection(checkboxId, targetId) {
+        var checkbox = document.getElementById(checkboxId);
+        var target = document.getElementById(targetId);
+        if (checkbox && target) {
+            checkbox.addEventListener('change', function() {
+                target.classList.toggle('d-none', !this.checked);
+            });
+        }
+    }
+
+    toggleSection('enable_dark_mode', 'darkModeOptions');
+    toggleSection('enable_pwa', 'pwaOptions');
+
+    // ===== Image upload via AJAX =====
+    document.querySelectorAll('.upload-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var fieldName = this.dataset.field;
+            var fileInput = document.querySelector('.file-input[data-field="' + fieldName + '"]');
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+    });
+
+    document.querySelectorAll('.file-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            var fieldName = this.dataset.field;
+            var file = this.files[0];
+            if (!file) return;
+
+            // Validate file
+            var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/x-icon'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('{{ "Invalid file type. Allowed: JPG, PNG, GIF, SVG, WEBP, ICO"|lang }}');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('{{ "File too large. Max 5MB"|lang }}');
+                return;
+            }
+
+            var progressWrapper = this.closest('.image-upload-field').querySelector('.upload-progress');
+            var progressBar = progressWrapper.querySelector('.progress-bar');
+            var statusText = progressWrapper.querySelector('.upload-status');
+
+            progressWrapper.classList.remove('d-none');
+            progressBar.style.width = '30%';
+
+            var formData = new FormData();
+            formData.append('ajax_action', 'upload_image');
+            formData.append('image', file);
+            formData.append('token', document.querySelector('input[name="token"]').value);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', window.location.href, true);
+
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    var percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                progressBar.style.width = '100%';
+
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        var pathInput = document.querySelector('input[name="' + fieldName + '"]');
+                        var previewImg = document.getElementById('preview_' + fieldName);
+                        var clearBtn = document.querySelector('.clear-image-btn[data-field="' + fieldName + '"]');
+
+                        pathInput.value = response.path;
+                        previewImg.src = response.path;
+                        clearBtn.style.display = 'inline-block';
+                        statusText.textContent = '{{ "Upload complete!"|lang }}';
+                        statusText.classList.add('text-success');
+
+                        setTimeout(function() {
+                            progressWrapper.classList.add('d-none');
+                            statusText.classList.remove('text-success');
+                        }, 2000);
+                    } else {
+                        statusText.textContent = response.error || '{{ "Upload failed"|lang }}';
+                        statusText.classList.add('text-danger');
+                    }
+                } catch (e) {
+                    statusText.textContent = '{{ "Upload error"|lang }}';
+                    statusText.classList.add('text-danger');
+                }
+            });
+
+            xhr.addEventListener('error', function() {
+                statusText.textContent = '{{ "Network error"|lang }}';
+                statusText.classList.add('text-danger');
+            });
+
+            xhr.send(formData);
+        });
+    });
+
+    // ===== Clear image button =====
+    document.querySelectorAll('.clear-image-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var fieldName = this.dataset.field;
+            var pathInput = document.querySelector('input[name="' + fieldName + '"]');
+            var previewImg = document.getElementById('preview_' + fieldName);
+
+            pathInput.value = '';
+            previewImg.src = 'images/no_image.png';
+            this.style.display = 'none';
+        });
+    });
+
+    // ===== Image preview on path change =====
+    document.querySelectorAll('.image-path-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            var previewId = this.dataset.previewTarget;
+            var previewImg = document.getElementById(previewId);
+            var clearBtn = document.querySelector('.clear-image-btn[data-field="' + this.name + '"]');
+
+            if (this.value) {
+                previewImg.src = this.value;
+                clearBtn.style.display = 'inline-block';
+            } else {
+                previewImg.src = 'images/no_image.png';
+                clearBtn.style.display = 'none';
+            }
+        });
+    });
+
+    // ===== Image hover overlay =====
+    document.querySelectorAll('.image-preview-wrapper').forEach(function(wrapper) {
+        var overlay = wrapper.querySelector('.image-overlay');
+        if (overlay) {
+            wrapper.addEventListener('mouseenter', function() {
+                overlay.classList.remove('d-none');
+            });
+            wrapper.addEventListener('mouseleave', function() {
+                overlay.classList.add('d-none');
+            });
+        }
+    });
+
+    // ===== Form unsaved changes warning =====
+    var formChanged = false;
+    var form = document.getElementById('appearanceForm');
+
+    form.addEventListener('input', function() {
+        formChanged = true;
+    });
+
+    form.addEventListener('submit', function() {
+        formChanged = false;
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '{{ "You have unsaved changes. Leave anyway?"|lang }}';
+        }
+    });
+
+    // ===== Card header toggle icons =====
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(header) {
+        var target = document.querySelector(header.dataset.bsTarget);
+        if (target) {
+            target.addEventListener('shown.bs.collapse', function() {
+                header.querySelector('.bi-chevron-down').classList.remove('bi-chevron-down');
+                header.querySelector('.bi').classList.add('bi-chevron-up');
+            });
+            target.addEventListener('hidden.bs.collapse', function() {
+                header.querySelector('.bi-chevron-up').classList.remove('bi-chevron-up');
+                header.querySelector('.bi').classList.add('bi-chevron-down');
+            });
+        }
+    });
+
+})();
+</script>
+{% endblock %}

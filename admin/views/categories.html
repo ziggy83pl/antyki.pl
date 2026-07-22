@@ -1,0 +1,256 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Kategorie</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="content-shell">
+<div class="content-card">
+<div class="modal fade" id="add" tabindex="-1" aria-labelledby="{{ 'Add category'|lang }}">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				<h5 class="modal-title">{{ 'Add category'|lang }}</h5>
+			</div>
+			<form method="post" class="form">
+				<input type="hidden" name="action" value="add_category">
+				<input type="hidden" name="token" value="{{ generateToken('admin_add_category') }}">
+				<div class="modal-body">
+					<div class="mb-3 row">
+						<label for="name">{{ 'The name'|lang }}</label>
+						<input type="text" name="name" required maxlength="64" placeholder="{{ 'The name'|lang }}" title="{{ 'The name'|lang }}" class="form-control">
+					</div>
+					<div class="mb-3 row">
+						<label for="cost">{{ 'Charge'|lang }}</label>
+						<div class="input-group">
+							<input type="number" name="cost" min="0" step="0.01" class="form-control">
+							<div class="input-group-text">{{ settings.currency }}</div>
+						</div>
+					</div>
+					<div class="mb-3 row">
+						<label for="thumb">{{ 'Thumb'|lang }}</label><br>
+						<a href="#" class="open_roxy" data-bs-target="#roxySelectFile">
+							<img data-roxy_name="thumb" src="images/no_image.png" alt="{{ 'Thumb'|lang }}" loading="lazy" style="max-height: 100px">
+						</a><br><br>
+						<input type="text" name="thumb" placeholder="{{ 'Thumb'|lang }}" title="{{ 'Thumb'|lang }}" class="form-control">
+					</div>
+					<div class="mb-3 row">
+						<label for="content">{{ 'Content'|lang }}</label>
+						<textarea id="content" name="content" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control"></textarea>
+						<script>
+							run_ckeditor('content',100);
+						</script>
+					</div>
+					<div class="mb-3 row">
+						<label for="h1">{{ 'Header h1'|lang }}</label>
+						<input type="text" name="h1" title="{{ 'Header h1'|lang }}" placeholder="{{ 'Header h1'|lang }}" maxlength="512" class="form-control">
+					</div>
+					<div class="mb-3 row">
+						<label for="title">{{ 'Title SEO'|lang }}</label>
+						<input type="text" name="title" title="{{ 'Title SEO'|lang }}" placeholder="{{ 'Title SEO'|lang }}" maxlength="512" class="form-control">
+					</div>
+					<div class="mb-3 row">
+						<label for="keywords">{{ 'Keywords SEO'|lang }}</label>
+						<input type="text" name="keywords" title="{{ 'Keywords SEO'|lang }}" placeholder="{{ 'Keywords SEO'|lang }}" maxlength="512" class="form-control">
+					</div>
+					<div class="mb-3 row">
+						<label for="description">{{ 'Description SEO'|lang }}</label>
+						<textarea name="description" title="{{ 'Description SEO'|lang }}" placeholder="{{ 'Description SEO'|lang }}" maxlength="512" class="form-control"></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+					<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="page-header">
+	<h1><span class="bi bi-diagram-3"></span> {% if category %}{{ 'Subcategories in'|lang }}: {{ category.name }}{% else %}{{ 'Categories'|lang }}{% endif %}</h1>
+	<p>{{ 'Here you can edit the categories'|lang }}</p>
+	{% if category %}
+		<h4>
+			<a href="?controller=categories" title="{{ 'Main Page'|lang }}">{{ 'Main Page'|lang }}</a> >
+			{% for item in category.breadcrumbs %}
+				<a href="?controller=categories&category_id={{ item.id }}&category_name={{ item.slug }}" title="{{ 'Category'|lang }}: {{ item.name }}">{{ item.name }}</a>
+				{% if not loop.last %} > {% endif %}
+			{% endfor %}
+		</h4>
+	{% endif %}
+</div>
+
+{% include 'alert.tpl' %}
+
+<div class="admin-toolbar">
+	<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add"><i class="bi bi-plus-lg me-1"></i>{{ 'Add category'|lang }}</button>
+	<a href="#" title="{{ 'Arrange alphabetically'|lang }}" class="btn btn-outline-secondary ajax_confirm" data-action="arrange_categories_alphabetically" data-category="{% if category %}{{ category.id }}{% else %}0{% endif %}" data-title="{{ 'Are you sure you want to arrange categories alphabetically on this page?'|lang }}" data-token="{{ generateToken('admin_arrange_categories_alphabetically') }}">{{ 'Arrange alphabetically'|lang }}</a>
+	<a href="#" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#reload" title="Reload all subcategories">{{ 'Reload all subcategories'|lang }}</a>
+</div>
+{% if categories %}
+	<div class="table-responsive admin-table">
+		<table class="table table-striped table-hover table-bordered table-sm mb-0">
+			<thead>
+			<tr>
+				<th></th>
+				<th>{{ 'Thumb'|lang }}</th>
+				<th>{{ 'The name'|lang }}</th>
+				<th class="text-center" style="width:55px">{{ 'Position'|lang }}</th>
+				<th class="text-center">{{ 'Charge'|lang }}</th>
+				<th class="text-center">{{ 'Number of offers'|lang }}</th>
+				<th class="text-center">{{ 'Edit'|lang }}</th>
+				<th class="text-center">{{ 'Edit subcategories'|lang }}</th>
+				<th class="text-center">{{ 'Remove'|lang }}</th>
+			</tr>
+			</thead>
+
+			{% for item in categories %}
+				<tr>
+					<td>{{ loop.index }}</td>
+					<td class="text-center">
+						{% if item.slug|lower in category_icons|keys %}
+							<i class="bi {{ category_icons[item.slug|lower] }} category-icon" title="{{ item.name }}"></i>
+						{% else %}
+							<i class="bi bi-tag-fill icon-gray category-icon" title="{{ item.name }}"></i>
+						{% endif %}
+					</td>
+					<td><a href="{{ path('offers') }}?category={{ item.id }}" target="_blank" title="{{ item.name }}">{{ item.name }}</a></td>
+					<td class="text-center">
+						<a href="#" title="{{ 'Position up'|lang }}" class="action-link bi bi-arrow-up ajax {% if loop.first %}inactive{% endif %}" data-action="position_categories" data-id="{{ item.id }}" data-position="{{ item.position }}" data-plusminus="+" data-category="{% if category %}{{ category.id }}{% else %}0{% endif %}" data-token="{{ generateToken('admin_position_categories') }}"></a>
+						<a href="#" title="{{ 'Position down'|lang }}" class="action-link bi bi-arrow-down ajax {% if loop.last %}inactive{% endif %}" data-action="position_categories" data-id="{{ item.id }}" data-position="{{ item.position }}" data-plusminus="-" data-category="{% if category %}{{ category.id }}{% else %}0{% endif %}" data-token="{{ generateToken('admin_position_categories') }}"></a>
+					</td>
+					<td class="text-center">{{ item.cost|showCurrency }}</td>
+					<td class="text-center">{{ item.number_offers }}</td>
+					<td class="text-center"><a href="#" title="{{ 'Edit'|lang }}" class="action-link bi bi-pencil-square" data-bs-toggle="modal" data-bs-target="#edit_{{ item.id }}"></a></td>
+					<td class="text-center"><a href="?controller=categories&category_id={{ item.id }}&category_name={{ item.slug }}" title="{{ 'Edit subcategories'|lang }}" class="action-link bi bi-pencil-square"></a></td>
+					<td class="text-center"><a href="#" title="{{ 'Remove'|lang }}" class="action-link bi bi-x-lg text-danger" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}"></a></td>
+				</tr>
+
+				<div class="modal fade" id="edit_{{ item.id }}" tabindex="-1" aria-labelledby="{{ 'Edit'|lang }}: {{ item.name }}">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								<h5 class="modal-title">{{ 'Edit'|lang }}: {{ item.name }}</h5>
+							</div>
+							<form method="post" class="form">
+								<input type="hidden" name="action" value="edit_category">
+								<input type="hidden" name="token" value="{{ generateToken('admin_edit_category') }}">
+								<input type="hidden" name="id" value="{{ item.id }}">
+								<div class="modal-body">
+									<div class="mb-3 row">
+										<label for="name">{{ 'The name'|lang }}</label>
+										<input type="text" name="name" required maxlength="64" placeholder="{{ 'The name'|lang }}" title="{{ 'The name'|lang }}" value="{{ item.name }}" class="form-control">
+									</div>
+									<div class="mb-3 row">
+										<label for="cost">{{ 'Charge'|lang }}</label>
+										<div class="input-group">
+											<input type="number" name="cost" min="0" step="0.01"  value="{{ item.cost }}" class="form-control">
+											<div class="input-group-text">{{ settings.currency }}</div>
+										</div>
+									</div>
+									<div class="mb-3 row">
+										<label for="thumb">{{ 'Thumb'|lang }}</label><br>
+										<a href="#" class="open_roxy" data-bs-target="#roxySelectFile">
+											<img data-roxy_name="thumb" src="{% if item.thumb %}{{ item.thumb }}{% else %}images/no_image.png{% endif %}" onerror="this.src='images/no_image.png'" alt="{{ 'Thumb'|lang }}" loading="lazy" style="max-height: 100px">
+										</a><br><br>
+										<input type="text" name="thumb" placeholder="{{ 'Thumb'|lang }}" title="{{ 'Thumb'|lang }}" value="{{ item.thumb }}" class="form-control">
+									</div>
+									<div class="mb-3 row">
+										<label for="content">{{ 'Content'|lang }}</label>
+										<textarea id="content_{{ item.id }}" name="content" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control">{{ item.content }}</textarea>
+										<script>
+											run_ckeditor('content_{{ item.id }}',100);
+										</script>
+									</div>
+									<div class="mb-3 row">
+										<label for="h1">{{ 'Header h1'|lang }}</label>
+										<input type="text" name="h1" title="{{ 'Header h1'|lang }}" placeholder="{{ 'Header h1'|lang }}" maxlength="512" class="form-control" value="{{ item.h1 }}">
+									</div>
+									<div class="mb-3 row">
+										<label for="title">{{ 'Title SEO'|lang }}</label>
+										<input type="text" name="title" title="{{ 'Title SEO'|lang }}" placeholder="{{ 'Title SEO'|lang }}" maxlength="512" class="form-control" value="{{ item.title }}">
+									</div>
+									<div class="mb-3 row">
+										<label for="keywords">{{ 'Keywords SEO'|lang }}</label>
+										<input type="text" name="keywords" title="{{ 'Keywords SEO'|lang }}" placeholder="{{ 'Keywords SEO'|lang }}" maxlength="512" value="{{ item.keywords }}" class="form-control">
+									</div>
+									<div class="mb-3 row">
+										<label for="description">{{ 'Description SEO'|lang }}</label>
+										<textarea name="description" title="{{ 'Description SEO'|lang }}" placeholder="{{ 'Description SEO'|lang }}" maxlength="512" class="form-control">{{ item.description }}</textarea>
+									</div>
+								</div>
+								<div class="modal-footer">
+									<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+									<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal fade" id="remove_{{ item.id }}" tabindex="-1" aria-labelledby="{{ 'Remove category'|lang }}: {{ item.name }}">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								<h5 class="modal-title">{{ 'Remove category'|lang }}</h5>
+							</div>
+							<form method="post">
+								<input type="hidden" name="action" value="remove_category">
+								<input type="hidden" name="id" value="{{ item.id }}">
+								<input type="hidden" name="token" value="{{ generateToken('admin_remove_category') }}">
+								<div class="modal-body">
+									<p>{{ 'Are you sure you want to remove category'|lang }}: "{{ item.name }}"?</p>
+									<p>{{ 'All subcategories will be deleted'|lang }}</p>
+								</div>
+								<div class="modal-footer">
+									<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+									<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			{% endfor %}
+		</table>
+	</div>
+{% else %}
+	<h4 class="text-danger">{{ 'Nothing found'|lang }}</h4>
+{% endif %}
+
+{% if category %}<br><p><a href="?controller=categories&category_id={{ category.category_id }}" title="{{ 'Return to the previous category'|lang }}">{{ 'Return to the previous category'|lang }}</a></p>{% endif %}
+
+<div class="modal fade" id="reload" tabindex="-1" aria-labelledby="{{ 'Reload all subcategories'|lang }}">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				<h5 class="modal-title">{{ 'Reload all subcategories'|lang }}</h5>
+			</div>
+			<form method="post" class="form">
+				<input type="hidden" name="action" value="reload_category">
+				<input type="hidden" name="category" value="{% if category %}{{ category.id }}{% else %}0{% endif %}">
+				<input type="hidden" name="token" value="{{ generateToken('admin_reload_category') }}">
+				<div class="modal-body">
+					<p class="text-danger">{{ 'This operation may take several minutes to very use database. Use this function only when the links to subcategory are incorrect.'|lang }}</p>
+				</div>
+				<div class="modal-footer">
+					<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+					<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+				</div>
+			</form>
+		</div>
+</div>
+</div>
+</div>
+{% endblock %}

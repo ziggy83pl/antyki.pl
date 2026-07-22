@@ -1,0 +1,265 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Statystyki</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+{# Chart.js + adapter dat #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<div class="content-shell">
+    {# Naglowek z toggle #}
+    <div class="content-card">
+        <div class="content-title page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>
+                    {{ 'Site statistics'|lang }}
+                </h1>
+                <p class="text-muted mb-0">{{ 'Real-time overview of your platform'|lang }}</p>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-refresh-stats" title="{{ 'Refresh'|lang }}">
+                    <i class="bi bi-arrow-clockwise me-1"></i> {{ 'Refresh'|lang }}
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" id="btn-export-csv" title="{{ 'Export CSV'|lang }}">
+                    <i class="bi bi-download me-1"></i> {{ 'Export CSV'|lang }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# Karty statystyk #}
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <a href="?controller=users" class="card stat-card stat-card--users h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">{{ 'Users'|lang }}</h6>
+                        <h3 class="mb-0 fw-bold">{{ statistics.users|e|number_format(0, ',', ' ') }}</h3>
+                        <div class="stat-meta mt-1 d-flex flex-wrap gap-1">
+                            <span class="badge bg-primary bg-opacity-10 text-primary" title="Zarejestrowani przez Facebook">
+                                <i class="bi bi-facebook me-1"></i>{{ statistics.users_register_fb|e }}
+                            </span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger" title="Zarejestrowani przez Google">
+                                <i class="bi bi-google me-1"></i>{{ statistics.users_register_google|e }}
+                            </span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary" title="Standardowa rejestracja">
+                                <i class="bi bi-envelope me-1"></i>{{ (statistics.users - statistics.users_register_fb - statistics.users_register_google)|e }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="?controller=offers" class="card stat-card stat-card--offers h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">{{ 'Offers'|lang }}</h6>
+                        <h3 class="mb-0 fw-bold">{{ statistics.offers|e|number_format(0, ',', ' ') }}</h3>
+                        <div class="stat-meta mt-1 d-flex flex-wrap gap-1">
+                            <span class="badge bg-success bg-opacity-10 text-success" title="Aktywne">
+                                <i class="bi bi-check-circle me-1"></i>{{ statistics.offers_active|e }}
+                            </span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger" title="Nieaktywne">
+                                <i class="bi bi-x-circle me-1"></i>{{ (statistics.offers - statistics.offers_active)|e }}
+                            </span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning" title="Wyróżnione / Polecane">
+                                <i class="bi bi-star-fill me-1"></i>{{ statistics.offers_promoted|e }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="?controller=logs_offers" class="card stat-card stat-card--views h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-eye-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">{{ 'Views offers'|lang }}</h6>
+                        <h3 class="mb-0 fw-bold">{{ statistics.logs_offers|e|number_format(0, ',', ' ') }}</h3>
+                        <div class="stat-meta mt-1 d-flex flex-wrap gap-1">
+                            <span class="badge bg-info bg-opacity-10 text-info" title="Logowania użytkowników">
+                                <i class="bi bi-person-check me-1"></i>{{ statistics.logs_users|e }}
+                            </span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary" title="Wykluczone IP w statystykach">
+                                <i class="bi bi-shield-lock me-1"></i>{{ statistics.black_list_ip|e }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="?controller=logs_mails" class="card stat-card stat-card--system h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">{{ 'Sends mails'|lang }}</h6>
+                        <h3 class="mb-0 fw-bold">{{ statistics.logs_mails|e|number_format(0, ',', ' ') }}</h3>
+                        <div class="stat-meta mt-1 d-flex flex-wrap gap-1">
+                            <span class="badge bg-warning bg-opacity-10 text-warning" title="E-maile w kolejce">
+                                <i class="bi bi-hourglass-split me-1"></i>{{ statistics.mails_queue|e }}
+                            </span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger" title="Blokowane e-maile na czarnej liście">
+                                <i class="bi bi-envelope-slash me-1"></i>{{ statistics.black_list_email|e }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {# Drugi rzad #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <a href="?controller=offers" class="card stat-card h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-images text-secondary fs-2 mb-2 d-block"></i>
+                    <h5 class="mb-0 fw-bold">{{ statistics.photos|e|number_format(0, ',', ' ') }}</h5>
+                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Photos'|lang }}</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="?controller=categories" class="card stat-card h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-folder-fill text-secondary fs-2 mb-2 d-block"></i>
+                    <h5 class="mb-0 fw-bold">{{ statistics.categories|e|number_format(0, ',', ' ') }}</h5>
+                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Categories'|lang }}</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="?controller=reset_password" class="card stat-card h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-key-fill text-secondary fs-2 mb-2 d-block"></i>
+                    <h5 class="mb-0 fw-bold">{{ statistics.reset_password|e|number_format(0, ',', ' ') }}</h5>
+                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Reset password'|lang }}</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="?controller=mailing" class="card stat-card h-100 border-0 text-decoration-none text-reset">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-envelope-exclamation-fill text-secondary fs-2 mb-2 d-block"></i>
+                    <h5 class="mb-0 fw-bold">{{ statistics.mails_queue|e|number_format(0, ',', ' ') }}</h5>
+                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Mails in queue'|lang }}</small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {# Wykres #}
+    <div class="content-card">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+                {{ 'Trends'|lang }}
+            </h5>
+            <div class="d-flex flex-wrap gap-2 align-items-end">
+                <div>
+                    <label class="form-label small text-muted mb-1">{{ 'Blue line'|lang }}</label>
+                    <select id="stat_select_1" class="form-select form-select-sm" style="min-width: 160px;">
+                        <option value="logins">{{ 'Logins'|lang }}</option>
+                        <option value="unique_logins" selected>{{ 'Unique logins'|lang }}</option>
+                        <option value="registration">{{ 'Registration users'|lang }}</option>
+                        <option value="activation_users">{{ 'Activation users'|lang }}</option>
+                        <option value="offers">{{ 'Added offers'|lang }}</option>
+                        <option value="views_offers">{{ 'Views offers'|lang }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">{{ 'Orange line'|lang }}</label>
+                    <select id="stat_select_2" class="form-select form-select-sm" style="min-width: 160px;">
+                        <option value="logins">{{ 'Logins'|lang }}</option>
+                        <option value="unique_logins">{{ 'Unique logins'|lang }}</option>
+                        <option value="registration">{{ 'Registration users'|lang }}</option>
+                        <option value="activation_users">{{ 'Activation users'|lang }}</option>
+                        <option value="offers" selected>{{ 'Added offers'|lang }}</option>
+                        <option value="views_offers">{{ 'Views offers'|lang }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">{{ 'Date start'|lang }}</label>
+                    <input id="stat_date_from" type="date" value="{{ 'now'|date_modify('-30 day')|date('Y-m-d') }}" max="{{ 'now'|date('Y-m-d') }}" class="form-control form-control-sm">
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">{{ 'Date finish'|lang }}</label>
+                    <input id="stat_date_to" type="date" value="{{ 'now'|date('Y-m-d') }}" max="{{ 'now'|date('Y-m-d') }}" class="form-control form-control-sm">
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">&nbsp;</label>
+                    <button id="stat_generate" type="button" class="btn btn-primary btn-sm d-block">
+                        <i class="bi bi-arrow-repeat me-1"></i>{{ 'Generate'|lang }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Skeleton #}
+        <div id="chart-skeleton" class="chart-skeleton d-none">
+            <div class="skeleton-bar" style="height: 60%;"></div>
+            <div class="skeleton-bar" style="height: 80%;"></div>
+            <div class="skeleton-bar" style="height: 45%;"></div>
+            <div class="skeleton-bar" style="height: 90%;"></div>
+            <div class="skeleton-bar" style="height: 55%;"></div>
+            <div class="skeleton-bar" style="height: 70%;"></div>
+            <div class="skeleton-bar" style="height: 40%;"></div>
+            <div class="skeleton-bar" style="height: 85%;"></div>
+            <div class="skeleton-bar" style="height: 50%;"></div>
+            <div class="skeleton-bar" style="height: 65%;"></div>
+            <div class="skeleton-bar" style="height: 75%;"></div>
+            <div class="skeleton-bar" style="height: 30%;"></div>
+        </div>
+
+        {# Chart #}
+        <div id="chart-wrapper" class="chart-wrapper">
+            <canvas id="statsChart"></canvas>
+        </div>
+
+        {# Empty #}
+        <div id="chart-empty" class="text-center py-5 d-none">
+            <i class="bi bi-inbox text-muted fs-1 mb-3 d-block"></i>
+            <p class="text-muted mb-0">{{ 'No data for selected period'|lang }}</p>
+        </div>
+    </div>
+</div>
+
+{# Config #}
+<script>
+window.STAT_CONFIG = {
+    csrfToken: '{{ generateToken("admin_statistics") }}',
+    lang: {
+        noData: '{{ "No data for selected period"|lang }}',
+        error: '{{ "Error loading data"|lang }}',
+        loading: '{{ "Loading..."|lang }}'
+    }
+};
+</script>
+<script src="js/statistics-dashboard.js?v=1.2"></script>
+{% endblock %}

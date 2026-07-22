@@ -1,0 +1,280 @@
+{% extends "main.tpl" %}
+
+{% block extra_head %}
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' cdn.jsdelivr.net; img-src 'self' data:;">
+{% endblock %}
+
+{% block wrapper %}
+<style>
+	/* Prevent browser scrollbars on the login page */
+	html, body {
+		overflow: hidden !important;
+		margin: 0;
+		padding: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	/* Custom styles for the modern login page with Spring Green Gradient */
+	.login-page-container {
+		background: radial-gradient(circle at 50% 50%, #065f46 0%, #022c22 100%) !important;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-family: 'Inter', sans-serif;
+		z-index: 9999;
+		overflow: hidden;
+		margin: 0;
+		padding: 1.5rem 0;
+	}
+
+	/* Decorative glowing background elements (Mint/Lime Spring Green) */
+	.glow-bg {
+		position: absolute;
+		width: 600px;
+		height: 600px;
+		border-radius: 50%;
+		background: radial-gradient(circle, rgba(52, 211, 153, 0.18) 0%, rgba(52, 211, 153, 0) 70%);
+		top: -10%;
+		left: -10%;
+		z-index: 1;
+		pointer-events: none;
+	}
+	.glow-bg-2 {
+		position: absolute;
+		width: 500px;
+		height: 500px;
+		border-radius: 50%;
+		background: radial-gradient(circle, rgba(167, 243, 208, 0.12) 0%, rgba(167, 243, 208, 0) 70%);
+		bottom: -10%;
+		right: -10%;
+		z-index: 1;
+		pointer-events: none;
+	}
+
+	.login-wrapper {
+		position: relative;
+		z-index: 10;
+		width: 100%;
+		max-width: 420px;
+		padding: 1.5rem;
+	}
+
+	.login-card {
+		background: rgba(15, 23, 42, 0.55);
+		backdrop-filter: blur(16px);
+		-webkit-backdrop-filter: blur(16px);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 1.5rem;
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+		transition: transform 0.3s ease;
+	}
+
+	.login-card:hover {
+		transform: translateY(-2px);
+	}
+
+	.logo-text {
+		font-size: 2.2rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		color: #ffffff;
+		text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+	}
+	.logo-accent {
+		color: #34d399; /* Spring Mint Green */
+		text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);
+	}
+
+	.form-label {
+		color: #a7f3d0; /* Soft green-tinted text */
+		font-weight: 500;
+		font-size: 0.85rem;
+		opacity: 0.85;
+	}
+
+	.form-control {
+		background: rgba(2, 44, 34, 0.6) !important;
+		border: 1px solid rgba(255, 255, 255, 0.08) !important;
+		color: #f0fdf4 !important;
+		border-radius: 0.75rem;
+		padding: 0.75rem 1rem;
+		transition: all 0.2s ease;
+	}
+	.form-control:focus {
+		border-color: #10b981 !important;
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+		background: rgba(2, 44, 34, 0.8) !important;
+	}
+
+	.input-group-text-btn {
+		background: rgba(2, 44, 34, 0.6) !important;
+		border: 1px solid rgba(255, 255, 255, 0.08) !important;
+		border-left: none !important;
+		color: #a7f3d0 !important;
+		border-radius: 0 0.75rem 0.75rem 0;
+		transition: all 0.2s ease;
+		opacity: 0.8;
+	}
+	.input-group-text-btn:hover {
+		color: #f0fdf4 !important;
+		opacity: 1;
+	}
+
+	.btn-login {
+		background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+		border: none;
+		border-radius: 0.75rem;
+		padding: 0.8rem;
+		font-weight: 600;
+		font-size: 0.95rem;
+		box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+		transition: all 0.2s ease;
+		color: #ffffff;
+	}
+	.btn-login:hover {
+		background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+		transform: translateY(-1px);
+		box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+	}
+
+	.login-footer {
+		position: relative;
+		margin-top: 1rem;
+		text-align: center;
+		z-index: 5;
+	}
+	.login-footer p {
+		color: #6ee7b7;
+		font-size: 0.8rem;
+		opacity: 0.6;
+	}
+
+	/* Recaptcha block styling */
+	.captcha-badge {
+		background: rgba(245, 158, 11, 0.15);
+		color: #fbbf24;
+		border: 1px solid rgba(245, 158, 11, 0.2);
+		font-family: monospace;
+		font-size: 1.1rem !important;
+		letter-spacing: 0.05em;
+		padding: 0.35em 0.75em !important;
+		border-radius: 0.5rem;
+	}
+</style>
+
+<div class="login-page-container">
+	<!-- Glowing backgrounds -->
+	<div class="glow-bg"></div>
+	<div class="glow-bg-2"></div>
+
+	<div class="login-wrapper">
+		<div class="card login-card p-4">
+			<div class="card-body text-center p-0">
+				<!-- Logo Header -->
+				<div class="mb-4 mt-2">
+					<span class="logo-text">Ogłoszenia<span class="logo-accent">Nova</span></span>
+					<div class="text-secondary small mt-1" style="color: #a7f3d0 !important; opacity: 0.7;">Panel Administracyjny</div>
+				</div>
+
+				<form method="post" class="text-start">
+					<input type="hidden" name="action" value="login">
+					<input type="hidden" name="session_code" value="{{ session_code }}">
+
+					<!-- Accessible alert representation -->
+					{% if alert_danger %}
+						<div class="alert alert-danger border-0 rounded-3 mb-3 small d-flex align-items-center" role="alert" id="login-alert" aria-live="assertive">
+							<i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
+							<div>
+								{% for alert in alert_danger %}
+									{{ alert }}{% if not loop.last %}<br>{% endif %}
+								{% endfor %}
+							</div>
+						</div>
+					{% endif %}
+
+					<!-- Username field -->
+					<div class="mb-3">
+						<label for="username" class="form-label">Nazwa użytkownika</label>
+						<div class="input-group">
+							<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-person-fill"></i></span>
+							<input type="text" class="form-control border-start-0" name="username" placeholder="Wpisz login" id="username" autocomplete="username" autocapitalize="off" spellcheck="false" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required autofocus style="border-radius: 0 0.75rem 0.75rem 0;">
+						</div>
+					</div>
+
+					<!-- Password field -->
+					<div class="mb-4">
+						<label for="password" class="form-label">Hasło dostępu</label>
+						<div class="input-group">
+							<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-lock-fill"></i></span>
+							<input type="password" class="form-control border-start-0 border-end-0" name="password" placeholder="Wpisz hasło" id="password" autocomplete="current-password" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required>
+							<button class="btn input-group-text-btn" type="button" id="togglePassword">
+								<i class="bi bi-eye"></i>
+							</button>
+						</div>
+					</div>
+
+					<!-- Dynamic math CAPTCHA verification if failed attempts >= 3 -->
+					{% if failed_attempts >= 3 %}
+					<div class="mb-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);">
+						<label for="captcha" class="form-label d-flex justify-content-between align-items-center mb-2">
+							<span class="text-warning fw-semibold"><i class="bi bi-shield-exclamation me-1"></i> Weryfikacja anty-bot:</span>
+							<span class="badge captcha-badge">{{ captcha_challenge }}</span>
+						</label>
+						<input type="number" class="form-control text-center fs-5 fw-bold" name="captcha" id="captcha" placeholder="Wpisz wynik działania" {% if alert_danger %}aria-describedby="login-alert"{% endif %} required>
+					</div>
+					{% endif %}
+
+					<!-- Action button -->
+					<button type="submit" class="btn btn-login w-100 mt-2" id="submitBtn">
+						<i class="bi bi-box-arrow-in-right me-1"></i> Zaloguj się
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="login-footer">
+		<p class="mb-0">Admin Panel v2.1 &copy; 2026. Wszystkie prawa zastrzeżone.</p>
+	</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const togglePassword = document.getElementById('togglePassword');
+	const password = document.getElementById('password');
+	const form = document.querySelector('form');
+	const submitBtn = document.getElementById('submitBtn');
+	
+	if (togglePassword && password) {
+		togglePassword.addEventListener('click', function() {
+			const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+			password.setAttribute('type', type);
+			
+			const icon = this.querySelector('i');
+			if (type === 'text') {
+				icon.classList.remove('bi-eye');
+				icon.classList.add('bi-eye-slash');
+			} else {
+				icon.classList.remove('bi-eye-slash');
+				icon.classList.add('bi-eye');
+			}
+		});
+	}
+
+	if (form && submitBtn) {
+		form.addEventListener('submit', function() {
+			// Disable button and show spinner to prevent duplicate submissions
+			submitBtn.disabled = true;
+			submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Zaloguj...';
+		});
+	}
+});
+</script>
+{% endblock %}

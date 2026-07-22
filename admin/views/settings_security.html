@@ -1,0 +1,152 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Ustawienia / Bezpieczeństwo</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="page-header mt-3 mb-4">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title fs-3 fw-bold mb-0">
+                    <i class="bi bi-shield-lock-fill text-success me-2"></i>Ustawienia bezpieczeństwa
+                </h1>
+                <p class="text-muted mt-1 mb-0">Konfiguracja zabezpieczeń panelu i limitów logowania</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    {% include 'alert.tpl' %}
+    
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+            <form method="post" action="?controller=settings_security" class="needs-validation" novalidate>
+                <input type="hidden" name="action" value="save_settings">
+                <input type="hidden" name="token" value="{{ generateToken('admin_save_settings') }}">
+
+                <div class="row gx-5">
+                    
+                    <!-- Sekcja: Powiadomienia -->
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <h5 class="fw-bold mb-4 text-primary border-bottom pb-2">
+                            <i class="bi bi-envelope-at-fill me-2"></i>Powiadomienia i Alerty
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label for="security_alert_email" class="form-label fw-semibold">Email do powiadomień</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-secondary"><i class="bi bi-person-bounding-box"></i></span>
+                                <input type="email" class="form-control" name="security_alert_email" id="security_alert_email" value="{{ settings.security_alert_email ?? 'twoj@email.pl' }}" required>
+                            </div>
+                            <div class="form-text">Na ten adres będą wysyłane alerty o atakach.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_alert_from" class="form-label fw-semibold">Nadawca alertów</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-secondary"><i class="bi bi-send"></i></span>
+                                <input type="email" class="form-control" name="security_alert_from" id="security_alert_from" value="{{ settings.security_alert_from ?? 'panel@twojadomena.pl' }}" required>
+                            </div>
+                            <div class="form-text">Z tego adresu będą wysyłane wiadomości systemowe (np. nagłówek From).</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_alert_after" class="form-label fw-semibold">Wyślij e-mail po (liczba błędów)</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-primary"><i class="bi bi-exclamation-triangle"></i></span>
+                                <input type="number" class="form-control" name="security_alert_after" id="security_alert_after" value="{{ settings.security_alert_after ?? '3' }}" min="1">
+                                <span class="input-group-text text-muted">próbach</span>
+                            </div>
+                            <div class="form-text">Po ilu nieudanych próbach logowania z rzędu z jednego IP wysłać alert na e-mail?</div>
+                        </div>
+                    </div>
+
+                    <!-- Sekcja: Ochrona dostępu -->
+                    <div class="col-lg-6">
+                        <h5 class="fw-bold mb-4 text-danger border-bottom pb-2">
+                            <i class="bi bi-shield-slash-fill me-2"></i>Ochrona przed Brute-Force
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="security_captcha_attempts" class="form-label fw-semibold">CAPTCHA po (liczba błędów)</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-warning"><i class="bi bi-robot"></i></span>
+                                <input type="number" class="form-control" name="security_captcha_attempts" id="security_captcha_attempts" value="{{ settings.security_captcha_attempts ?? '3' }}" min="1">
+                                <span class="input-group-text text-muted">próbach</span>
+                            </div>
+                            <div class="form-text">Po tylu błędach przy logowaniu pokaże się zabezpieczenie obrazkowe/matematyczne.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_block_attempts" class="form-label fw-semibold">Zablokuj IP po (liczba błędów)</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-danger"><i class="bi bi-slash-circle-fill"></i></span>
+                                <input type="number" class="form-control" name="security_block_attempts" id="security_block_attempts" value="{{ settings.security_block_attempts ?? '10' }}" min="1">
+                                <span class="input-group-text text-muted">próbach</span>
+                            </div>
+                            <div class="form-text">Maksymalna liczba nieudanych logowań zanim system zablokuje dany adres IP.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_block_minutes" class="form-label fw-semibold">Czas blokady IP</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-danger"><i class="bi bi-stopwatch"></i></span>
+                                <input type="number" class="form-control" name="security_block_minutes" id="security_block_minutes" value="{{ settings.security_block_minutes ?? '30' }}" min="1">
+                                <span class="input-group-text text-muted">minut</span>
+                            </div>
+                            <div class="form-text">Jak długo dany IP ma być całkowicie zablokowany.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_session_timeout" class="form-label fw-semibold">Timeout bezczynności sesji</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-secondary"><i class="bi bi-hourglass-bottom"></i></span>
+                                <input type="number" class="form-control" name="security_session_timeout" id="security_session_timeout" value="{{ settings.security_session_timeout ?? '30' }}" min="5">
+                                <span class="input-group-text text-muted">minut</span>
+                            </div>
+                            <div class="form-text">Automatycznie wyloguj po takim czasie bezczynności.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="security_fail_delay" class="form-label fw-semibold">Opóźnienie przy błędzie (Slow down)</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-info"><i class="bi bi-speedometer"></i></span>
+                                <input type="number" class="form-control" name="security_fail_delay" id="security_fail_delay" value="{{ settings.security_fail_delay ?? '1' }}" min="0">
+                                <span class="input-group-text text-muted">sekund</span>
+                            </div>
+                            <div class="form-text">Celowe spowolnienie ładowania po błędnym haśle (zabezpieczenie przed atakami słownikowymi).</div>
+                        </div>
+
+                        <div class="mb-3 border-top pt-3 mt-3">
+                            <label class="form-label fw-semibold text-danger"><i class="bi bi-shield-lock-fill me-1"></i> Dwuetapowa weryfikacja (2FA)</label>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" type="checkbox" name="security_2fa_enabled" id="security_2fa_enabled" value="1" {% if settings.security_2fa_enabled == '1' %}checked{% endif %} style="width: 2.5rem; height: 1.25rem; cursor: pointer;">
+                                <label class="form-check-label ms-2 fw-semibold" for="security_2fa_enabled" style="cursor: pointer;">
+                                    Wymagaj kodu Google Authenticator przy logowaniu
+                                </label>
+                            </div>
+                            <div class="form-text text-muted">Włącza dodatkowy poziom ochrony. Przy pierwszym logowaniu administrator otrzyma kod QR do sparowania aplikacji uwierzytelniającej.</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end border-top pt-4 mt-2">
+                    <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill shadow-sm">
+                        <i class="bi bi-check-circle me-2"></i> Zapisz ustawienia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

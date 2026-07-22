@@ -1,0 +1,311 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Pulpit</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-shell">
+	<div class="content-card">
+		<div class="content-title page-header">
+			<h1><span class="bi bi-speedometer2"></span> {{ 'Admin Panel'|lang }}</h1>
+			<p class="mb-0">Pulpit menedżerski — szybki podgląd stanu serwisu</p>
+		</div>
+
+		<!-- Pasek Filtrów Pulpitu -->
+		<div class="card border-0 shadow-sm rounded-3 p-3 mb-4 bg-light">
+			<form method="get" action="" class="row g-3 align-items-center">
+				<input type="hidden" name="controller" value="{{ controller }}">
+				<div class="col-md-5 col-sm-12">
+					<div class="form-check form-switch pt-1">
+						<input class="form-check-input" type="checkbox" name="only_pending" id="only_pending" value="1" {% if get.only_pending == '1' %}checked{% endif %} onchange="this.form.submit()">
+						<label class="form-check-label fw-bold small text-secondary" for="only_pending">
+							<i class="bi bi-funnel-fill text-warning me-1"></i> Pokaż tylko oczekujące (ogłoszenia i statystyki)
+						</label>
+					</div>
+				</div>
+				<div class="col-md-7 col-sm-12 ms-auto">
+					<div class="d-flex align-items-center gap-2 justify-content-md-end flex-wrap">
+						<label class="small fw-semibold text-muted mb-0">Zakres dat:</label>
+						<input type="date" name="date_from" value="{{ get.date_from }}" class="form-control form-control-sm" style="max-width: 140px;" onchange="this.form.submit()">
+						<span class="text-muted small">do</span>
+						<input type="date" name="date_to" value="{{ get.date_to }}" class="form-control form-control-sm" style="max-width: 140px;" onchange="this.form.submit()">
+						{% if get.only_pending or get.date_from or get.date_to %}
+							<a href="?controller={{ controller }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Resetuj filtry"><i class="bi bi-x-lg"></i> Reset</a>
+						{% endif %}
+					</div>
+				</div>
+			</form>
+		</div>
+
+		<!-- Siatka statystyk -->
+		<div class="row g-3 mb-4">
+			<div class="col-md-3">
+				<a href="?controller=offers&active=1" class="card stat-card stat-card--users h-100 border-0 text-decoration-none text-reset p-3 {% if get.only_pending == '1' %}opacity-50{% endif %}" style="transition: all 0.3s ease;">
+					<div class="d-flex align-items-center justify-content-between">
+						<div>
+							<small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Aktywne ogłoszenia</small>
+							<h3 class="fw-bold mb-0 mt-1 text-primary">{{ dashboard.offers_active }}</h3>
+							<div class="small text-muted mt-2">
+								Suma ogłoszeń: <span class="fw-semibold text-dark">{{ dashboard.offers_active + dashboard.offers_pending }}</span>
+							</div>
+						</div>
+						<div class="fs-1 text-primary opacity-50"><i class="bi bi-list-ul"></i></div>
+					</div>
+				</a>
+			</div>
+			<div class="col-md-3">
+				<a href="?controller=offers&active=0" class="card stat-card stat-card--system h-100 p-3 {% if get.only_pending == '1' %}border border-warning border-3 shadow{% else %}border-0{% endif %} text-decoration-none text-reset" style="transition: all 0.3s ease;">
+					<div class="d-flex align-items-center justify-content-between">
+						<div>
+							<small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Oczekujące (moderacja)</small>
+							<h3 class="fw-bold mb-0 mt-1 text-warning">{{ dashboard.offers_pending }}</h3>
+							<div class="mt-2">
+								{% if dashboard.offers_pending > 0 %}
+									<span class="badge bg-warning bg-opacity-20 text-black border border-warning border-opacity-10 fw-semibold" style="font-size: 0.7rem;">
+										<i class="bi bi-exclamation-circle me-1"></i>Wymaga weryfikacji
+									</span>
+								{% else %}
+									<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.7rem;">
+										<i class="bi bi-check-circle me-1"></i>Wszystko czyste
+									</span>
+								{% endif %}
+							</div>
+						</div>
+						<div class="fs-1 text-warning opacity-50"><i class="bi bi-hourglass-split"></i></div>
+					</div>
+				</a>
+			</div>
+			<div class="col-md-3">
+				<a href="?controller=users" class="card stat-card stat-card--offers h-100 border-0 text-decoration-none text-reset p-3 {% if get.only_pending == '1' %}opacity-50{% endif %}" style="transition: all 0.3s ease;">
+					<div class="d-flex align-items-center justify-content-between">
+						<div>
+							<small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Zarejestrowani klienci</small>
+							<h3 class="fw-bold mb-0 mt-1 text-success">{{ dashboard.users_total }}</h3>
+							<div class="small text-muted mt-2 text-truncate" style="max-width: 170px;">
+								Ostatni: <span class="fw-semibold text-dark">{{ dashboard.latest_users[0].username|default('brak') }}</span>
+							</div>
+						</div>
+						<div class="fs-1 text-success opacity-50"><i class="bi bi-people"></i></div>
+					</div>
+				</a>
+			</div>
+			<div class="col-md-3">
+				<a href="?controller=mailing" class="card stat-card stat-card--views h-100 border-0 text-decoration-none text-reset p-3 {% if get.only_pending == '1' %}opacity-50{% endif %}" style="transition: all 0.3s ease;">
+					<div class="d-flex align-items-center justify-content-between">
+						<div>
+							<small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">E-maile w kolejce</small>
+							<h3 class="fw-bold mb-0 mt-1 text-info">{{ dashboard.mails_queue }}</h3>
+							<div class="mt-2">
+								{% if dashboard.mails_queue > 0 %}
+									<span class="badge bg-info bg-opacity-20 text-black border border-info border-opacity-10 fw-semibold" style="font-size: 0.7rem;">
+										<i class="bi bi-send me-1"></i>Oczekiwanie na wysyłkę
+									</span>
+								{% else %}
+									<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 fw-semibold" style="font-size: 0.7rem;">
+										<i class="bi bi-check-all me-1"></i>Wysyłka ukończona
+									</span>
+								{% endif %}
+							</div>
+						</div>
+						<div class="fs-1 text-info opacity-50"><i class="bi bi-envelope-paper"></i></div>
+					</div>
+				</a>
+			</div>
+		</div>
+
+		<!-- Wykresy Statystyk -->
+		<div class="card border border-light shadow-sm rounded-3 mb-4">
+			<div class="card-header bg-transparent border-bottom p-3">
+				<h5 class="fw-bold mb-0"><i class="bi bi-graph-up me-2 text-primary"></i>Statystyki serwisu (ostatnie 14 dni)</h5>
+			</div>
+			<div class="card-body">
+				<div class="mb-4">
+					<h6 class="fw-semibold text-secondary mb-2"><i class="bi bi-list-ul me-1"></i>Nowe ogłoszenia</h6>
+					<div style="position: relative; height:220px; width:100%">
+						<canvas id="chartOffers"></canvas>
+					</div>
+				</div>
+				<hr class="my-4">
+				<div>
+					<h6 class="fw-semibold text-secondary mb-2"><i class="bi bi-people me-1"></i>Nowi użytkownicy</h6>
+					<div style="position: relative; height:220px; width:100%">
+						<canvas id="chartUsers"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Ostatnie elementy -->
+		<div class="row g-4">
+			<!-- Najnowsze Ogłoszenia -->
+			<div class="col-md-6">
+				<div class="card border border-light shadow-sm rounded-3 h-100">
+					<div class="card-header bg-transparent border-bottom p-3 d-flex align-items-center justify-content-between">
+						<h5 class="fw-bold mb-0"><i class="bi bi-list-stars me-2 text-primary"></i>Najnowsze ogłoszenia</h5>
+						<a href="?controller=offers" class="btn btn-outline-primary btn-sm px-3" style="font-size: 0.75rem; border-radius: 20px;"><i class="bi bi-arrow-right-short me-1"></i>Zobacz wszystkie</a>
+					</div>
+					<div class="card-body p-0">
+						{% if dashboard.latest_offers %}
+							<div class="table-responsive">
+								<table class="table table-hover table-striped mb-0 align-middle" style="font-size: 0.85rem;">
+									<thead>
+										<tr>
+											<th scope="col"><i class="bi bi-hash me-1"></i>ID</th>
+											<th scope="col"><i class="bi bi-file-earmark-text me-1"></i>Tytuł</th>
+											<th scope="col"><i class="bi bi-calendar-event me-1"></i>Data dodania</th>
+											<th scope="col" class="text-center"><i class="bi bi-flag me-1"></i>Status</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for offer in dashboard.latest_offers %}
+											<tr>
+												<td>{{ offer.id }}</td>
+												<td>
+													<a href="{{ path('offer', offer.id, offer.slug) }}" target="_blank" class="text-decoration-none fw-bold text-dark">{{ offer.name|slice(0, 35) }}{% if offer.name|length > 35 %}...{% endif %}</a>
+												</td>
+												<td>{{ offer.date|date("d-m-Y H:i") }}</td>
+												<td class="text-center">
+													{% if offer.active %}
+														<span class="badge-status badge-status--active"><i class="bi bi-check-circle me-1"></i>Aktywne</span>
+													{% else %}
+														<span class="badge-status badge-status--pending"><i class="bi bi-hourglass me-1"></i>Oczekuje</span>
+													{% endif %}
+												</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+						{% else %}
+							<div class="text-center py-5">
+								<i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+								<p class="text-muted mb-3">Brak ogłoszeń</p>
+								<a href="{{ path('add') }}" class="btn btn-primary btn-sm" target="_blank">
+									<i class="bi bi-plus-lg"></i> Dodaj pierwsze ogłoszenie
+								</a>
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+
+			<!-- Najnowsi Użytkownicy -->
+			<div class="col-md-6">
+				<div class="card border border-light shadow-sm rounded-3 h-100">
+					<div class="card-header bg-transparent border-bottom p-3 d-flex align-items-center justify-content-between">
+						<h5 class="fw-bold mb-0"><i class="bi bi-person-check me-2 text-success"></i>Najnowsi klienci</h5>
+						<a href="?controller=users" class="btn btn-outline-success btn-sm px-3" style="font-size: 0.75rem; border-radius: 20px;"><i class="bi bi-arrow-right-short me-1"></i>Zobacz wszystkich</a>
+					</div>
+					<div class="card-body p-0">
+						{% if dashboard.latest_users %}
+							<div class="table-responsive">
+								<table class="table table-hover table-striped mb-0 align-middle" style="font-size: 0.85rem;">
+									<thead>
+										<tr>
+											<th scope="col"><i class="bi bi-hash me-1"></i>ID</th>
+											<th scope="col"><i class="bi bi-person me-1"></i>Użytkownik</th>
+											<th scope="col"><i class="bi bi-envelope me-1"></i>Email</th>
+											<th scope="col"><i class="bi bi-calendar-event me-1"></i>Rejestracja</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for user in dashboard.latest_users %}
+											<tr>
+												<td>{{ user.id }}</td>
+												<td><span class="fw-bold text-dark">{{ user.username }}</span></td>
+												<td>{{ user.email }}</td>
+												<td>{{ user.date|date("d-m-Y H:i") }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+						{% else %}
+							<div class="p-4 text-center text-muted">Brak zarejestrowanych użytkowników.</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+	const labels = {{ dashboard.stats.labels|json_encode|raw }};
+	const offersData = {{ dashboard.stats.offers|json_encode|raw }};
+	const usersData = {{ dashboard.stats.users|json_encode|raw }};
+
+	// Chart for Offers
+	const ctxOffers = document.getElementById('chartOffers').getContext('2d');
+	new Chart(ctxOffers, {
+		type: 'line',
+		data: {
+			labels: labels,
+			datasets: [{
+				label: 'Nowe ogłoszenia',
+				data: offersData,
+				borderColor: '#0d6efd',
+				backgroundColor: 'rgba(13, 110, 253, 0.1)',
+				borderWidth: 3,
+				fill: true,
+				tension: 0.3,
+				pointBackgroundColor: '#0d6efd',
+				pointRadius: 4
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			scales: {
+				y: {
+					beginAtZero: true,
+					ticks: {
+						stepSize: 1
+					}
+				}
+			}
+		}
+	});
+
+	// Chart for Users
+	const ctxUsers = document.getElementById('chartUsers').getContext('2d');
+	new Chart(ctxUsers, {
+		type: 'line',
+		data: {
+			labels: labels,
+			datasets: [{
+				label: 'Nowi użytkownicy',
+				data: usersData,
+				borderColor: '#198754',
+				backgroundColor: 'rgba(25, 135, 84, 0.1)',
+				borderWidth: 3,
+				fill: true,
+				tension: 0.3,
+				pointBackgroundColor: '#198754',
+				pointRadius: 4
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			scales: {
+				y: {
+					beginAtZero: true,
+					ticks: {
+						stepSize: 1
+					}
+				}
+			}
+		}
+	});
+});
+</script>
+{% endblock %}

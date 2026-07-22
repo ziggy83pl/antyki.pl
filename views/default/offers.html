@@ -1,0 +1,381 @@
+{% extends "main.tpl" %}
+
+{% block json_ld %}
+	{{ parent() }}
+	{% if get.category %}
+	<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "FAQPage",
+	  "mainEntity": [{
+		"@type": "Question",
+		"name": "Czym jest kategoria {% if settings.h1 %}{{ settings.h1 }}{% else %}{{ 'Offers'|lang }}{% endif %}?",
+		"acceptedAnswer": {
+		  "@type": "Answer",
+		  "text": "Znajdziesz tutaj aktualne i darmowe ogłoszenia z branży antyków i militariów powiązane z kategorią: {% if settings.h1 %}{{ settings.h1 }}{% else %}{{ 'Offers'|lang }}{% endif %}."
+		}
+	  }, {
+		"@type": "Question",
+		"name": "Ile kosztuje publikacja ogłoszenia w dziale {% if settings.h1 %}{{ settings.h1 }}{% else %}{{ 'Offers'|lang }}{% endif %}?",
+		"acceptedAnswer": {
+		  "@type": "Answer",
+		  "text": "Giełda Antyków i Militariów to portal w 100% darmowy. Publikacja ogłoszeń C2C oraz kontakt z ogłoszeniodawcami nie wiąże się z żadnymi ukrytymi prowizjami."
+		}
+	  }]
+	}
+	</script>
+	{% endif %}
+{% endblock %}
+
+{% block javascript %}
+	{{ parent() }}
+	{% if settings.google_maps and offers_show_map %}
+		<script>
+			function displayMap() {
+				autocomplete = new google.maps.places.Autocomplete((document.getElementById('search_main_address')), {types: ['geocode']});
+				autocomplete2 = new google.maps.places.Autocomplete((document.getElementById('search_box_address')), {types: ['geocode']});
+				var map = new google.maps.Map(document.getElementById('google_maps'), {
+					center: new google.maps.LatLng({{ settings.google_maps_lat }},{{ settings.google_maps_long }}),
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+					scrollwheel:  false
+				});
+				var locations = [
+					{% for offer in offers %}
+						{% if offer.address_lat and offer.address_long %}
+							{name:'{{ offer.name|e('js') }}', lat:{{ offer.address_lat }}, long:{{ offer.address_long }}, index:{{ loop.index }}, content:'<a href="{{ path('offer',offer.id,offer.slug) }}" title="{{ offer.name }}"><p class="google_maps_p">{{ offer.name|slice(0,40) }}</p>{% if offer.thumb %}<img src="upload/photos/{{ offer.thumb }}" alt="{{ offer.name }}" onerror="this.src=\'{{ settings.base_url }}/views/{{ settings.template }}/images/no_image.png\'" class="google_maps_img">{% endif %}</a>'}{% if not loop.last %},{% endif %}
+						{% endif %}
+					{% endfor %}
+				]
+				var point, before_infoWindows;
+				var bounds = new google.maps.LatLngBounds();
+				var markers = [];
+				for (i = 0; i < locations.length; i++) {
+					latlngset = new google.maps.LatLng(locations[i].lat, locations[i].long);
+					var punkt = new google.maps.Marker({
+						map: map, title: locations[i].name, position: latlngset
+					});
+					markers.push(punkt);
+					var content = locations[i].content;
+					var infowindow = new google.maps.InfoWindow()
+					google.maps.event.addListener(punkt,'click', (function(punkt,content,infowindow){
+						return function() {
+							if(before_infoWindows){
+								before_infoWindows.close();
+							}
+							infowindow.setContent(content);
+							infowindow.open(map,punkt);
+							before_infoWindows = infowindow;
+						};
+					})(punkt,content,infowindow));
+					bounds.extend(punkt.position);
+				}
+				google.maps.event.addListener(map, 'zoom_changed', function() {
+					zoomChangeBoundsListener =
+						google.maps.event.addListener(map, 'bounds_changed', function(event) {
+							if (this.getZoom() > 16 && this.initialZoom == true) {
+								this.setZoom(16);
+								this.initialZoom = false;
+							}
+						google.maps.event.removeListener(zoomChangeBoundsListener);
+					});
+				});
+				map.initialZoom = true;
+				map.fitBounds(bounds);
+				var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+			}
+		</script>
+		<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key={{ settings.google_maps_api }}&v=3.exp&libraries=places&callback=initGoogleMap" async defer></script>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="bg-white border-bottom py-4 mb-4">
+	<div class="container">
+		<h1 class="fw-bold mb-0 text-dark">{% if settings.h1 %}{{ settings.h1 }}{% else %}{{ 'Offers'|lang }}{% endif %}</h1>
+	</div>
+</div>
+
+{% if settings.google_maps and offers_show_map %}
+	<div id="google_maps" class="map-container shadow-sm mb-4 d-none d-md-block"></div>
+{% endif %}
+
+{% if settings.ads_1 %}<div class="ads mb-4">{{ settings.ads_1|raw }}</div>{% endif %}
+
+<div class="container pb-5" id="offers_page">
+	<div class="row">
+		{% if breadcrumbs %}
+			<div class="col-12 mb-4">
+				<nav class="breadcrumb-container bg-white border rounded-3 p-3 shadow-sm" itemscope itemtype="https://schema.org/BreadcrumbList">
+					<ol class="breadcrumb mb-0">
+						<li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+							<a href="{{ settings.base_url }}" title="{{ 'Main Page'|lang }}" itemprop="item" class="text-decoration-none text-muted">
+								<span itemprop="name">{{ 'Main Page'|lang }}</span>
+							</a>
+							<meta itemprop="position" content="1" />
+						</li>
+						{% for item in breadcrumbs %}
+							<li class="breadcrumb-item {% if loop.last %}active text-dark fw-semibold{% endif %}" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+								{% if not loop.last %}
+									<a href="{{ item.path }}" title="{{ item.name }}" itemprop="item" class="text-decoration-none text-muted">
+										<span itemprop="name">{{ item.name }}</span>
+									</a>
+								{% else %}
+									<span itemprop="name">{{ item.name }}</span>
+									<link itemprop="item" href="{{ settings.base_url }}/{{ item.path }}" />
+								{% endif %}
+								<meta itemprop="position" content="{{ loop.index + 1 }}" />
+							</li>
+						{% endfor %}
+					</ol>
+				</nav>
+			</div>
+		{% endif %}
+
+		<div class="col-lg-3">
+			{% if settings.ads_side_1 %}<div class="ads mb-3">{{ settings.ads_side_1|raw }}</div>{% endif %}
+
+			<div class="d-block d-lg-none text-center mb-3">
+				<button data-bs-toggle="collapse" data-bs-target="#form_search_offers" class="btn btn-outline-primary w-100"><i class="bi bi-filter me-2"></i>{{ 'Show / hide search box'|lang }}</button>
+			</div>
+
+			<form class="form-search collapse show card border-0 shadow-sm p-4 mb-4" method="get" id="form_search_offers">
+				<input type="hidden" name="search">
+				{% if get.category>0 %}
+					<input type="hidden" name="category" value="{{ get.category }}">
+				{% endif %}
+
+				{% if categories %}
+					<div class="mb-4">
+						<h5 class="fw-bold mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center">
+							<span>{{ 'Categories'|lang }}</span>
+							<span class="d-flex gap-2">
+								<a href="{{ path('offers') }}" title="{{ 'Main Page'|lang }}" class="btn btn-sm btn-outline-secondary p-1"><i class="bi bi-house"></i></a>
+								{% if overCategory %}
+									<a href="{{ overCategory.search_path }}" title="{{ overCategory.name }}" class="btn btn-sm btn-outline-secondary p-1"><i class="bi bi-arrow-up"></i></a>
+								{% endif %}
+							</span>
+						</h5>
+						<div class="list-group list-group-flush rounded-3 border">
+							{% for cat in categories %}
+								<a href="{{ cat.search_path }}" title="{{ 'Category'|lang }}: {{ cat.name }}" class="list-group-item list-group-item-action d-flex align-items-center {% if get.category==cat.id %}active{% endif %}">
+									{% if cat.slug|lower in category_icons|keys %}
+										<i class="bi {{ category_icons[cat.slug|lower] }} category-list-icon"></i>
+									{% elseif cat.thumb %}
+										<img src="{{ cat.thumb }}" alt="{{ cat.name }}" class="category-list-img">
+									{% endif %}
+									<span class="small">{{ cat.name }}</span>
+									{% if settings.show_number_offers_in_categories and not get.search is defined and not get.state and not get.type %}
+										<span class="badge rounded-pill {% if get.category==cat.id %}bg-white text-primary{% else %}bg-secondary{% endif %} ms-auto">{{ cat.number_offers }}</span>
+									{% endif %}
+								</a>
+							{% endfor %}
+						</div>
+					</div>
+				{% endif %}
+
+				{% if get.username %}
+					<div class="mb-3">
+						<label for="username" class="form-label fw-semibold">{{ 'Username'|lang }}: </label>
+						<select name="username" id="username" class="form-select">
+							<option value="">{{ 'All users'|lang }}</option>
+							<option value="{{ get.username }}" selected>{{ get.username }}</option>
+						</select>
+					</div>
+				{% endif %}
+
+				{% if settings.search_box_keywords %}
+					<div class="mb-3 position-relative">
+						<label for="keywords" class="form-label fw-semibold">{{ 'Keywords'|lang }}: </label>
+						<input class="form-control" type="text" name="keywords" id="keywords" placeholder="{{ 'Enter your keywords...'|lang }}" title="{{ 'Enter your keywords...'|lang }}" value="{{ get.keywords }}" autocomplete="off">
+						<div id="sidebar_keywords_suggestions" class="search-suggestions-dropdown"></div>
+						<div class="form-check mt-2">
+							<input class="form-check-input" type="checkbox" name="exact_phrase" id="exact_phrase" {% if get.exact_phrase %}checked{% endif %}>
+							<label class="form-check-label small" for="exact_phrase">{{ 'Exact phrase'|lang }}</label>
+						</div>
+					</div>
+				{% endif %}
+
+				{% if types %}
+					<div class="mb-3">
+						<label class="form-label fw-semibold">{{ 'Offer type'|lang }}:</label>
+						<div class="form-check">
+							<input class="form-check-input" type="radio" name="type" id="type_all" value="" {% if not get.type %}checked{% endif %}>
+							<label class="form-check-label small" for="type_all">{{ 'All'|lang }}</label>
+						</div>
+						{% for type in types %}
+							<div class="form-check">
+								<input class="form-check-input" type="radio" name="type" id="type_{{ type.slug }}" value="{{ type.slug }}" {% if get.type==type.slug %}checked{% endif %}>
+								<label class="form-check-label small" for="type_{{ type.slug }}">{{ type.name }}</label>
+							</div>
+						{% endfor %}
+					</div>
+				{% endif %}
+
+				{% if states %}
+					<div class="mb-3">
+						<label for="state" class="form-label fw-semibold">{{ 'State'|lang }}:</label>
+						<select class="form-select select_state" name="state" id="state" title="{{ 'Select the appropriate state'|lang }}">
+							<option value="">{{ 'All'|lang }}</option>
+							<option disabled>──────────</option>
+							{% for state in states %}
+								<option value="{{ state.slug }}" {% if get.state==state.slug %}selected{% endif %}>{{ state.name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					{% for key,state in states %}
+						{% if state.states %}
+							<div class="mb-3 substates substate_{{ state.slug }}" {% if get.state!=state.slug %}style="display: none"{% endif %}>
+								<select class="form-select" name="state2" title="{{ 'Select the appropriate state'|lang }}" {% if get.state!=state.slug %}disabled{% endif %}>
+									<option value="">{{ '-- select --'|lang }}</option>
+									{% for key2,state2 in state.states %}
+										<option value="{{ state2.slug }}" {% if get.state2==state2.slug %}selected{% endif %}>{{ state2.name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+
+				{% if settings.search_box_address %}
+					<div class="mb-3">
+						<label for="search_box_address" class="form-label fw-semibold">{{ 'Address'|lang }}:</label>
+						<input type="text" name="address" class="form-control" placeholder="{{ '1600 Pennsylvania Avenue NW, Washington, D.C. 20500'|lang }}" title="{{ 'Enter the address'|lang }}" value="{{ get.address }}" id="search_box_address">
+					</div>
+					{% if settings.search_box_distance and settings.google_maps_api %}
+						<div class="mb-3">
+							<div class="input-group">
+								<span class="input-group-text small">{{ 'Distance'|lang }}</span>
+								<input type="number" name="distance" class="form-control text-end" placeholder="20" title="{{ 'Enter the distance from the searched address'|lang }}" value="{% if get.distance>=0 %}{{ get.distance }}{% else %}10{% endif %}" min="0" step="1">
+								<span class="input-group-text small">{{ 'km'|lang }}</span>
+							</div>
+						</div>
+					{% endif %}
+				{% endif %}
+
+				{% if search_show_price %}
+					<div class="mb-3">
+						<label for="search_price_from" class="form-label fw-semibold">{{ 'Price'|lang }}: </label>
+						<div class="input-group">
+							<input class="form-control text-end" type="number" name="price_from" id="search_price_from" placeholder="{{ 'Min...'|lang }}" title="{{ 'Enter the min value'|lang }}" value="{{ get.price_from }}" min="0" step="0.01">
+							<span class="input-group-text">-</span>
+							<input class="form-control text-end" type="number" name="price_to" id="search_price_to" placeholder="{{ 'Max...'|lang }}" title="{{ 'Enter the max value'|lang }}" value="{{ get.price_to }}" min="0" step="0.01">
+						</div>
+					</div>
+				{% endif %}
+
+				{% if options %}
+					{% for option in options %}
+						<div class="mb-3">
+							<label for="options[{{ option.name }}]" class="form-label fw-semibold">{{ option.name }}: </label>
+							{% if option.kind=='text' %}
+								<input class="form-control" type="text" name="options[{{ option.id }}]" value="{{ get.options[option.id] }}">
+							{% elseif option.kind=='number' %}
+								<div class="input-group">
+									<input class="form-control text-end" type="number" name="options[{{ option.id }}][from]" placeholder="{{ 'Min...'|lang }}" title="{{ 'Enter the min value'|lang }}" value="{{ get.options[option.id].from }}">
+									<span class="input-group-text">-</span>
+									<input class="form-control text-end" type="number" name="options[{{ option.id }}][to]" placeholder="{{ 'Max...'|lang }}" title="{{ 'Enter the max value'|lang }}" value="{{ get.options[option.id].to }}">
+								</div>
+							{% elseif (option.kind=='select' or option.kind=='checkbox') and option.choices %}
+								<div class="group_checkbox border rounded p-2 bg-light">
+									{% for choice in option.choices %}
+										<div class="form-check">
+											<input class="form-check-input" type="checkbox" name="options[{{ option.id }}][]" id="opt_{{ option.id }}_{{ loop.index }}" value="{{ choice }}" {% if choice in get.options[option.id] %}checked{% endif %}>
+											<label class="form-check-label small" for="opt_{{ option.id }}_{{ loop.index }}">{{ choice }}</label>
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+						</div>
+					{% endfor %}
+				{% endif %}
+
+				<div class="d-grid gap-2 mt-4">
+					<button type="submit" class="btn btn-accent"><i class="bi bi-search me-2"></i>{{ 'Search'|lang }}</button>
+					<button type="reset" class="reset_form btn btn-light"><i class="bi bi-eraser me-2"></i>{{ 'Clear'|lang }}</button>
+				</div>
+			</form>
+
+			<!-- Widget subskrypcji powiadomień o nowych ofertach -->
+			<div class="card border-0 shadow-sm p-4 mb-4" id="alerts_subscription_widget">
+				<h5 class="fw-bold mb-3 border-bottom pb-2">
+					<i class="bi bi-bell-fill text-warning me-2"></i>{{ 'Notification of new offers'|lang }}
+				</h5>
+				<p class="text-muted small mb-3">
+					{{ 'Notify me when a new offer appears in category:'|lang }}
+				</p>
+				<form id="subscribe-alert-form">
+					<div class="mb-3">
+						<select class="form-select" id="subscribe-category-id" name="category_id" required>
+							<option value="">{{ '-- select --'|lang }}</option>
+							{% for cat in all_categories %}
+								<option value="{{ cat.id }}">
+									{% if cat.depth > 1 %}
+										{% for i in 2..cat.depth %}—{% endfor %}&nbsp;
+									{% endif %}
+									{{ cat.name }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="mb-3">
+						<input type="email" class="form-control" id="subscribe-email" name="email" placeholder="{{ 'Your email address'|lang }}" required value="{{ user.email }}">
+					</div>
+					<div class="d-grid">
+						<button type="submit" class="btn btn-warning fw-semibold">
+							<i class="bi bi-envelope-at me-2"></i>{{ 'Subscribe'|lang }}
+						</button>
+					</div>
+				</form>
+				<div id="subscribe-alert-message" class="mt-3 text-center small d-none"></div>
+			</div>
+
+			{% if settings.ads_side_2 %}<div class="ads mb-3">{{ settings.ads_side_2|raw }}</div>{% endif %}
+		</div>
+		<div class="col-lg-9">
+			{% if settings.content %}<div class="mb-4">{{ settings.content|raw }}</div>{% endif %}
+
+			<!-- Intent switcher tabs on top of search results -->
+			<div class="card border-0 shadow-sm rounded-4 p-2 mb-4">
+				<div class="nav nav-pills nav-fill gap-1">
+					<button type="button" class="nav-link rounded-pill fw-bold py-2.5 {% if not get.type %}active bg-primary text-white{% else %}text-secondary bg-light{% endif %}" onclick="selectListType('')">
+						<i class="bi bi-grid-fill me-1"></i> Wszystkie ogłoszenia
+					</button>
+					<button type="button" class="nav-link rounded-pill fw-bold py-2.5 {% if get.type == 'kupie' %}active bg-primary text-white{% else %}text-secondary bg-light{% endif %}" onclick="selectListType('kupie')">
+						<i class="bi bi-briefcase-fill me-1"></i> Szukam podwykonawców (Zlecenia)
+					</button>
+					<button type="button" class="nav-link rounded-pill fw-bold py-2.5 {% if get.type == 'uslugi' %}active bg-primary text-white{% else %}text-secondary bg-light{% endif %}" onclick="selectListType('uslugi')">
+						<i class="bi bi-tools me-1"></i> Szukam zleceń (Oferty usług)
+					</button>
+				</div>
+			</div>
+
+			<script>
+			function selectListType(typeVal) {
+				const radioId = typeVal ? 'type_' + typeVal : 'type_all';
+				const radioElement = document.getElementById(radioId);
+				if (radioElement) {
+					radioElement.checked = true;
+				} else {
+					let hiddenInput = document.getElementById('search_type_hidden_list');
+					if (!hiddenInput) {
+						hiddenInput = document.createElement('input');
+						hiddenInput.type = 'hidden';
+						hiddenInput.name = 'type';
+						hiddenInput.id = 'search_type_hidden_list';
+						document.getElementById('form_search_offers').appendChild(hiddenInput);
+					}
+					hiddenInput.value = typeVal;
+				}
+				document.getElementById('form_search_offers').submit();
+			}
+			</script>
+
+			{% include 'offers.tpl' %}
+		</div>
+	</div>
+</div>
+
+{% endblock %}

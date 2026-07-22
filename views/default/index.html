@@ -1,0 +1,523 @@
+
+{% extends "main.tpl" %}
+
+{% block css %}
+	{{ parent() }}
+	<style>
+		body.site-body {
+			padding-top: 0 !important;
+		}
+
+		/* Spacing adjustment */
+		#search_box {
+			margin-top: 35px !important;
+		}
+		
+		/* Modern search bar styling */
+		.search-bar-modern {
+			background-color: #ffffff;
+			border: 1px solid rgba(0, 0, 0, 0.08) !important;
+			border-radius: 1.25rem !important;
+			padding: 8px !important;
+		}
+		
+		.search-bar-modern .form-control,
+		.search-bar-modern .form-select {
+			background-color: transparent !important;
+			box-shadow: none !important;
+		}
+		
+		.search-bar-modern .input-group-text {
+			padding-left: 15px;
+			padding-right: 5px;
+		}
+		
+		@media (min-width: 768px) {
+			.border-end-md {
+				border-right: 1px solid #e5e7eb !important;
+			}
+		}
+
+		/* Styling for why-us-card in light and dark mode */
+		.why-us-card {
+			background-color: #ffffff !important;
+			border-color: #e2e8f0 !important;
+			color: #0f172a !important;
+		}
+
+		.why-us-card h4 {
+			color: #0f172a !important;
+			font-weight: 700 !important;
+		}
+
+		.why-us-card p {
+			color: #334155 !important;
+		}
+
+		html[data-bs-theme="dark"] .why-us-card {
+			background-color: #1e293b !important;
+			border-color: #334155 !important;
+			color: #f8fafc !important;
+		}
+
+		html[data-bs-theme="dark"] .why-us-card h4 {
+			color: #ffffff !important;
+			font-weight: 700 !important;
+		}
+
+		html[data-bs-theme="dark"] .why-us-card p {
+			color: #cbd5e1 !important;
+		}
+		
+		/* Remove standard search box wrapper header and shadow in index */
+		.search-box-wrapper {
+			border: none !important;
+			background: transparent !important;
+			box-shadow: none !important;
+			overflow: visible !important;
+		}
+		.search-box-wrapper .hero-panel-top {
+			display: none !important;
+		}
+		.search-box-wrapper .hero-panel-body {
+			padding: 0 !important;
+		}
+		
+		/* Custom Location Selector Dropdown */
+		.location-dropdown {
+			border-color: #e5e7eb !important;
+			box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+			max-height: 320px;
+			overflow-y: auto;
+			z-index: 1050 !important;
+		}
+		
+		.btn-all-poland {
+			background: none;
+			border: none;
+			outline: none;
+			transition: background-color 0.2s ease;
+			text-align: left;
+			width: 100%;
+			padding: 15px 20px;
+		}
+		
+		.btn-all-poland:hover {
+			background-color: #f3f4f6;
+		}
+		
+		.state-header {
+			transition: background-color 0.2s ease;
+		}
+		
+		.state-header:hover {
+			background-color: #f9fafb;
+		}
+		
+		.substate-item {
+			transition: background-color 0.2s ease;
+			font-size: 0.95rem;
+		}
+		
+		.substate-item:hover {
+			background-color: #e5e7eb;
+			color: #1d4ed8;
+		}
+		
+		.toggle-substates-btn {
+			width: 32px;
+			height: 32px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50% !important;
+			background-color: #f3f4f6 !important;
+			border: 1px solid #e5e7eb !important;
+			color: #4b5563 !important;
+			transition: all 0.2s ease-in-out, transform 0.2s ease !important;
+			text-decoration: none !important;
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		}
+		
+		.toggle-substates-btn:hover {
+			background-color: #ea580c !important;
+			border-color: #ea580c !important;
+			color: #ffffff !important;
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		}
+		
+		.toggle-substates-btn.active {
+			transform: rotate(90deg);
+			background-color: #4b5563 !important;
+			border-color: #4b5563 !important;
+			color: #ffffff !important;
+		}
+		
+		.toggle-substates-btn.active:hover {
+			transform: rotate(90deg) scale(1.05);
+		}
+		
+		.state-header:hover .toggle-substates-btn {
+			border-color: #d1d5db !important;
+			background-color: #e5e7eb !important;
+		}
+		
+		#location_clear_btn {
+			cursor: pointer;
+			transition: color 0.2s;
+		}
+		#location_clear_btn:hover {
+			color: #ef4444 !important;
+		}
+	</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page_box">
+	<section class="hero-section">
+		<div class="container">
+			<div class="row align-items-center g-4 justify-content-center">
+				<div class="col-lg-10 text-center">
+					<div class="hero-copy">
+						<!-- Modernization Alert -->
+						{% if settings.show_modernization_alert %}
+						<div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm rounded-4 mx-auto mb-4 text-start d-flex align-items-start gap-3 p-3 animate__animated animate__fadeInDown" role="alert" style="max-width: 650px; background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border-left: 5px solid #f97316 !important; margin-top: 80px;">
+							<div class="rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background-color: #ffedd5;">
+								<i class="bi bi-cone-striped fs-5" style="color: #ea580c;"></i>
+							</div>
+							<div class="pe-4">
+								<h6 class="alert-heading fw-bold mb-1 text-dark" style="font-size: 0.95rem;">{{ 'Strona w modernizacji'|lang }}</h6>
+								<p class="mb-2 text-secondary" style="font-size: 0.85rem; line-height: 1.45;">{{ 'Strona jest w ciągłej modernizacji i może zawierać błędy w działaniu. Za problemy przepraszamy.'|lang }}</p>
+								<a href="{{ path('suggestions') }}" class="btn btn-sm btn-accent d-inline-flex align-items-center gap-1.5 py-1 px-3 rounded-pill" style="font-size: 0.75rem;">
+									<i class="bi bi-lightbulb"></i> {{ 'Zgłoś sugestię lub błąd'|lang }}
+								</a>
+							</div>
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 1.25rem;"></button>
+						</div>
+						{% endif %}
+
+						<div class="hero-content">
+							<span class="hero-kicker d-none d-md-inline-flex">{{ settings.title }}</span>
+							<h1 class="display-6 fw-bold mb-3 d-none d-md-block">{% if settings.h1 %}{{ settings.h1 }}{% else %}{{ settings.title }}{% endif %}</h1>
+							
+							<div class="d-none d-md-inline-flex align-items-center bg-white text-success fw-bold rounded-pill px-4 py-2 mb-4 shadow-sm border border-success border-opacity-25" style="font-size: 0.95rem;">
+								<i class="bi bi-star-fill text-warning me-2"></i> 100% Darmowe – Bez ukrytych prowizji
+							</div>
+							
+							<p class="lead mb-4 d-none d-md-block" style="font-size: 1.1rem;">{{ settings.description }}</p>
+							<div class="d-none d-md-flex flex-wrap gap-2 justify-content-center mb-5">
+								<a href="{{ path('offers') }}" class="btn btn-accent btn-lg px-4">{{ 'Search the best offers'|lang }}</a>
+								<a href="{{ path('add') }}" class="btn btn-outline-light btn-lg px-4 d-flex align-items-center gap-2">
+									{{ 'Add offer'|lang }} <span class="badge bg-success bg-opacity-75 text-white" style="font-size: 0.65rem;">ZA DARMO</span>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<div id="search_box" class="container search_box_slider mb-4">
+		<div class="search-box-wrapper shadow-lg">
+			<div class="hero-panel-top">
+				<i class="bi bi-search me-2"></i>{{ 'Search the best offers'|lang }}
+			</div>
+			<div class="hero-panel-body">
+				{% include 'search_main.tpl' %}
+			</div>
+		</div>
+	</div>
+
+	{% if slider %}
+		<div class="container mb-5 mt-5 d-none d-md-block">
+			<div id="slider" class="carousel slide carousel-fade" data-bs-ride="carousel">
+				<div class="carousel-inner rounded-4 overflow-hidden shadow-sm">
+					{% for slide in slider %}
+						<div class="carousel-item {% if loop.first %}active{% endif %}">
+							<img alt="{{ slide.title|default(settings.title) }}" class="d-block w-100" src="{{ slide.image }}" width="1200" height="450" {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} />
+							{% if slide.title or slide.description %}
+								<div class="carousel-caption d-none d-md-block">
+									{% if slide.title %}<h3 class="display-5 fw-bold text-white mb-3">{{ slide.title }}</h3>{% endif %}
+									{% if slide.description %}<p class="lead text-white-50">{{ slide.description }}</p>{% endif %}
+								</div>
+							{% endif %}
+						</div>
+					{% endfor %}
+				</div>
+				{% if slider|length > 1 %}
+					<button class="carousel-control-prev" type="button" data-bs-target="#slider" data-bs-slide="prev">
+						<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+						<span class="visually-hidden">Previous</span>
+					</button>
+					<button class="carousel-control-next" type="button" data-bs-target="#slider" data-bs-slide="next">
+						<span class="carousel-control-next-icon" aria-hidden="true"></span>
+						<span class="visually-hidden">Next</span>
+					</button>
+				{% endif %}
+			</div>
+		</div>
+	{% endif %}
+
+	{% if settings.index_box_subcategories and categories %}
+		<section id="why_us" class="mb-5 pb-4 d-none d-md-block">
+			<div class="container">
+				<div class="row g-4 text-center">
+					<div class="col-md-4">
+						<div class="p-4 why-us-card rounded-4 shadow-sm h-100 border">
+							<div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+								<i class="bi bi-wallet2 fs-3"></i>
+							</div>
+							<h4 class="fw-bold h5">0 zł prowizji</h4>
+							<p class="small mb-0">Darmowe dodawanie ogłoszeń. Nie pobieramy żadnych opłat i prowizji od sprzedaży unikatów.</p>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="p-4 why-us-card rounded-4 shadow-sm h-100 border">
+							<div class="rounded-circle bg-accent bg-opacity-10 text-accent d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+								<i class="bi bi-shield-shaded fs-3"></i>
+							</div>
+							<h4 class="fw-bold h5">Antyki i Militaria</h4>
+							<p class="small mb-0">Portal stworzony z pasją dla miłośników historii, dawnej broni, numizmatyki i zabytkowych mebli.</p>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="p-4 why-us-card rounded-4 shadow-sm h-100 border">
+							<div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+								<i class="bi bi-compass fs-3"></i>
+							</div>
+							<h4 class="fw-bold h5">Kolekcjonerzy w całej Polsce</h4>
+							<p class="small mb-0">Wygodne wyszukiwanie, bezpośredni kontakt i ogólnopolski zasięg dla kolekcjonerów staroci.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="index_categories" class="index-section">
+			<div class="container">
+				<div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2">
+					<div>
+						<p class="section-kicker mb-1">{{ 'Categories'|lang }}</p>
+						<h2 class="section-title mb-0">{{ 'Browse by category'|lang }}</h2>
+					</div>
+					<a href="{{ path('offers') }}" class="btn btn-outline-light btn-sm">{{ 'See all offers'|lang }}</a>
+				</div>
+					<div class="row g-3">
+						{% for item in categories %}
+							{% set tile_variant = loop.index0 % 6 %}
+							<div class="col-xl-3 col-md-4 col-6 index_categories">
+								<a href="{{ path('offers') }}?category={{ item.id }}" title="{{ 'Category'|lang }}: {{ item.name }}" class="category-tile category-tile-{{ tile_variant }} {% if item.list_subcategories %}index_show_subcategories{% endif %}" data-id="{{ item.id }}" data-index="{{ loop.index }}">
+									<span class="category-tile-icon category-tile-icon-{{ tile_variant }}">
+										{% if category_icons[item.slug|lower] is defined %}
+											<i class="bi {{ category_icons[item.slug|lower] }} category-icon"></i>
+										{% elseif item.thumb and item.thumb|length > 5 %}
+											<img src="{{ item.thumb }}" alt="{{ item.name }}" loading="lazy" width="64" height="64">
+										{% else %}
+											<i class="bi bi-tag-fill icon-gray category-icon" title="No icon for: {{ item.slug }}"></i>
+									{% endif %}
+								</span>
+								<span class="category-tile-name">{{ item.name }}</span>
+								{% if settings.show_number_offers_in_categories %}<span class="badge bg-light text-dark rounded-pill">{{ item.number_offers }}</span>{% endif %}
+							</a>
+						</div>
+					{% endfor %}
+				</div>
+				{% for item in categories %}
+					{% set tile_variant = loop.index0 % 6 %}
+					<div class="index_subcategories col-12" id="index_subcategory_{{ item.id }}">
+						<div class="subcategories-panel subcategories-panel-{{ tile_variant }}">
+							<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+								<h3 class="h5 mb-0">{{ item.name }}</h3>
+								<a href="{{ path('offers') }}?category={{ item.id }}" class="btn btn-sm btn-accent btn-accent-soft">{{ 'See all offers in'|lang }}</a>
+							</div>
+							{% if item.list_subcategories %}
+								{% set subcategories_sum = 0 %}
+								{% for sub in item.list_subcategories %}
+									{% set subcategories_sum = subcategories_sum + sub.number_offers %}
+								{% endfor %}
+								<div class="row g-2">
+									{% for item2 in item.list_subcategories %}
+										<div class="col-md-3 col-sm-6">
+											<a class="subcategory-chip subcategory-chip-{{ tile_variant }}" href="{{ path('offers') }}?category={{ item2.id }}" title="{{ 'Category'|lang }}: {{ item2.name }}">
+												<i class="bi bi-chevron-right me-2"></i>
+												<span>{{ item2.name }}</span>
+												{% if settings.show_number_offers_in_categories %}<span class="ms-auto badge bg-secondary rounded-pill">{{ item2.number_offers }}</span>{% endif %}
+											</a>
+										</div>
+									{% endfor %}
+									{% if item.number_offers > subcategories_sum %}
+										{% set direct_offers = item.number_offers - subcategories_sum %}
+										<div class="col-md-3 col-sm-6">
+											<a class="subcategory-chip subcategory-chip-{{ tile_variant }}" style="border-style: dashed !important; opacity: 0.85;" href="{{ path('offers') }}?category={{ item.id }}" title="{{ 'Category'|lang }}: {{ item.name }}">
+												<i class="bi bi-arrow-right-short me-2"></i>
+												<span class="fst-italic text-muted">{{ 'Other'|lang }}</span>
+												<span class="ms-auto badge bg-primary rounded-pill text-white">{{ direct_offers }}</span>
+											</a>
+										</div>
+									{% endif %}
+								</div>
+							{% else %}
+								<p class="text-muted mb-0">{{ 'No subcategories yet'|lang }}</p>
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		</section>
+	{% endif %}
+
+	{% if settings.ads_1 %}<div class="ads">{{ settings.ads_1|raw }}</div>{% endif %}
+
+	{% if offers %}
+		<section class="container home-offers">
+			<div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2">
+				<div>
+					<p class="section-kicker mb-1">{{ 'Latest'|lang }}</p>
+					<h2 class="section-title mb-0">{{ 'Fresh offers'|lang }}</h2>
+				</div>
+				<a href="{{ path('offers') }}" class="btn btn-outline-secondary">{{ 'See all offers'|lang }}</a>
+			</div>
+			{% include 'offers_index.tpl' %}
+		</section>
+	{% endif %}
+
+	{% if settings.ads_2 %}<div class="ads">{{ settings.ads_2|raw }}</div>{% endif %}
+
+	{% if settings.index_page %}
+		<section id="index_text" class="d-none d-md-block">
+			<div class="container content">
+				{{ settings.index_page|raw }}
+			</div>
+		</section>
+	{% endif %}
+
+	{% if settings.ads_3 %}<div class="ads">{{ settings.ads_3|raw }}</div>{% endif %}
+
+	{% if articles %}
+		<section class="container home-articles d-none d-md-block">
+			<div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2">
+				<div>
+					<p class="section-kicker mb-1">{{ 'Blog'|lang }}</p>
+					<h2 class="section-title mb-0">{{ 'Recent articles'|lang }}</h2>
+				</div>
+			</div>
+			{% include 'articles.tpl' %}
+		</section>
+	{% endif %}
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+	<script src="js/jquery-3.3.1.min.js"></script>
+	{{ parent() }}
+
+	<script>
+		$(document).ready(function() {
+			const $displayInput = $('#location_input_display');
+			const $dropdownMenu = $('#location_dropdown_menu');
+			const $clearBtn = $('#location_clear_btn');
+			const $stateHidden = $('#search_state_hidden');
+			const $state2Hidden = $('#search_state2_hidden');
+			const $addressHidden = $('#search_address_hidden');
+			
+			// Show dropdown on click/focus
+			$('#location_input_display, #location_selector_container .input-group-text:not(#location_clear_btn)').on('click focus', function(e) {
+				e.stopPropagation();
+				$dropdownMenu.fadeIn(200);
+			});
+			
+			// Close dropdown on click outside
+			$(document).on('click', function(e) {
+				if (!$(e.target).closest('#location_selector_container').length) {
+					$dropdownMenu.fadeOut(150);
+				}
+			});
+			
+			// Prevent closing when clicking inside the dropdown menu (except on selections)
+			$dropdownMenu.on('click', function(e) {
+				e.stopPropagation();
+			});
+			
+			// Click Cała Polska
+			$('#btn_all_poland').on('click', function() {
+				$stateHidden.val('');
+				$state2Hidden.val('');
+				$addressHidden.val('');
+				$displayInput.val('');
+				$displayInput.attr('placeholder', 'Cała Polska');
+				$clearBtn.hide();
+				$dropdownMenu.fadeOut(150);
+			});
+			
+			// Click State Header (selects whole state)
+			$('.state-header').on('click', function(e) {
+				if ($(e.target).closest('.toggle-substates-btn').length) {
+					return;
+				}
+				const stateSlug = $(this).data('state-slug');
+				const stateName = $(this).data('state-name');
+				
+				$stateHidden.val(stateSlug);
+				$state2Hidden.val('');
+				$addressHidden.val(stateName);
+				$displayInput.val(stateName);
+				$clearBtn.css('display', 'flex');
+				$dropdownMenu.fadeOut(150);
+			});
+			
+			// Click Arrow to Toggle Substates
+			$('.toggle-substates-btn').on('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				const stateSlug = $(this).data('state-slug');
+				const $sublist = $('#substates_list_' + stateSlug);
+				const isVisible = $sublist.is(':visible');
+				
+				$('.substates-list').slideUp(200);
+				$('.toggle-substates-btn').removeClass('active');
+				
+				if (!isVisible) {
+					$sublist.slideDown(200);
+					$(this).addClass('active');
+				}
+			});
+			
+			// Click Substate Item (City/Town)
+			$('.substate-item').on('click', function() {
+				const stateSlug = $(this).data('state-slug');
+				const stateName = $(this).data('state-name');
+				const substateSlug = $(this).data('substate-slug');
+				const substateName = $(this).data('substate-name');
+				
+				$stateHidden.val(stateSlug);
+				$state2Hidden.val(substateSlug);
+				
+				if (substateSlug === '') {
+					$addressHidden.val(stateName);
+					$displayInput.val(stateName);
+				} else {
+					$addressHidden.val(substateName + ', ' + stateName);
+					$displayInput.val(substateName + ', ' + stateName);
+				}
+				
+				$clearBtn.css('display', 'flex');
+				$dropdownMenu.fadeOut(150);
+			});
+			
+			// Click Clear button (X)
+			$clearBtn.on('click', function(e) {
+				e.stopPropagation();
+				$stateHidden.val('');
+				$state2Hidden.val('');
+				$addressHidden.val('');
+				$displayInput.val('');
+				$displayInput.attr('placeholder', 'Cała Polska');
+				$clearBtn.hide();
+				$dropdownMenu.fadeOut(150);
+			});
+		});
+	</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{
+    "name": "",
+    "short_name": "",
+    "start_url": "\/",
+    "display": "standalone",
+    "background_color": "",
+    "theme_color": "",
+    "icons": [
+        {
+            "src": "\/upload\/images\/logo_facebook.png",
+            "sizes": "512x512",
+            "type": "image\/png"
+        }
+    ]
+}

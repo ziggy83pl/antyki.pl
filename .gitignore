@@ -1,0 +1,11 @@
+.env
+/vendor/
+/upload/
+/tmp/
+config/config.php
+config/db.php
+.idea/
+.vscode/
+.DS_Store
+*.log
+db.php

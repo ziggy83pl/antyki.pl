@@ -1,0 +1,156 @@
+{% extends "main.tpl" %}  
+
+{% block json_ld %}
+	{{ parent() }}
+	<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "Article",
+	  "headline": "{{ article.name|e('js') }}",
+	  {% if article.thumb %}
+	  "image": "{{ settings.base_url }}/{{ article.thumb }}",
+	  {% endif %}
+	  "datePublished": "{{ article.date|date('c') }}"
+	}
+	</script>
+{% endblock %}
+
+{% block javascript %}
+	{{ parent() }}
+	<script>
+		// Automatyczny generator FAQPage Schema.org dla artykułów (GEO)
+		document.addEventListener("DOMContentLoaded", function() {
+			const articleContent = document.querySelector('article.content');
+			if (!articleContent) return;
+			
+			const faqs = [];
+			const h3s = articleContent.querySelectorAll('h3');
+			
+			h3s.forEach(h3 => {
+				const questionText = h3.innerText.trim();
+				// Sprawdzamy czy to pytanie (np. zaczyna się od "FAQ" lub ma znak zapytania)
+				if (questionText.includes('?') || questionText.toLowerCase().includes('faq')) {
+					let answerText = "";
+					let nextNode = h3.nextElementSibling;
+					
+					// Zbieramy tekst dopóki nie natrafimy na kolejny nagłówek
+					while(nextNode && !['H1','H2','H3','H4','H5','H6'].includes(nextNode.tagName)) {
+						if (nextNode.innerText) {
+							answerText += nextNode.innerText.trim() + " ";
+						}
+						nextNode = nextNode.nextElementSibling;
+					}
+					
+					if (answerText.trim() !== "") {
+						faqs.push({
+							"@type": "Question",
+							"name": questionText.replace(/^FAQ\s*-\s*/i, ''),
+							"acceptedAnswer": {
+								"@type": "Answer",
+								"text": answerText.trim()
+							}
+						});
+					}
+				}
+			});
+			
+			if (faqs.length > 0) {
+				const script = document.createElement('script');
+				script.type = "application/ld+json";
+				script.text = JSON.stringify({
+					"@context": "https://schema.org",
+					"@type": "FAQPage",
+					"mainEntity": faqs
+				});
+				document.head.appendChild(script);
+			}
+		});
+	</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white border-bottom py-4 mb-5">
+	<div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+		<div>
+			<span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ 'Published'|lang }}: {{ article.date|date("d-m-Y") }}</span>
+			<h1 class="fw-bold mb-0 text-dark mt-1">{{ article.name }}</h1>
+		</div>
+		<a href="{{ path('articles') }}" title="{{ 'Return to the list of articles'|lang }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>{{ 'Return to the list of articles'|lang }}</a>
+	</div>
+</div>
+
+<div class="container pb-5">
+	<div class="row justify-content-center">
+		<div class="col-lg-8">
+			<div class="card border-0 shadow-sm p-4 p-md-5 mb-4">
+				{% if article.thumb %}
+					<div class="mb-4 rounded-4 overflow-hidden shadow-sm">
+						<img src="{{ article.thumb }}" alt="{{ article.name }}" class="w-100 img-fluid object-fit-cover" style="max-height: 450px;" loading="eager">
+					</div>
+				{% endif %}
+
+				<article class="content lh-lg text-secondary">
+					{{ article.content|raw }}
+				</article>
+
+				<!-- Internal Linking CTA -->
+				<div class="mt-5 p-4 bg-light rounded text-center border">
+					<h4 class="fw-bold mb-3"><i class="bi bi-search me-2 text-accent"></i>Szukasz unikatowych antyków lub militariów?</h4>
+					<p class="text-muted mb-4">Portal <strong>antyki.pl</strong> to miejsce, gdzie znajdziesz setki aktualnych ogłoszeń z antykami, bronią białą, monetami i starociami od kolekcjonerów z całej Polski.</p>
+					<a href="{{ path('offers') }}" class="btn btn-accent btn-lg px-5 text-white">Przejdź do ogłoszeń</a>
+				</div>
+
+				{% if settings.social_facebook or settings.social_twitter or settings.social_wykop or settings.social_google_plus or settings.social_pinterest %}
+					<div class="d-flex flex-wrap gap-2 align-items-center mt-5 pt-3 border-top">
+						<span class="small text-muted me-2 fw-semibold">{{ 'Share'|lang }}:</span>
+						{% if settings.social_facebook %}
+							<div class="social_inline_block social-fb">
+								<div class="fb-like" data-href="{{ path('article', article.id, article.slug) }}" data-layout="button" data-action="like" data-show-faces="true" data-share="true"></div>		
+							</div>
+						{% endif %}
+						{% if settings.social_twitter %}
+							<div class="social_inline_block">
+								<a href="https://twitter.com/share" class="twitter-share-button" data-url="{{ path('article', article.id, article.slug) }}" data-lang="{{ settings.lang }}">Tweet</a>
+								<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+							</div>
+						{% endif %}
+						{% if settings.social_wykop %}
+							<div class="social_inline_block">
+								<script>
+									var widget_url='https://www.wykop.pl/dataprovider/diggerwidget/?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&desc='+encodeURIComponent('{{ settings.description }}')+'&bg='+('FFFFFF')+'&type='+('compact2')+'&bold='+(true);
+									document.write('<div><iframe src="'+widget_url+'" style="border:none;width:100px;height:20px;overflow:hidden;margin:0;padding:0;" frameborder="0" border="0"></iframe></div>');
+								</script>
+							</div>
+						{% endif %}
+						{% if settings.social_google_plus %}
+							<div class="social_inline_block">
+								<script src="https://apis.google.com/js/platform.js" async defer>lang: '{{ settings.lang }}'</script>
+								<div class="g-plusone" data-size="medium"></div>
+							</div>
+						{% endif %}
+						{% if settings.social_pinterest %}
+							<div class="social_inline_block social-pinterest">
+								<a href="//www.pinterest.com/pin/create/button/?url={{ path('article', article.id, article.slug) }}" data-pin-do="buttonPin" data-pin-config="beside"><img src="//assets.pinterest.com/images/pidgets/pinit_fg_en_rect_gray_20.png" alt="pin" /></a>
+								<script async src="//assets.pinterest.com/js/pinit.js"></script>
+							</div>
+						{% endif %}
+					</div>
+				{% endif %}
+			</div>
+
+			{% if settings.ads_3 %}
+				<div class="ads my-4">{{ settings.ads_3|raw }}</div>
+			{% endif %}
+
+			{% if settings.allow_comments_fb_article %}
+				<div class="card border-0 shadow-sm p-4">
+					<h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-chat-left-dots me-2 text-primary"></i>{{ 'Comments'|lang }}</h3>
+					<div class="fb-comments-wrapper">
+						<div class="fb-comments" data-href="{{ path('article',article.id,article.slug) }}" data-numposts="15" data-width="100%"></div>
+					</div>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}

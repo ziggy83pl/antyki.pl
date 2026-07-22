@@ -1,0 +1,345 @@
+{% extends "main.tpl" %}  
+
+{% block json_ld %}
+	{{ parent() }}
+	<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "{% if profile.verified_company %}LocalBusiness{% else %}Person{% endif %}",
+	  "name": "{{ profile.username|e('js') }}",
+	  "image": "{% if profile.avatar %}{{ settings.base_url }}/upload/avatars/{{ profile.avatar }}{% else %}{{ settings.base_url }}/views/{{ settings.template }}/images/no_image.png{% endif %}",
+	  {% if profile.rating_count > 0 %}
+	  "aggregateRating": {
+		"@type": "AggregateRating",
+		"ratingValue": "{{ profile.rating_avg|round(1) }}",
+		"reviewCount": "{{ profile.rating_count }}"
+	  }
+	  {% endif %}
+	}
+	</script>
+{% endblock %}
+
+{% block css %}
+	{{ parent() }}
+	<style>
+		/* Icon hover micro-animations */
+		.profile-stat-row i, .profile-header-icon {
+			transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+			display: inline-block;
+			color: #6b7280;
+		}
+		.profile-stat-row:hover i, h3:hover .profile-header-icon {
+			color: #2563eb !important;
+			transform: scale(1.25) rotate(3deg);
+		}
+	</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white border-bottom py-4 mb-5">
+	<div class="container">
+		<h1 class="fw-bold mb-0 text-dark">{{ 'Profile of'|lang }}: {{ profile.username }}</h1>
+	</div>
+</div>
+
+<div class="container pb-5">
+	<div class="row g-4">
+		<!-- Profile Info and Avatar -->
+		<div class="col-lg-4">
+			<div class="card border-0 shadow-sm p-4 text-center">
+				<div class="mb-4">
+					{% if profile.avatar %}
+						<img src="upload/avatars/{{ profile.avatar }}" alt="{{ profile.username }}" onerror="this.src='{{ settings.base_url }}/views/{{ settings.template }}/images/no_image.png'" class="rounded-circle border p-1 shadow-sm object-fit-cover" style="width: 150px; height: 150px;" loading="lazy">
+					{% else %}
+						<div class="offer-no-image-placeholder placeholder-gray rounded-circle border p-1 shadow-sm d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; min-height: 150px;">
+							<i class="bi bi-person-fill" style="font-size: 5rem !important; filter: none !important;"></i>
+						</div>
+					{% endif %}
+				</div>
+						{% if user.id and (user.id == profile.id or user.username == profile.username) %}
+						<div class="d-flex align-items-center justify-content-center gap-2">
+						  <h2 class="h4 fw-bold mb-1" id="username-display">{{ profile.username }}</h2>
+						  <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUsernameModal">
+						    <i class="bi bi-pencil"></i> {{ 'Edit'|lang }}
+						  </button>
+						</div>
+						{% endif %}
+
+					{% if user.id and user.id == profile.id %}
+<!-- Edit Username Modal -->
+					<div class="modal fade" id="editUsernameModal" tabindex="-1" aria-labelledby="editUsernameModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="editUsernameModalLabel">{{ 'Edit Username'|lang }}</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <form method="post" action="{{ path('profile') }}?slug={{ profile.username }}">
+					        <div class="modal-body">
+					          <input type="hidden" name="token" value="{{ generateToken('edit_username') }}">
+					          <input type="hidden" name="action" value="edit_username">
+					          <div class="mb-3">
+					            <label for="newUsername" class="form-label">{{ 'New username'|lang }}</label>
+					            <input type="text" class="form-control" id="newUsername" name="new_username" value="{{ profile.username }}" required maxlength="30">
+					          </div>
+					        <div class="mb-3">
+  <label class="form-label">{{ 'Captcha'|lang }}</label>
+  <div class="d-flex align-items-center gap-2">
+    <img src="{{ path('captcha') }}" alt="{{ 'Captcha'|lang }}" class="border rounded" loading="lazy">
+    <input type="text" name="captcha" class="form-control" required placeholder="{{ 'Enter captcha'|lang }}">
+  </div>
+</div>
+</div>
+					        <div class="modal-footer">
+					          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|lang }}</button>
+					          <button type="submit" class="btn btn-primary">{{ 'Save'|lang }}</button>
+					        </div>
+					      </form>
+					    </div>
+					  </div>
+{% endif %}
+					</div>
+				{% if profile.rating_count > 0 %}
+					<div class="mb-3">
+						<span class="text-warning">
+							{% set rating = profile.rating_avg|default(0)|round(1) %}
+							{% for i in 1..5 %}
+								{% if rating >= i %}
+									<i class="bi bi-star-fill"></i>
+								{% elseif rating >= i - 0.5 %}
+									<i class="bi bi-star-half"></i>
+								{% else %}
+									<i class="bi bi-star"></i>
+								{% endif %}
+							{% endfor %}
+						</span>
+						<div class="small text-muted mt-1">{{ profile.rating_avg|round(1) }} / 5 ({{ profile.rating_count }} {{ 'opinions'|lang }})</div>
+						<div class="mt-2">
+							<span class="text-success small fw-semibold"><i class="bi bi-hand-thumbs-up-fill me-1"></i>{{ reputation.recommendation_percent }}% {{ 'satisfied customers'|lang }}</span>
+						</div>
+						{% if reputation.is_super_wykonawca %}
+							<div class="mt-2">
+								<span class="badge bg-warning text-black border border-warning shadow-sm" style="font-size: 0.8rem; font-weight: 600;" title="{{ 'Super Wykonawca'|lang }}">
+									<i class="bi bi-trophy-fill me-1 text-danger"></i> {{ 'Super Wykonawca'|lang }}
+								</span>
+							</div>
+						{% endif %}
+					</div>
+				{% else %}
+					<div class="small text-muted mb-3"><i class="bi bi-star me-1"></i>{{ 'No opinions yet'|lang }}</div>
+				{% endif %}
+				{% if settings.enable_verification_badges %}
+					<div class="d-flex flex-column gap-2 align-items-center mb-3">
+						{% if profile.verified_email %}
+							<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 w-100"><i class="bi bi-envelope-check-fill me-2"></i>Zweryfikowany e-mail</span>
+						{% endif %}
+						{% if profile.verified_phone %}
+							<span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 w-100"><i class="bi bi-telephone-fill me-2"></i>Zweryfikowany telefon</span>
+						{% endif %}
+						{% if profile.verified_company %}
+							<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 w-100"><i class="bi bi-building-fill-check me-2"></i>Firma zweryfikowana</span>
+						{% endif %}
+					</div>
+				{% endif %}
+				<a href="{{ path('offers') }}?search&username={{ profile.username }}" title="{{ 'See all offers added by this user'|lang }}" class="btn btn-outline-primary btn-sm w-100 mb-3"><i class="bi bi-grid me-2"></i>{{ 'See all offers added by this user'|lang }}</a>
+				{% if profile.url_website or profile.url_facebook or profile.url_linkedin or profile.url_youtube %}
+				<hr class="my-3">
+				<h6 class="fw-bold text-muted small text-uppercase mb-3"><i class="bi bi-globe me-1"></i> Media społecznościowe</h6>
+				<div class="d-flex flex-column gap-2">
+					{% if profile.url_website %}
+						<a href="{{ profile.url_website }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm text-start w-100">
+							<i class="bi bi-link-45deg me-2"></i>Strona WWW
+						</a>
+					{% endif %}
+					{% if profile.url_facebook %}
+						<a href="{{ profile.url_facebook }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm text-start w-100" style="border-color: #1877f2; color: #1877f2;">
+							<i class="bi bi-facebook me-2"></i>Facebook
+						</a>
+					{% endif %}
+					{% if profile.url_linkedin %}
+						<a href="{{ profile.url_linkedin }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm text-start w-100" style="border-color: #0a66c2; color: #0a66c2;">
+							<i class="bi bi-linkedin me-2"></i>LinkedIn
+						</a>
+					{% endif %}
+					{% if profile.url_youtube %}
+						<a href="{{ profile.url_youtube }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm text-start w-100" style="border-color: #ff0000; color: #ff0000;">
+							<i class="bi bi-youtube me-2"></i>YouTube
+						</a>
+					{% endif %}
+				</div>
+				{% endif %}
+			</div>
+		</div>
+
+		<!-- Details & Statistics -->
+		<div class="col-lg-8">
+			<div class="card border-0 shadow-sm p-4 p-md-5 mb-4">
+				{% if profile.description %}
+					<h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-file-text me-2 profile-header-icon"></i>{{ 'About me'|lang }}</h3>
+					<div class="content text-muted lh-lg mb-4">
+						{{ profile.description|raw }}
+					</div>
+					<hr class="mb-4">
+				{% endif %}
+
+				<h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-graph-up me-2 profile-header-icon"></i>{{ 'Statistics'|lang }}</h3>
+				<div class="table-responsive">
+					<table class="table table-hover border align-middle mb-0">
+						<tbody>
+							<tr class="profile-stat-row">
+								<td class="fw-semibold text-muted" style="width: 40%;"><i class="bi bi-person me-2"></i>{{ 'Username'|lang }}:</td>
+								<td class="text-dark">{{ profile.username }}</td>
+							</tr>
+							<tr class="profile-stat-row">
+								<td class="fw-semibold text-muted"><i class="bi bi-grid me-2"></i>{{ 'Number of offers'|lang }}:</td>
+								<td><span class="badge bg-primary rounded-pill">{{ profile.number_offers }}</span></td>
+							</tr>
+							<tr class="profile-stat-row">
+								<td class="fw-semibold text-muted"><i class="bi bi-box-arrow-in-right me-2"></i>{{ 'Amount logins'|lang }}:</td>
+								<td class="text-dark">{{ profile.number_login }}</td>
+							</tr>
+							{% if profile.last_login %}
+								<tr class="profile-stat-row">
+									<td class="fw-semibold text-muted"><i class="bi bi-clock-history me-2"></i>{{ 'Last login'|lang }}:</td>
+									<td class="text-dark">{{ profile.last_login|date("d-m-Y") }}</td>
+								</tr>
+							{% endif %}
+							<tr class="profile-stat-row">
+								<td class="fw-semibold text-muted"><i class="bi bi-calendar3 me-2"></i>{{ 'Date of registration'|lang }}:</td>
+								<td class="text-dark">{{ profile.date|date("d-m-Y") }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<!-- Reviews & Ratings Section -->
+			<div class="card border-0 shadow-sm p-4 p-md-5 mb-4" id="opinions-section">
+				<h3 class="h5 fw-bold text-dark mb-4"><i class="bi bi-star me-2 profile-header-icon text-warning"></i>{{ 'Opinions'|lang }} ({{ opinions|length }})</h3>
+				
+				{% include 'alert.tpl' %}
+				
+				{% if opinions %}
+					<!-- Histogram ocen -->
+					<div class="row mb-5 align-items-center">
+						<div class="col-md-4 text-center border-end py-2">
+							<div class="display-3 fw-bold text-dark mb-1" style="line-height: 1.1;">{{ reputation.avg_rating }}</div>
+							<div class="text-warning mb-2">
+								{% for i in 1..5 %}
+									{% if reputation.avg_rating >= i %}
+										<i class="bi bi-star-fill fs-5"></i>
+									{% elseif reputation.avg_rating >= i - 0.5 %}
+										<i class="bi bi-star-half fs-5"></i>
+									{% else %}
+										<i class="bi bi-star fs-5"></i>
+									{% endif %}
+								{% endfor %}
+							</div>
+							<div class="text-muted small">{{ reputation.recommendation_percent }}% {{ 'satisfied customers'|lang }}</div>
+						</div>
+						<div class="col-md-8 py-2">
+							<h5 class="h6 text-muted mb-3">{{ 'Ratings distribution'|lang }}</h5>
+							{% for star in 5..1 %}
+								<div class="d-flex align-items-center mb-2">
+									<span class="text-muted small me-2" style="width: 70px;">{{ star }} {{ 'stars'|lang }}</span>
+									<div class="progress flex-grow-1" style="height: 10px;">
+										<div class="progress-bar bg-warning" role="progressbar" style="width: {{ reputation.histogram_percentages[star] }}%;" aria-valuenow="{{ reputation.histogram_percentages[star] }}" aria-valuemin="0" aria-valuemax="100"></div>
+									</div>
+									<span class="text-muted small ms-2" style="width: 35px; text-align: right;">{{ reputation.histogram[star] }}</span>
+								</div>
+							{% endfor %}
+						</div>
+					</div>
+
+					<div class="opinions-list mb-4">
+						{% for opinion in opinions %}
+							<div class="d-flex border-bottom pb-3 mb-3">
+								<div class="flex-shrink-0">
+									{% if opinion.author_avatar %}
+										<img src="upload/avatars/{{ opinion.author_avatar }}" alt="{{ opinion.author_username }}" class="rounded-circle border" width="48" height="48" style="object-fit: cover;">
+									{% else %}
+										<div class="rounded-circle bg-light border d-flex align-items-center justify-content-center text-secondary" style="width: 48px; height: 48px;">
+											<i class="bi bi-person-fill" style="font-size: 1.5rem;"></i>
+										</div>
+									{% endif %}
+								</div>
+								<div class="flex-grow-1 ms-3">
+									<div class="d-flex justify-content-between align-items-center">
+										<h6 class="fw-bold mb-0 text-dark">{{ opinion.author_username }}</h6>
+										<small class="text-muted">{{ opinion.date|date("d-m-Y") }}</small>
+									</div>
+									<div class="text-warning my-1">
+										{% for star in 1..5 %}
+											{% if opinion.rating >= star %}
+												<i class="bi bi-star-fill"></i>
+											{% else %}
+												<i class="bi bi-star"></i>
+											{% endif %}
+										{% endfor %}
+									</div>
+									<p class="text-muted mb-0 small lh-base">{{ opinion.comment|nl2br }}</p>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+				{% else %}
+					<p class="text-muted mb-4">{{ 'No opinions yet'|lang }}</p>
+				{% endif %}
+
+				{% if user.id and user.id != profile.id %}
+					<hr class="my-4">
+					<h4 class="h6 fw-bold text-dark mb-3"><i class="bi bi-pencil me-1"></i>{{ 'Add review'|lang }}</h4>
+					<form method="post" action="#opinions-section">
+						<input type="hidden" name="action" value="add_opinion">
+						<input type="hidden" name="token" value="{{ generateToken('add_opinion') }}">
+						
+						<div class="mb-3">
+							<label for="rating" class="form-label fw-semibold text-muted small">{{ 'Rating (1-5 stars)'|lang }}:</label>
+							<select name="rating" id="rating" class="form-select form-select-sm" style="max-width: 150px;" required>
+								<option value="" disabled selected>-- {{ 'select'|lang }} --</option>
+								<option value="5">⭐⭐⭐⭐⭐ 5/5</option>
+								<option value="4">⭐⭐⭐⭐ 4/5</option>
+								<option value="3">⭐⭐⭐ 3/5</option>
+								<option value="2">⭐⭐ 2/5</option>
+								<option value="1">⭐ 1/5</option>
+							</select>
+						</div>
+						
+						<div class="mb-3">
+							<label for="comment" class="form-label fw-semibold text-muted small">{{ 'Comment'|lang }}:</label>
+							<textarea name="comment" id="comment" rows="4" class="form-control form-control-sm" placeholder="{{ 'Write a review...'|lang }}" required></textarea>
+						</div>
+						
+						<button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-send me-1"></i>{{ 'Save review'|lang }}</button>
+					</form>
+				{% elseif user.id == profile.id %}
+					<div class="alert alert-light border text-center py-3">
+						<span class="small text-muted">{{ 'You cannot add a review to yourself'|lang }}</span>
+					</div>
+				{% elseif not user.id %}
+					<div class="alert alert-light border text-center py-3">
+						<span class="small text-muted">{{ 'You must be logged in to add a review'|lang }}. <a href="{{ path('login') }}?redirect={{ path('profile', 0, profile.username) }}" class="fw-bold">{{ 'Login'|lang }}</a></span>
+					</div>
+				{% endif %}
+			</div>
+
+			{% if settings.allow_comments_fb_profile %}
+				<div class="card border-0 shadow-sm p-4 mb-4">
+					<h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-chat-left-dots me-2 profile-header-icon"></i>{{ 'Comments'|lang }}</h3>
+					<div class="fb-comments-wrapper d-flex justify-content-center">
+						<div class="fb-comments" data-href="{{ path('profile',0,profile.username) }}" data-numposts="15" data-width="100%"></div>
+					</div>
+				</div>
+			{% endif %}
+
+			{% if settings.show_contact_form_profile %}
+				<div class="card border-0 shadow-sm p-4 p-md-5">
+					<h3 class="h5 fw-bold text-dark mb-4"><i class="bi bi-envelope me-2 profile-header-icon"></i>{{ 'Contact form'|lang }}</h3>
+					{% include 'alert.tpl' %}
+					{% include 'contact_form.tpl' %}
+				</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}

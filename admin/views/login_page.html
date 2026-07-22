@@ -1,0 +1,33 @@
+
+{% extends "main.tpl" %}
+
+{% block content %}
+<div class="content-shell">
+	<div class="content-card">
+		<div class="content-title page-header">
+			<h1><span class="bi bi-pencil-square"></span> {{ 'Login page'|lang }}</h1>
+			<p class="mb-0">{{ 'Here you can edit content of page'|lang }}</p>
+		</div>
+
+		{% include 'alert.tpl' %}
+
+		<form method="post" class="row g-3">
+			<input type="hidden" name="action" value="save_login_page">
+			<input type="hidden" name="token" value="{{ generateToken('admin_save_login_page') }}">
+			<div class="col-12">
+				<label class="form-label fw-bold">{{ 'Content'|lang }}:</label>
+				<textarea name="login_page" id="login_page" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control" rows="18">{{ settings.login_page }}</textarea>
+				<script>
+					if (typeof run_ckeditor === 'function') {
+						run_ckeditor('login_page', 500);
+					}
+				</script>
+			</div>
+			<div class="col-12">
+				<input type="submit" value="{{ 'Save'|lang }}" class="btn btn-primary text-uppercase">
+			</div>
+		</form>
+	</div>
+</div>
+
+{% endblock %}

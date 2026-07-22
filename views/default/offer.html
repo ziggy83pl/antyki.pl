@@ -1,0 +1,779 @@
+{% extends "main.tpl" %}
+
+{% block css %}
+	{{ parent() }}
+	{% if offer.photos %}
+		<link rel="stylesheet" href="views/{{ settings.template }}/css/lightbox.css"/>
+	{% endif %}
+{% endblock %}
+
+{% block json_ld %}
+	{{ parent() }}
+	<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "Product",
+	  "name": "{{ offer.name|e('js') }}",
+	  "description": "{{ offer.description|striptags|slice(0, 300)|e('js') }}",
+	  {% if offer.photos %}
+	  "image": "{{ settings.base_url }}/upload/photos/{{ offer.photos[0].folder }}{{ offer.photos[0].url }}",
+	  {% endif %}
+	  "offers": {
+	    "@type": "Offer",
+	    {% if offer.price > 0 %}
+	    "price": "{{ offer.price }}",
+	    "priceCurrency": "{{ settings.currency }}",
+	    {% endif %}
+	    "availability": "https://schema.org/InStock",
+	    "itemCondition": "https://schema.org/UsedCondition",
+	    "url": "{{ canonical_url }}"
+	  }{% if offer.user_rating_count > 0 %},
+	  "aggregateRating": {
+		"@type": "AggregateRating",
+		"ratingValue": "{{ offer.user_rating_avg|round(1) }}",
+		"reviewCount": "{{ offer.user_rating_count }}"
+	  }
+	  {% endif %}
+	}
+	</script>
+{% endblock %}
+
+{% block javascript %}
+	{{ parent() }}
+	{% if offer.photos %}
+		<script src="js/jquery-3.3.1.min.js"></script>
+		<script src="views/{{ settings.template }}/js/lightbox.js"></script>
+		<script>
+			lightbox.option({
+				'albumLabel': "%1 / %2"
+			})
+		</script>
+	{% endif %}
+	{% if showContactTab %}
+		<script>
+			document.addEventListener('DOMContentLoaded', function(){
+				var contactTab = document.querySelector('.nav-tabs a[href="#contact_form"]');
+				if(contactTab){
+					bootstrap.Tab.getOrCreateInstance(contactTab).show();
+				}
+			});
+		</script>
+	{% endif %}
+	{% if settings.google_maps and offer.address_lat!=0 and offer.address_long!=0 %}
+		<script>
+			{# FIX: Nazwa funkcji zmieniona z displayMap na initGoogleMap — musi pasować do callback w URL API #}
+			function initGoogleMap() {
+				var myLatlng = new google.maps.LatLng({{ offer.address_lat }},{{ offer.address_long }});
+				var map = new google.maps.Map(document.getElementById("google_maps"), {
+					zoom: {{ settings.google_maps_zoom_offer|default(10) }},
+					center: myLatlng,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+					scrollwheel: false
+				});
+				var marker = new google.maps.Marker({
+					position: myLatlng,
+					map: map,
+					{# FIX: Escapowanie nazwy oferty w kontekście JS — zabezpieczenie przed XSS i błędami z apostrofami #}
+					title: '{{ offer.name|e('js') }}'
+				});
+			}
+		</script>
+		<script src="https://maps.googleapis.com/maps/api/js?key={{ settings.google_maps_api }}&v=3.exp&libraries=places&callback=initGoogleMap" async defer></script>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% set category_icons = {
+    'militaria-do-1945': 'bi-shield-shaded',
+    'militaria-wspolczesne': 'bi-shield-fill',
+    'numizmatyka-i-falerystyka': 'bi-coin',
+    'starodruki-i-dokumenty': 'bi-book-half',
+    'znaleziska-wykrywacz': 'bi-compass',
+    'sztuka-i-rekodzielo': 'bi-palette icon-orange',
+    'design-i-antyki': 'bi-house-heart icon-orange',
+    'kolekcje-hobby': 'bi-bookmark-star icon-orange'
+} %}
+{% set category_color_map = {
+    'militaria-do-1945': 'gray',
+    'militaria-wspolczesne': 'gray',
+    'numizmatyka-i-falerystyka': 'yellow',
+    'starodruki-i-dokumenty': 'blue',
+    'znaleziska-wykrywacz': 'green',
+    'sztuka-i-rekodzielo': 'purple',
+    'design-i-antyki': 'orange',
+    'kolekcje-hobby': 'orange'
+} %}
+
+{# FIX: Zmiana http:// na https:// w schema.org #}
+<div itemscope itemtype="https://schema.org/Product">
+	<meta itemprop="sku" content="{{ offer.id }}" />
+	<meta itemprop="mpn" content="{{ offer.id }}" />
+	<div itemprop="brand" itemscope itemtype="https://schema.org/Brand">
+		<meta itemprop="name" content="{{ settings.title|default('Giełda Antyków i Militariów') }}" />
+	</div>
+
+	{% if settings.ads_1 %}
+		<div class="container pt-3 pt-md-4 mb-2">
+			<div class="ads text-center">{{ settings.ads_1|raw }}</div>
+		</div>
+	{% endif %}
+
+	<div class="container pb-5 {% if settings.ads_1 %}pt-3 pt-md-4{% else %}pt-0{% endif %}" id="offer">
+
+		<!-- Górna belka: Breadcrumbs i przyciski akcji -->
+		<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+			<nav aria-label="breadcrumb">
+				<p class="section-kicker mb-0">
+					<a href="{{ settings.base_url }}" class="text-decoration-none text-muted">{{ 'Main Page'|lang }}</a>
+					{% if offer.categories %}
+						{% for category in offer.categories %}
+							<i class="bi bi-chevron-right mx-1 small"></i>
+							<a href="{{ path('offers') }}?category={{ category.id }}" class="text-decoration-none {% if loop.last %}text-primary fw-bold{% else %}text-muted{% endif %}">
+								<span {% if loop.last %}itemprop="category"{% endif %}>{{ category.name }}</span>
+							</a>
+						{% endfor %}
+					{% endif %}
+				</p>
+			</nav>
+
+			<div class="d-flex gap-2">
+				<form method="post" class="m-0">
+					{% if offer.clipboard %}
+						<input type="hidden" name="action" value="clipboard_remove">
+						<input type="hidden" name="token" value="{{ generateToken('clipboard_remove') }}">
+						<button type="submit" class="btn btn-warning btn-sm rounded-pill shadow-sm px-3">
+							<i class="bi bi-heart-fill me-1"></i> {{ 'Remove from clipboard'|lang }}
+						</button>
+					{% else %}
+						<input type="hidden" name="action" value="clipboard_add">
+						<input type="hidden" name="token" value="{{ generateToken('clipboard_add') }}">
+						<button type="submit" class="btn btn-outline-primary btn-sm rounded-pill shadow-sm px-3 clipboard-btn-single" data-id="{{ offer.id }}">
+							<i class="bi bi-heart me-1"></i> {{ 'Add to clipboard'|lang }}
+						</button>
+					{% endif %}
+				</form>
+				{% if (user.id and user.id==offer.user_id) or user.moderator %}
+					<a href="{{ path('edit',offer.id,offer.slug) }}" class="btn btn-outline-dark btn-sm rounded-pill shadow-sm px-3">
+						<i class="bi bi-pencil-square me-1"></i> {{ 'Edit'|lang }}
+					</a>
+				{% endif %}
+			</div>
+		</div>
+
+		{% include 'alert.tpl' %}
+
+		<div class="row g-4">
+			<!-- Lewa kolumna: Galeria i Opis -->
+			<div class="col-lg-8">
+				
+				<!-- Galeria zdjęć -->
+				<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-light">
+					<div class="p-2 bg-white">
+						{% if offer.photos %}
+							<div id="offer_photos" class="text-center p-1">
+								{% for photo in offer.photos %}
+									{% if loop.first %}
+										<a href="upload/photos/{{ photo.folder }}{{ photo.url }}" data-lightbox="offer_photos" data-title="{{ offer.name }}">
+											<div class="main-photo-container d-flex align-items-center justify-content-center bg-light rounded-3 mb-2" style="height: 500px; overflow: hidden;">
+												<img src="upload/photos/{{ photo.folder }}{{ photo.url }}" alt="{{ offer.name }}" style="object-fit: cover; width: 100%; height: 100%;" itemprop="image">
+											</div>
+										</a>
+									{% else %}
+										<a href="upload/photos/{{ photo.folder }}{{ photo.url }}" data-lightbox="offer_photos" data-title="{{ offer.name }}">
+											<img src="upload/photos/{{ photo.folder }}{{ photo.thumb }}" alt="{{ offer.name }}" class="rounded-2 m-1 shadow-sm thumb-photo" style="width: 80px; height: 60px; object-fit: cover;" loading="lazy">
+										</a>
+									{% endif %}
+								{% endfor %}
+							</div>
+						{% else %}
+							{# Nowoczesny placeholder w kolorze kategorii dla widoku szczegółowego #}
+							{% set cat_slug = offer.category_slug|lower %}
+							{% set icon_data = category_icons[cat_slug]|default('bi-tag-fill icon-gray')|split(' ') %}
+							{% set color_class = category_color_map[cat_slug]|default('gray') %}
+							<div class="offer-no-image-placeholder placeholder-{{ color_class }} rounded-3" style="height: 500px;">
+								<i class="bi {{ icon_data[0] }}"></i>
+							</div>
+						{% endif %}
+					</div>
+				</div>
+
+				<!-- Nagłówek i parametry -->
+				{% set badges_html %}
+					{% set time_diff = "now"|date("U") - offer.date|date("U") %}
+					{% if time_diff < 259200 %}
+						{% set hours_diff = time_diff // 3600 %}
+						{% set days_diff = hours_diff // 24 %}
+						<span class="badge bg-success text-white rounded-pill px-3 py-2 shadow-sm"><i class="bi bi-star-fill me-1"></i> {{ 'New'|lang }} <small class="fw-normal" style="opacity: 0.85;">({% if days_diff == 1 %}1 {{ 'day'|lang }}{% elseif days_diff > 1 %}{{ days_diff }} {{ 'days'|lang }}{% elseif hours_diff > 0 %}{{ hours_diff }}h{% else %}<1h{% endif %})</small></span>
+					{% endif %}
+					{% if offer.type_name %}
+						{% if offer.type_slug == 'kupie' %}
+							<span class="badge bg-primary text-white rounded-pill px-3 py-2 shadow-sm"><i class="bi bi-briefcase-fill me-1"></i> {{ offer.type_name }}</span>
+						{% elseif offer.type_slug == 'uslugi' %}
+							<span class="badge bg-success text-white rounded-pill px-3 py-2 shadow-sm"><i class="bi bi-tools me-1"></i> {{ offer.type_name }}</span>
+						{% elseif offer.type_name == 'Pilne' %}
+							<span class="badge bg-danger text-white rounded-pill px-3 py-2 shadow-sm"><i class="bi bi-exclamation-circle-fill me-1"></i> {{ offer.type_name }}</span>
+						{% else %}
+							<span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">{{ offer.type_name }}</span>
+						{% endif %}
+					{% endif %}
+				{% endset %}
+
+				<div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-4">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<h1 class="h2 fw-bold mb-0" itemprop="name">{{ offer.name }}</h1>
+						<div class="d-none d-md-flex flex-wrap gap-2 justify-content-end">
+							{{ badges_html|raw }}
+						</div>
+					</div>
+
+					<div class="d-flex flex-wrap gap-3 text-muted small mb-4">
+						<span><i class="bi bi-calendar3 me-1"></i> {{ 'Published'|lang }}: {{ offer.date|date("d-m-Y") }}</span>
+						{% if not settings.hide_views %}
+							<span><i class="bi bi-eye me-1"></i> {{ offer.view_all }} {{ 'Views'|lang }}</span>
+						{% endif %}
+						<span><i class="bi bi-geo-alt me-1"></i> {{ offer.state_name }}{% if offer.state2_name %}, {{ offer.state2_name }}{% endif %}</span>
+					</div>
+
+					{% if badges_html|trim|length > 0 %}
+						<div class="d-flex d-md-none flex-wrap gap-2 justify-content-start mb-4">
+							{{ badges_html|raw }}
+						</div>
+					{% endif %}
+
+					{% if offer.options %}
+						<div class="row g-2 mb-4">
+							{% for key,option in offer.options %}
+								<div class="col-md-4 col-6">
+									<div class="bg-light p-2 rounded-3">
+										<small class="text-muted d-block" style="font-size: 0.75rem;">{{ key }}</small>
+										<span class="fw-bold small">{% for key2, item in option %}{% if key2 %}, {% endif %}{{ item }}{% endfor %}</span>
+									</div>
+								</div>
+							{% endfor %}
+						</div>
+					{% endif %}
+				</div>
+
+				<!-- Opis i zakładki -->
+				<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+				<ul class="nav nav-tabs" role="tablist">
+					<li class="nav-item"><a id="description-tab" href="#description" class="nav-link active main-color-2" data-bs-toggle="tab" role="tab" aria-controls="description" aria-selected="true">{{ 'Description'|lang }}</a></li>
+					{% if settings.show_contact_form_offer %}
+						<li class="nav-item"><a id="contact_form-tab" href="#contact_form" class="nav-link main-color-2" data-bs-toggle="tab" role="tab" aria-controls="contact_form" aria-selected="false">{{ 'Contact form'|lang }}</a></li>
+					{% endif %}
+					{% if (not settings.promote_only_by_author or (offer.user_id==user.id and user.id)) and (settings.pay_by_dotpay or settings.pay_by_paypal or settings.pay_by_p24) %}
+						<li class="nav-item"><a id="promote-tab" href="#promote" class="nav-link main-color-2" data-bs-toggle="tab" role="tab" aria-controls="promote" aria-selected="false">{{ 'Promote'|lang }}</a></li>
+					{% endif %}
+				 </ul>
+				 <div class="tab-content">
+					<div itemprop="description" class="tab-pane container active overflow_auto" id="description" role="tabpanel" aria-labelledby="description-tab"><br>{{ offer.description|raw }}</div>
+					{% if settings.show_contact_form_offer %}
+						<div class="tab-pane container fade" id="contact_form" role="tabpanel" aria-labelledby="contact_form-tab">
+							<br>
+							{% include 'contact_form.tpl' %}
+							<br>
+						</div>
+					{% endif %}
+					{% if (not settings.promote_only_by_author or (offer.user_id==user.id and user.id)) and (settings.pay_by_dotpay or settings.pay_by_paypal or settings.pay_by_p24) %}
+						<div class="tab-pane container fade" id="promote" role="tabpanel" aria-labelledby="promote-tab">
+							<br>
+							{% if offer.active %}
+								{% if offer.promoted %}
+									<h5 class="text-success">{{ 'Offer is promoted to'|lang }} {{ offer.promoted_date_end|date("d-m-Y") }}</h5>
+								{% else %}
+									<h5 class="text-danger">{{ 'Offer is no promoted'|lang }}</h5>
+								{% endif %}
+								<h4>{{ 'Promote offer'|lang }}: {{ settings.promote_cost|showCurrency }} / {{ settings.promote_days }} {{ 'days'|lang }}</h4>
+								<br>
+								<div class="offer_payments">
+									<form method="post">
+										<input type="hidden" name="action" value="new_payment">
+										<input type="hidden" name="item_id" value="{{ offer.id }}">
+										<input type="hidden" name="type" value="promote">
+										{% if settings.pay_by_dotpay %}
+											<input type="submit" value="{{ 'Pay by Dotpay'|lang }}" class="btn btn-primary" formaction="{{ settings.base_url }}/php/payment_dotpay.php">
+										{% endif %}
+										{% if settings.pay_by_paypal %}
+											<input type="submit" value="{{ 'Pay by PayPal'|lang }}" class="btn btn-primary" formaction="{{ settings.base_url }}/php/payment_paypal.php">
+										{% endif %}
+										{% if settings.pay_by_p24 %}
+											<input type="submit" value="{{ 'Pay by Przelewy24'|lang }}" class="btn btn-primary" formaction="{{ settings.base_url }}/php/payment_p24.php">
+										{% endif %}
+									</form>
+								</div>
+								<br>
+							{% else %}
+								<h5 class="text-danger">{{ 'To promote offer it must be active!'|lang }}</h5>
+							{% endif %}
+						</div>
+					{% endif %}
+				</div>
+				</div>
+			</div>
+
+			<!-- Prawa kolumna: Cena, Sprzedawca, Akcje -->
+			<div class="col-lg-4">
+				<div class="sticky-top" style="top: 100px; z-index: 10;">
+					
+					<!-- Karta ceny -->
+					<div class="card border-0 shadow-sm rounded-4 p-4 mb-3 bg-white text-center" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+						{% if offer.price_free %}
+							<h2 class="display-5 fw-bold text-success mb-0">{{ 'For free'|lang }}</h2>
+							<meta itemprop="price" content="0" />
+						{% elseif offer.price>0 %}
+							<h2 class="display-5 fw-bold text-dark mb-0">
+								<span itemprop="price" content="{{ offer.price }}">{{ offer.price|showCurrency }}</span>
+							</h2>
+							{% if offer.price_negotiate %}
+								<span class="badge bg-light text-muted rounded-pill mt-2 px-3">{{ 'to negotiate'|lang }}</span>
+							{% endif %}
+						{% else %}
+							<h2 class="display-6 fw-bold text-dark mb-0">{{ 'Price on request'|lang }}</h2>
+							<meta itemprop="price" content="0" />
+						{% endif %}
+						<meta itemprop="priceCurrency" content="{{ settings.currency_code|default('PLN') }}"/>
+						<link itemprop="availability" href="https://schema.org/InStock" />
+						<link itemprop="itemCondition" href="https://schema.org/UsedCondition" />
+						<meta itemprop="url" content="{{ path('offer', offer.id, offer.slug) }}" />
+						<meta itemprop="priceValidUntil" content="{{ "now"|date_modify("+1 year")|date("Y-m-d") }}" />
+					</div>
+
+					<!-- Karta kontaktu -->
+					<div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+						<div class="author-profile-card d-flex align-items-center mb-4 p-3 bg-light rounded-4 border border-light-subtle position-relative">
+							<div class="flex-shrink-0">
+								{% if offer.user_avatar %}
+									<img src="upload/avatars/{{ offer.user_avatar }}" alt="{{ offer.username }}" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover;">
+								{% else %}
+									{% set cat_slug = offer.category_slug|lower %}
+									{% set icon_data = category_icons[cat_slug]|default('bi-person-fill icon-gray')|split(' ') %}
+									{% set color_class = category_color_map[cat_slug]|default('gray') %}
+									<div class="offer-no-image-placeholder placeholder-{{ color_class }} rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; min-height: 60px;">
+										<i class="bi {{ icon_data[0] }}" style="font-size: 1.8rem !important; filter: none !important;"></i>
+									</div>
+								{% endif %}
+							</div>
+							<div class="flex-grow-1 ms-3">
+								<h6 class="fw-bold mb-0">{{ offer.username|default('Użytkownik') }}</h6>
+								{% if offer.user_id > 0 %}
+									<div class="my-1" style="line-height: 1;">
+										{% if offer.user_rating_count > 0 %}
+											<span class="text-warning small">
+												{% set rating = offer.user_rating_avg|default(0)|round(1) %}
+												{% for i in 1..5 %}
+													{% if rating >= i %}
+														<i class="bi bi-star-fill"></i>
+													{% elseif rating >= i - 0.5 %}
+														<i class="bi bi-star-half"></i>
+													{% else %}
+														<i class="bi bi-star"></i>
+													{% endif %}
+												{% endfor %}
+											</span>
+											<a href="{{ path('profile',0,offer.username) }}#opinions-section" class="text-muted small ms-1 position-relative" style="font-size: 0.75rem; z-index: 2;">({{ offer.user_rating_count }})</a>
+											
+											{% set user_rec_percent = 0 %}
+											{% if offer.user_rating_count > 0 %}
+												{% set user_rec_percent = (offer.user_rating_positive_count / offer.user_rating_count * 100)|round %}
+											{% endif %}
+											<div class="mt-1">
+												<span class="text-success small fw-semibold" style="font-size: 0.75rem;"><i class="bi bi-hand-thumbs-up-fill me-1"></i>{{ user_rec_percent }}% {{ 'satisfied customers'|lang }}</span>
+											</div>
+											{% if offer.user_rating_avg >= 4.7 and offer.user_rating_count >= 3 %}
+												<div class="mt-2">
+													<span class="badge bg-warning text-black border border-warning shadow-sm" style="font-size: 0.75rem; font-weight: 600;" title="{{ 'Super Wykonawca'|lang }}">
+														<i class="bi bi-trophy-fill me-1 text-danger"></i> {{ 'Super Wykonawca'|lang }}
+													</span>
+												</div>
+											{% endif %}
+										{% else %}
+											<span class="text-muted small" style="font-size: 0.75rem;"><i class="bi bi-star me-1"></i>{{ 'No opinions'|lang }}</span>
+										{% endif %}
+									</div>
+								{% endif %}
+								<small class="text-muted">{{ 'Added by'|lang }}</small>
+							</div>
+							{% if offer.user_id > 0 %}
+								<a href="{{ path('profile',0,offer.username) }}" class="btn btn-light btn-sm rounded-circle stretched-link"><i class="bi bi-chevron-right"></i></a>
+							{% else %}
+								<a href="#" data-bs-toggle="modal" data-bs-target="#guestUserModal" class="btn btn-light btn-sm rounded-circle stretched-link"><i class="bi bi-chevron-right"></i></a>
+							{% endif %}
+						</div>
+
+						{% if settings.enable_verification_badges and offer.user_id > 0 %}
+							<div class="d-flex flex-column gap-2 mb-3">
+								{% if offer.user_verified_email %}
+									<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 text-start"><i class="bi bi-envelope-check-fill me-2"></i>Zweryfikowany e-mail</span>
+								{% endif %}
+								{% if offer.user_verified_phone %}
+									<span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 text-start"><i class="bi bi-telephone-fill me-2"></i>Zweryfikowany telefon</span>
+								{% endif %}
+								{% if offer.user_verified_company %}
+									<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 text-start"><i class="bi bi-building-fill-check me-2"></i>Firma zweryfikowana</span>
+								{% endif %}
+							</div>
+						{% endif %}
+
+						<div class="d-grid gap-3">
+							{% if settings.hide_data_not_logged and not user.id %}
+								<a href="{{ path('login') }}?redirect={{ offer.id }},{{ offer.slug }}" class="btn btn-login-to-view py-3 px-4 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2">
+									<i class="bi bi-lock-fill" style="font-size: 1.35rem;"></i>
+									<span>{{ 'Login to see details'|lang }}!</span>
+								</a>
+							{% else %}
+								{% if offer.phone %}
+									{% if settings.hide_phone %}
+										<button type="button" class="btn btn-success py-3 fw-bold rounded-3 show_hidden_data" data-type="phone" data-data="{{ offer.phone }}" data-id="{{ offer.id }}" data-token="{{ generateToken('click_statistics') }}">
+											<i class="bi bi-telephone-fill me-2"></i> {{ 'show phone...'|lang }}
+										</button>
+									{% else %}
+										<a href="tel:{{ offer.phone }}" class="btn btn-success py-3 fw-bold rounded-3 shadow-sm btn-pulse track_phone_click" data-id="{{ offer.id }}" data-token="{{ generateToken('click_statistics') }}">
+											<i class="bi bi-telephone-fill me-2"></i> {{ offer.phone }}
+										</a>
+									{% endif %}
+									
+									{% set wa_phone = offer.phone|replace({' ': '', '-': '', '+': ''}) %}
+									{% if wa_phone|length == 9 %}{% set wa_phone = '48' ~ wa_phone %}{% endif %}
+									<a href="https://wa.me/{{ wa_phone }}?text={{ 'Dzień dobry, piszę w sprawie ogłoszenia: '|url_encode }}{{ offer.name|url_encode }} ({{ settings.base_url }}{{ path('offer', offer.id, offer.slug) }})" target="_blank" class="btn text-white py-3 fw-bold rounded-3 shadow-sm" style="background-color: #25D366;">
+										<i class="bi bi-whatsapp me-2" style="font-size: 1.1rem;"></i> Napisz na WhatsApp
+									</a>
+								{% endif %}
+
+								{% if offer.user_id %}
+									{% if user.id and offer.user_id != user.id %}
+										<a href="{{ path('chat') }}?start_chat={{ offer.id }}" class="btn btn-accent py-3 fw-bold rounded-3 shadow-sm">
+											<i class="bi bi-chat-dots-fill me-2"></i> {{ 'Chat with owner'|lang }}
+										</a>
+									{% elseif not user.id %}
+										<a href="{{ path('login') }}?redirect={{ path('chat') }}?start_chat={{ offer.id }}" class="btn btn-accent py-3 fw-bold rounded-3 shadow-sm">
+											<i class="bi bi-chat-dots-fill me-2"></i> {{ 'Chat with owner'|lang }}
+										</a>
+									{% endif %}
+								{% endif %}
+
+								{% if not settings.hide_email %}
+									<button type="button" class="btn btn-outline-primary py-2 fw-bold rounded-3 show_hidden_data" data-type="email" data-data_0="{{ offer.email_part_0 }}" data-data_1="{{ offer.email_part_1 }}" data-id="{{ offer.id }}" data-token="{{ generateToken('click_statistics') }}">
+										<i class="bi bi-envelope-at me-2"></i> {{ 'Contact by email'|lang }}
+									</button>
+								{% endif %}
+
+								{% if offer.user_url_website %}
+									<a href="{{ offer.user_url_website }}" target="_blank" rel="noopener nofollow" class="btn btn-outline-secondary py-2 fw-bold rounded-3 track_website_click w-100" data-id="{{ offer.id }}" data-token="{{ generateToken('click_statistics') }}">
+										<i class="bi bi-globe me-2"></i> {% if offer.user_company_name %}{{ offer.user_company_name }}{% else %}{{ 'Website'|lang }}{% endif %}
+									</a>
+								{% endif %}
+
+								<button type="button" class="btn btn-outline-dark py-2 fw-bold rounded-3" id="shareBtn" data-title="{{ offer.name|escape('html') }}" data-text="Zobacz ogłoszenie: {{ offer.name|escape('html') }}" data-url="{{ path('offer',offer.id,offer.slug) }}">
+									<i class="bi bi-share-fill me-2"></i> Udostępnij
+								</button>
+								
+								<button type="button" class="btn btn-outline-danger py-2 fw-bold rounded-3" id="reportOfferBtn" data-id="{{ offer.id }}">
+									<i class="bi bi-flag-fill me-2"></i> {{ 'Report advertisement'|lang }}
+								</button>
+							{% endif %}
+						</div>
+					</div>
+
+					<!-- Bezpieczeństwo -->
+					<div class="alert alert-info border-0 shadow-sm rounded-4 p-4 mb-3 d-flex align-items-start gap-3">
+						<i class="bi bi-shield-exclamation text-info fs-2 lh-1"></i>
+						<div>
+							<strong class="d-block mb-1 text-dark fs-6">{{ 'Safety warning'|lang }}</strong>
+							<span class="text-muted small">{{ 'Safety warning text'|lang }}</span>
+						</div>
+					</div>
+
+					{% if settings.ads_side_1 %}
+						<div class="ads mb-3">{{ settings.ads_side_1|raw }}</div>
+					{% endif %}
+					{% if settings.ads_side_2 %}
+						<div class="ads mb-3">{{ settings.ads_side_2|raw }}</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
+		<!-- Sekcja Social Media -->
+		<div class="mt-4 pt-4 border-top">
+				{# === Sekcja Social Media === #}
+				{% if settings.social_facebook %}
+					<div class="social_inline_block social-fb">
+						<div class="fb-like" data-href="{{ path('offer',offer.id,offer.slug) }}" data-layout="button" data-action="like" data-show-faces="true" data-share="true"></div>
+					</div>
+				{% endif %}
+				{% if settings.social_twitter %}
+					<div class="social_inline_block">
+						{# FIX: Zaktualizowano do nowoczesnego share URL (X/Twitter) #}
+						<a href="https://x.com/intent/tweet?url={{ path('offer',offer.id,offer.slug)|url_encode }}&text={{ offer.name|url_encode }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark" title="Share on X">
+							<i class="bi bi-twitter-x"></i> Share
+						</a>
+					</div>
+				{% endif %}
+				{% if settings.social_wykop %}
+					<div class="social_inline_block">
+						{# FIX: Zamieniono document.write na bezpieczny iframe tworzony przez DOM API #}
+						<script>
+							(function() {
+								var widgetUrl = 'https://www.wykop.pl/dataprovider/diggerwidget/?url=' + encodeURIComponent(location.href) + '&title=' + encodeURIComponent(document.title) + '&desc=' + encodeURIComponent('{{ settings.description|e('js') }}') + '&bg=FFFFFF&type=compact2&bold=true';
+								var container = document.currentScript.parentElement;
+								var iframe = document.createElement('iframe');
+								iframe.src = widgetUrl;
+								iframe.style.cssText = 'border:none;width:100px;height:20px;overflow:hidden;margin:0;padding:0;';
+								iframe.setAttribute('frameborder', '0');
+								container.appendChild(iframe);
+							})();
+						</script>
+					</div>
+				{% endif %}
+				{# FIX: Usunięto blok Google+ — usługa została zamknięta w 2019 roku #}
+				{% if settings.social_pinterest %}
+					<div class="social_inline_block social-pinterest">
+						{# FIX: Zmieniono protocol-relative // na https:// #}
+						<a href="https://www.pinterest.com/pin/create/button/?url={{ path('offer',offer.id,offer.slug) }}" data-pin-do="buttonPin" data-pin-config="beside" target="_blank" rel="noopener noreferrer"><img src="https://assets.pinterest.com/images/pidgets/pinit_fg_en_rect_gray_20.png" alt="Pinterest"/></a>
+						<script async src="https://assets.pinterest.com/js/pinit.js"></script>
+					</div>
+				{% endif %}
+		</div>
+
+		<!-- Mapa -->
+		{% if settings.google_maps and offer.address_lat!=0 and offer.address_long!=0 %}
+			<div class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+				<div id="google_maps" style="height: 400px; width: 100%;"></div>
+			</div>
+		{% endif %}
+
+		<!-- Podobne ogłoszenia -->
+		{% if offers %}
+			<div class="mt-5">
+				<h3 class="fw-bold mb-4 text-center">{{ 'Similar offers'|lang }}</h3>
+				{% include 'offers_index.tpl' %}
+			</div>
+		{% endif %}
+	</div>
+</div>
+
+<!-- Modal Udostępniania (Share Modal) -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg rounded-4" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="shareModalLabel">Udostępnij</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-grid gap-2 mb-3">
+          <!-- Kopiowanie linku -->
+          <button type="button" class="btn btn-light d-flex align-items-center justify-content-between p-3 rounded-3 border-0" id="copyLinkBtn" style="transition: all 0.2s;">
+            <span class="fw-semibold text-dark"><i class="bi bi-link-45deg me-2 text-primary fs-5"></i> Kopiuj link</span>
+            <i class="bi bi-clipboard text-muted" id="copyIcon"></i>
+          </button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-2 flex-wrap gap-2">
+          <!-- Facebook -->
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ path('offer',offer.id,offer.slug)|url_encode }}" target="_blank" rel="noopener noreferrer" class="d-flex flex-column align-items-center text-decoration-none share-social-btn" style="width: 60px;">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mb-1" style="width: 45px; height: 45px; transition: transform 0.2s;">
+              <i class="bi bi-facebook fs-5"></i>
+            </div>
+            <span class="small text-muted" style="font-size: 0.7rem;">Facebook</span>
+          </a>
+          <!-- X (Twitter) -->
+          <a href="https://x.com/intent/tweet?url={{ path('offer',offer.id,offer.slug)|url_encode }}&text={{ offer.name|url_encode }}" target="_blank" rel="noopener noreferrer" class="d-flex flex-column align-items-center text-decoration-none share-social-btn" style="width: 60px;">
+            <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center mb-1" style="width: 45px; height: 45px; transition: transform 0.2s;">
+              <i class="bi bi-twitter-x fs-5"></i>
+            </div>
+            <span class="small text-muted" style="font-size: 0.7rem;">X / Twitter</span>
+          </a>
+          <!-- WhatsApp -->
+          <a href="https://api.whatsapp.com/send?text={{ ('Zobacz to ogłoszenie: ' ~ offer.name ~ ' ' ~ path('offer',offer.id,offer.slug))|url_encode }}" target="_blank" rel="noopener noreferrer" class="d-flex flex-column align-items-center text-decoration-none share-social-btn" style="width: 60px;">
+            <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mb-1" style="width: 45px; height: 45px; transition: transform 0.2s;">
+              <i class="bi bi-whatsapp fs-5"></i>
+            </div>
+            <span class="small text-muted" style="font-size: 0.7rem;">WhatsApp</span>
+          </a>
+          <!-- E-mail -->
+          <a href="mailto:?subject={{ offer.name|url_encode }}&body={{ ('Zobacz to ogłoszenie na Giełdzie Antyków i Militariów: ' ~ offer.name ~ ' ' ~ path('offer',offer.id,offer.slug))|url_encode }}" class="d-flex flex-column align-items-center text-decoration-none share-social-btn" style="width: 60px;">
+            <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mb-1" style="width: 45px; height: 45px; transition: transform 0.2s;">
+              <i class="bi bi-envelope-fill fs-5"></i>
+            </div>
+            <span class="small text-muted" style="font-size: 0.7rem;">E-mail</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Abuse Modal -->
+<div class="modal fade" id="reportOfferModal" tabindex="-1" aria-labelledby="reportOfferModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold" id="reportOfferModalLabel"><i class="bi bi-flag-fill text-danger me-2"></i>{{ 'Report advertisement'|lang }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <form id="report-abuse-form">
+          <input type="hidden" name="offer_id" value="{{ offer.id }}">
+          
+          <div class="mb-3">
+            <label for="report-reason" class="form-label small fw-semibold text-muted">{{ 'Report reason'|lang }}</label>
+            <select class="form-select rounded-3" id="report-reason" name="reason" required>
+              <option value="" disabled selected>{{ '-- select --'|lang }}</option>
+              <option value="spam">{{ 'Spam'|lang }}</option>
+              <option value="fraud">{{ 'Fraud'|lang }}</option>
+              <option value="outdated">{{ 'Outdated'|lang }}</option>
+              <option value="other">{{ 'Other'|lang }}</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="report-description" class="form-label small fw-semibold text-muted">{{ 'Additional details'|lang }}</label>
+            <textarea class="form-control rounded-3" id="report-description" name="description" rows="3" placeholder="Opisz szczegóły..."></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="report-email" class="form-label small fw-semibold text-muted">{{ 'Your e-mail'|lang }}</label>
+            <input type="email" class="form-control rounded-3" id="report-email" name="email" value="{{ user.email }}" required {% if user.email %}readonly{% endif %}>
+          </div>
+          
+          <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-danger py-2.5 fw-bold rounded-3 shadow-sm" id="submitReportBtn">
+              <i class="bi bi-send-fill me-2"></i>{{ 'Submit report'|lang }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guest User Warning Modal -->
+<div class="modal fade" id="guestUserModal" tabindex="-1" aria-labelledby="guestUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold" id="guestUserModalLabel"><i class="bi bi-info-circle-fill text-primary me-2"></i>Informacja</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+          <i class="bi bi-person-x text-muted fs-1"></i>
+        </div>
+        <h6 class="fw-bold mb-2">Brak profilu użytkownika</h6>
+        <p class="text-muted small mb-0 px-3">
+          Ten użytkownik nie założył konta, dodał ogłoszenie jako gość. Nie możemy przenieść Cię do strony jego profilu, ponieważ ona nie istnieje.
+        </p>
+      </div>
+      <div class="modal-footer border-top-0 pt-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	function showToast(message) {
+		const toast = document.createElement('div');
+		toast.innerText = message;
+		toast.style.cssText = `
+			position: fixed;
+			bottom: 30px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: #10b981;
+			color: #fff;
+			padding: 12px 24px;
+			border-radius: 30px;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+			z-index: 9999;
+			font-weight: 600;
+			font-size: 0.9rem;
+			opacity: 0;
+			transition: opacity 0.3s ease, bottom 0.3s ease;
+		`;
+		document.body.appendChild(toast);
+		toast.offsetHeight; // force reflow
+		toast.style.opacity = '1';
+		toast.style.bottom = '40px';
+		
+		setTimeout(() => {
+			toast.style.opacity = '0';
+			toast.style.bottom = '30px';
+			setTimeout(() => toast.remove(), 300);
+		}, 3000);
+	}
+	window.showToast = showToast;
+
+	const shareBtn = document.getElementById('shareBtn');
+	if (shareBtn) {
+		shareBtn.addEventListener('click', function() {
+			const title = shareBtn.getAttribute('data-title');
+			const text = shareBtn.getAttribute('data-text');
+			const relativeUrl = shareBtn.getAttribute('data-url');
+			const url = relativeUrl;
+
+			const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+			const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+			const useNativeShare = navigator.share && !(isIOS && isStandalone);
+
+			const fallbackModal = () => {
+				const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+				shareModal.show();
+			};
+
+			if (useNativeShare) {
+				navigator.share({
+					title: title,
+					text: text,
+					url: url
+				}).then(() => {
+					showToast('Dziękujemy za udostępnienie!');
+				}).catch(err => {
+					console.error('Sharing failed:', err);
+					if (err.name !== 'AbortError') {
+						fallbackModal();
+					}
+				});
+			} else {
+				fallbackModal();
+			}
+		});
+	}
+
+	const copyLinkBtn = document.getElementById('copyLinkBtn');
+	if (copyLinkBtn) {
+		copyLinkBtn.addEventListener('click', function() {
+			const relativeUrl = shareBtn.getAttribute('data-url');
+			const url = relativeUrl;
+			
+			navigator.clipboard.writeText(url).then(function() {
+				const copyIcon = document.getElementById('copyIcon');
+				copyIcon.className = 'bi bi-check2 text-success fs-5';
+				copyLinkBtn.classList.add('bg-success-subtle');
+				showToast('Link został skopiowany!');
+				
+				setTimeout(() => {
+					copyIcon.className = 'bi bi-clipboard text-muted';
+					copyLinkBtn.classList.remove('bg-success-subtle');
+				}, 2000);
+			}).catch(err => {
+				console.error('Could not copy text: ', err);
+			});
+		});
+	}
+
+	document.querySelectorAll('.share-social-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const modalEl = document.getElementById('shareModal');
+			const modal = bootstrap.Modal.getInstance(modalEl);
+			if (modal) {
+				modal.hide();
+			}
+			showToast('Dziękujemy za udostępnienie!');
+		});
+	});
+});
+</script>
+{% endblock %}

@@ -1,0 +1,619 @@
+{% extends "main.tpl" %}
+
+{% block css %}
+	{{ parent() }}
+	<style>
+		#box_add_offer {
+			background: #fff;
+			padding: 40px;
+			border-radius: 1.5rem;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+			margin-bottom: 50px;
+		}
+		@media (max-width: 575.98px) {
+			#box_add_offer {
+				padding: 18px 12px;
+				border-radius: 1rem;
+			}
+			.form-group.row {
+				margin-left: 0;
+				margin-right: 0;
+			}
+			.form-group.row > [class*="col-"] {
+				padding-left: 0;
+				padding-right: 0;
+			}
+			/* Etykiety i pola formularza pionowo na mobile */
+			.form-group.row > label[class*="col-sm-"],
+			.form-group.row > div[class*="col-sm-"],
+			.form-group.row > div[class*="col-lg-"],
+			.form-group.row > div[class*="col-md-"] {
+				flex: 0 0 100%;
+				max-width: 100%;
+			}
+			/* Zmniejsz padding przycisku zapisu */
+			.btn-save-offer {
+				padding: 12px 30px;
+				font-size: 1rem;
+				width: 100%;
+			}
+			/* Upload zone mniejszy padding */
+			.upload-zone-wrapper {
+				padding: 18px;
+			}
+			/* Odstęp między etykietą a polem */
+			.form-group.row > label[class*="col-sm-"] {
+				padding-bottom: 4px;
+				margin-bottom: 0;
+			}
+		}
+		.form-section-title {
+			border-left: 4px solid #2563eb;
+			padding-left: 15px;
+			margin: 30px 0 20px 0;
+			font-weight: 700;
+			color: #1f2937;
+		}
+		.form-control, .form-select {
+			border-radius: 0.75rem;
+			padding: 12px 15px;
+			border: 1px solid #e5e7eb;
+			background-color: #f9fafb;
+			transition: all 0.2s;
+		}
+		.form-control:focus {
+			background-color: #fff;
+			box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+			border-color: #2563eb;
+		}
+		.col-form-label {
+			font-weight: 600;
+			color: #4b5563;
+		}
+
+		/* Stylizacja sekcji zdjęć */
+		.upload-zone-wrapper {
+			background: #f3f4f6;
+			border: 2px dashed #d1d5db;
+			border-radius: 1rem;
+			padding: 30px;
+			text-align: center;
+			transition: all 0.3s;
+			position: relative;
+		}
+		.upload-zone-wrapper:hover,
+		.upload-zone-wrapper.dragover {
+			border-color: #2563eb;
+			background: #eff6ff;
+		}
+		#input_select_photo {
+			position: absolute;
+			top: 0; left: 0; width: 100%; height: 100%;
+			opacity: 0;
+			cursor: pointer;
+		}
+		.upload-icon {
+			font-size: 2.5rem;
+			color: #9ca3af;
+			margin-bottom: 10px;
+		}
+		#preview_photos {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 15px;
+			margin-top: 20px;
+		}
+		#preview_photos .img-thumbnail {
+			border-radius: 0.75rem;
+			padding: 0;
+			border: 2px solid #fff;
+			box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+			position: relative;
+			overflow: hidden;
+			background-color: #f8f9fa;
+		}
+		@media (min-width: 576px) {
+			#preview_photos .img-thumbnail {
+				width: 120px;
+				height: 120px;
+			}
+		}
+		@media (max-width: 575.98px) {
+			#preview_photos .img-thumbnail {
+				width: 100%;
+				height: 200px;
+			}
+		}
+		#preview_photos .img-thumbnail img {
+			width: 100%; height: 100%; object-fit: contain; background-color: #f8f9fa;
+		}
+		.remove_photo_btn {
+			position: absolute;
+			top: 5px; right: 5px;
+			background: rgba(239, 68, 68, 0.9);
+			color: white;
+			border-radius: 50%;
+			width: 24px; height: 24px;
+			display: flex; align-items: center; justify-content: center;
+			text-decoration: none;
+			transition: transform 0.2s;
+		}
+		.remove_photo_btn:hover {
+			transform: scale(1.1);
+			color: white;
+		}
+
+		/* Przycisk zapisu */
+		.btn-save-offer {
+			padding: 15px 50px;
+			font-size: 1.1rem;
+			font-weight: 700;
+			border-radius: 1rem;
+			box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+		}
+
+		/* CKEditor 5 modern styling */
+		.ck-editor__editable_inline {
+			min-height: 250px;
+			border-radius: 0 0 0.75rem 0.75rem !important;
+			border: 1px solid #e5e7eb !important;
+			border-top: none !important;
+			background-color: #fff !important;
+		}
+		.ck-toolbar {
+			border-radius: 0.75rem 0.75rem 0 0 !important;
+			background: #f9fafb !important;
+			border-color: #e5e7eb !important;
+		}
+		.ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
+			border-color: #e5e7eb !important;
+		}
+		.ck.ck-editor__main>.ck-editor__editable.ck-focused {
+			border-color: #2563eb !important;
+			box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+		}
+
+		/* Icon hover and focus-within micro-animations */
+		.form-group label i {
+			transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+			display: inline-block;
+			color: #6b7280;
+		}
+		.form-group:hover label i,
+		.form-group:focus-within label i {
+			color: #2563eb !important;
+			transform: scale(1.25) rotate(3deg);
+		}
+
+		/* Google Map size and responsiveness */
+		#google_maps {
+			height: 300px;
+			transition: height 0.3s ease;
+		}
+		@media (min-width: 992px) {
+			#google_maps {
+				height: 450px;
+			}
+		}
+
+		/* Dark Mode support inside #box_add_offer and Modals */
+		html[data-bs-theme="dark"] #box_add_offer {
+			background: #1e293b !important;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer label,
+		html[data-bs-theme="dark"] #box_add_offer .col-form-label,
+		html[data-bs-theme="dark"] #box_add_offer .form-check-label {
+			color: #f8fafc !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer .text-muted {
+			color: #94a3b8 !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer a.main-color-2 {
+			color: #3b82f6 !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer a.main-color-2:hover {
+			color: #60a5fa !important;
+			text-decoration: underline !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer .form-control,
+		html[data-bs-theme="dark"] #box_add_offer .form-select {
+			background-color: #0f172a !important;
+			border-color: #334155 !important;
+			color: #f8fafc !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer .form-control:focus {
+			border-color: #3b82f6 !important;
+			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer .upload-zone-wrapper {
+			background: #1e293b !important;
+			border-color: #475569 !important;
+		}
+		html[data-bs-theme="dark"] #box_add_offer .upload-zone-wrapper:hover {
+			background: #334155 !important;
+			border-color: #3b82f6 !important;
+		}
+
+		/* Live Preview Card dark mode support */
+		html[data-bs-theme="dark"] .offer-preview-card {
+			background-color: #1e293b !important;
+			border-color: #334155 !important;
+		}
+		html[data-bs-theme="dark"] .offer-preview-card .preview_live_title {
+			color: #f8fafc !important;
+		}
+		html[data-bs-theme="dark"] .offer-preview-card .preview_live_category,
+		html[data-bs-theme="dark"] .offer-preview-card .preview_live_location {
+			background-color: #334155 !important;
+			border-color: #475569 !important;
+			color: #cbd5e1 !important;
+		}
+		html[data-bs-theme="dark"] .offer-preview-card .bg-light {
+			background-color: #0f172a !important;
+			color: #cbd5e1 !important;
+		}
+		html[data-bs-theme="dark"] .offer-preview-card .preview_live_no_img {
+			color: #94a3b8 !important;
+		}
+
+		/* Modal body bg override in dark mode */
+		html[data-bs-theme="dark"] .modal-body.bg-light {
+			background-color: #0f172a !important;
+		}
+	</style>
+{% endblock %}
+
+{% block javascript %}
+	<script src="js/jquery-3.3.1.min.js"></script>
+	{{ parent() }}
+	<script src="https://cdn.ckeditor.com/ckeditor5/35.4.0/classic/ckeditor.js"></script>
+	<script src="https://cdn.ckeditor.com/ckeditor5/35.4.0/classic/translations/pl.js"></script>
+	<script src="js/jquery-sortable.js"></script>
+	<script>
+		var photo_max = {{ settings.photo_max|escape('js') }};
+		var photo_max_size = {{ settings.photo_max_size|default(0)|escape('js') }};
+		var list_categories = list_options = [];
+		var inputPrice = '';
+		{% if offer %}
+			list_categories = {{ offer.categories|json_encode()|raw }};
+			{% if offer.options %}list_options = {{ offer.options|json_encode()|raw }}{% endif %};
+			inputPrice = '{{ offer.price|escape('js') }}';
+		{% endif %}
+		var required_category = "{{ settings.required_category|escape('js') }}";
+		var required_subcategory = "{{ settings.required_subcategory|escape('js') }}";
+		var lang = {'Photo limit exceeded':"{{ 'Photo limit exceeded'|lang }}"};
+	</script>
+	<script src="views/{{ settings.template }}/js/add.js?{{ settings.assets_version }}"></script>
+	{% if settings.google_maps %}
+		<script>
+			var google_maps, google_maps_marker;
+			function bounceMarker() {
+				if (google_maps_marker) {
+					google_maps_marker.setAnimation(google.maps.Animation.BOUNCE);
+					setTimeout(function() {
+						google_maps_marker.setAnimation(null);
+					}, 2100);
+				}
+			}
+			function initGoogleMap() {
+				autocomplete = new google.maps.places.Autocomplete((document.getElementById('add_address')), {types: ['geocode']});
+				google.maps.event.addDomListener(window, "load", function() {
+					{% if offer and (offer.address_lat!=0 or offer.address_long!=0) %}var myLatlng = new google.maps.LatLng({{ offer.address_lat }},{{ offer.address_long }});{% endif %}
+					google_maps = new google.maps.Map(document.getElementById("google_maps"), {
+						center: new google.maps.LatLng( {% if offer and (offer.address_lat!=0 or offer.address_long!=0) %}{{ offer.address_lat }},{{ offer.address_long }}{% else %}{{ settings.google_maps_lat|default('52.068498') }},{{ settings.google_maps_long|default('19.479532') }}{% endif %}),
+						zoom: {% if offer and (offer.address_lat!=0 or offer.address_long!=0) %}14{% else %}6{% endif %},
+						scrollwheel:  false
+					});
+					google_maps_marker = new google.maps.Marker({
+						draggable: true,
+						{% if offer and (offer.address_lat!=0 or offer.address_long!=0) %}position: myLatlng,{% endif %}
+						map: google_maps
+					});
+					google.maps.event.addListener(google_maps_marker, 'dragend', function (event) {
+						$('input[name=address_lat]').val(this.getPosition().lat());
+						$('input[name=address_long]').val(this.getPosition().lng());
+						bounceMarker();
+					});
+					google.maps.event.addListener(google_maps, 'click', function (mapEvent) {
+						google_maps.panTo(mapEvent.latLng);
+						google_maps_marker.setPosition(google_maps.getCenter());
+						$('input[name=address_lat]').val(google_maps_marker.getPosition().lat());
+						$('input[name=address_long]').val(google_maps_marker.getPosition().lng());
+						bounceMarker();
+					});
+					autocomplete.addListener('place_changed', function() {
+						var place = autocomplete.getPlace();
+						if (!place.geometry) {
+							return;
+						}
+						if (place.geometry.viewport) {
+							google_maps.fitBounds(place.geometry.viewport);
+						} else {
+							google_maps.setCenter(place.geometry.location);
+							google_maps.setZoom(15);
+						}
+						google_maps_marker.setPosition(place.geometry.location);
+						$('input[name=address_lat]').val(place.geometry.location.lat());
+						$('input[name=address_long]').val(place.geometry.location.lng());
+						bounceMarker();
+					});
+				});
+			}
+		</script>
+		<script src="https://maps.googleapis.com/maps/api/js?key={{ settings.google_maps_api }}&v=3.exp&libraries=places&callback=initGoogleMap" async defer></script>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page_box">
+	<div class="container-fluid container-lg py-2 py-md-5 px-2 px-sm-3 px-lg-3">
+		<div id="box_add_offer">
+		<div class="text-center">
+			{% if offer and not offer.add_similar %}
+				<h1 class="display-6 fw-bold text-dark">{{ 'Edit offer'|lang }}</h1>
+				<h4><a href="{{ path('offer',offer.id,offer.slug) }}{% if not offer.user_id %}?code={{ offer.code }}{% endif %}" title="{{ offer.name }}" class="text-primary" target="_blank">{{ 'See offer'|lang }}</a></h4>
+				<p><a href="#" title="{{ 'Delete offer'|lang }}: {{ offer.name }}" class="text-danger" data-bs-toggle="modal" data-bs-target="#remove_offer">{{ 'Delete offer'|lang }}</a></p>
+			{% else %}
+				<h1 class="display-6 fw-bold text-dark">{{ 'Add offer'|lang }}</h1>
+				<p class="text-muted">{{ 'Here you can add a new offer to the system'|lang }}</p>
+			{% endif %}
+		</div>
+		<br>
+		<form method="post" id="form_add_offer" action="" enctype="multipart/form-data">
+			<input type="hidden" name="action" value="{% if offer and not get.add_similar %}edit{% else %}add{% endif %}">
+			<input type="hidden" name="session_code" value="{{ session_code }}">
+			<input type="hidden" name="token" value="{{ generateToken('add_offer') }}">
+
+			<div class="row">
+				<!-- Left Column: Form Fields -->
+				<div class="col-lg-7">
+					<div class="form-group row mb-3">
+				<label for="name" class="col-sm-3 col-form-label"><i class="bi bi-pencil-square me-1"></i>{{ 'Title'|lang }}:<span class="text-danger">&nbsp;*</span></label>
+				<div class="col-sm-9">
+					<input type="text" class="form-control" name="name" placeholder="{{ 'My title...'|lang }}" id="name" maxlength="{{ settings.number_char_title }}" required {% if offer %}value="{{ offer.name }}"{% endif %} title="{{ 'Enter the title'|lang }}">
+					<p class="text-muted small" style="margin:2px 2px 0">{{ 'Chars'|lang }}: <span id="title_char_count">{% if offer %}{{ offer.name|length }}{% else %}0{% endif %}</span> / {{ settings.number_char_title }}</p>
+				</div>
+			</div>
+			{% if types %}
+				<div class="form-group row mb-3">
+					<label for="type_id" class="col-sm-3 col-form-label"><i class="bi bi-tag me-1"></i>{{ 'Offer type'|lang }}:{% if settings.required_type %}<span class="text-danger">&nbsp;*</span>{% endif %}</label>
+					<div class="col-sm-9">
+						<div class="row">
+							<div class="col-12">
+								<select class="form-control" name="type_id" id="type_id" title="{{ 'Select the appropriate offer type'|lang }}" {% if settings.required_type %}required{% endif %}>
+									<option value="">{{ '-- select --'|lang }}</option>
+									{% for type in types %}
+										<option value="{{ type.id }}" {% if offer and offer.type_id==type.id %}selected{% endif %}>{{ type.name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+					</div>
+				</div>
+			{% endif %}
+			<div class="form-group row mb-3" id="categories_group">
+				<label for="category_id" class="col-sm-3 col-form-label "><i class="bi bi-grid me-1"></i>{{ 'Category'|lang }}:{% if settings.required_category or settings.required_subcategory %}<span class="text-danger">&nbsp;*</span>{% endif %}</label>
+				<div class="col-sm-9">
+					<div class="row" id="categories_container">
+						<!-- Categories selects will be generated dynamically by jQuery -->
+						<div class="col-12 d-none" id="icon_load_categories">
+							<span class="bi bi-arrow-repeat spin-animation fs-4"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="options_container">
+				<!-- Dynamic options will be loaded here by jQuery -->
+			</div>
+
+			<div class="form-group row mb-3" id="price_group" style="display:none;">
+				<label for="price" class="col-sm-3 col-form-label"><i class="bi bi-cash-stack me-1"></i>{{ 'Price'|lang }}:<span class="text-danger" id="price_required_star" style="display:none;">&nbsp;*</span></label>
+				<div class="col-lg-3 col-md-6 col-sm-9">
+					<div id="price_input_wrapper">
+						<div class="input-group">
+							<input type="number" name="price" id="price" min="0" max="100000000" class="form-control" step="0.01" {% if offer %}value="{{ offer.price }}"{% endif %}><span class="input-group-text">{{ settings.currency }}</span>
+						</div>
+						<div id="price_negotiate_wrapper" {% if not offer or not offer.price %}style="display:none;"{% endif %}>
+							<label><input type="checkbox" name="price_negotiate" id="price_negotiate" {% if offer and offer.price_negotiate %}checked{% endif %}> {{ 'To negotiate'|lang }}</label><br>
+						</div>
+					</div>
+					<label style="margin-top:5px"><input type="checkbox" name="price_free" id="price_free" {% if offer and offer.price_free %}checked{% endif %}> {{ 'For free'|lang }}</label>
+				</div>
+			</div>
+			{% if not offer or offer.add_similar %}
+				<div class="form-group row mb-3">
+					<label for="type" class="col-sm-3 col-form-label"><i class="bi bi-calendar3 me-1"></i>{{ 'The length of the display'|lang }}: </label>
+					<div class="col-lg-3 col-md-6 col-sm-9">
+						<select name="days" class="form-control" required>
+							{% if offersDays %}
+								{% for day in offersDays %}
+									<option value="{{ day.id }}">{{ day.length }} {{ 'days'|lang }}{% if day.cost > 0 %} - {{ day.cost|showCurrency }}{% endif %}</option>
+								{% endfor %}
+							{% else %}
+								<option value="0">{{ settings.days_default }} {{ 'days'|lang }}</option>
+							{% endif %}
+						</select>
+					</div>
+				</div>
+			{% endif %}
+			<hr>
+			<div class="form-group row mb-3">
+				<label for="description" class="col-sm-3 col-form-label"><i class="bi bi-file-text me-1"></i>{{ 'Offer description'|lang }}:</label>
+				<div class="col-sm-9">
+					<textarea id="description" name="description" class="form-control" style="height: 150px">{% if offer %}{{ offer.description }}{% endif %}</textarea>
+				</div>
+			</div>
+
+			{% if settings.photo_add %}
+				<h4 class="form-section-title">{{ 'Photos'|lang }}</h4>
+				<div class="form-group row mb-3">
+					<div class="col-12">
+						<div class="progress mb-3" id="photos_progress" style="height: 10px; display:none;">
+							<div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+								0%
+							</div>
+						</div>
+						<div class="alert alert-danger" role="alert" id="photos_info" style="display:none"></div>
+
+						<div class="upload-zone-wrapper">
+							<div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+							<p class="mb-1 fw-bold">{{ 'Click or drag photos here'|lang }}</p>
+							<p class="text-muted small">{% if settings.photo_max %}{{ 'Limit photos'|lang }}: {{ settings.photo_max }}. {% endif %}JPG, PNG, WEBP</p>
+							<input class="form-control" id="input_select_photo" type="file" name="zdjecie" multiple accept="image/jpeg, image/png, image/webp, .jpg, .jpeg, .png, .webp">
+						</div>
+
+						<div id="preview_photos" class="d-flex flex-wrap">
+							{% if offer.photos %}
+								{% for photo in offer.photos %}
+									<div class="img-thumbnail">
+										<img src="upload/photos/{{ photo.folder }}{{ photo.thumb }}" alt="{{ photo.url }}" loading="lazy">
+										<a href="#" title="{{ 'Remove photo'|lang }}: {{ photo.url }}" class="remove_photo remove_photo_btn"><i class="bi bi-x"></i></a>
+										<input type="hidden" name="photos[]" value="{{ photo.id }}">
+									</div>
+								{% endfor %}
+							{% endif %}
+							<div id="preview_load"><span class="bi bi-arrow-repeat spin-animation fs-4"></span></div>
+						</div>
+					</div>
+				</div>
+			{% endif %}
+
+			<h4 class="form-section-title mt-4 mb-3">{{ 'Contact details'|lang }}</h4>
+			<div class="form-group row mb-3">
+				<label for="email" class="col-sm-3 col-form-label"><i class="bi bi-envelope me-1"></i>{{ 'E-mail address'|lang }}:<span class="text-danger">&nbsp;*</span></label>
+				<div class="col-sm-9">
+					<input type="email" class="form-control" name="email" placeholder="{{ 'example@example.com'|lang }}" id="email" maxlength="64" required value="{% if offer %}{{ offer.email }}{% elseif user.id %}{{ user.email }}{% endif %}" title="{{ 'Enter your email address'|lang }}" {% if (user.id and not user.moderator) or (offer and not user.moderator) %}readonly{% endif %}>
+				</div>
+			</div>
+			<div class="form-group row mb-3">
+				<label for="phone" class="col-sm-3 col-form-label"><i class="bi bi-telephone me-1"></i>{{ 'Phone'|lang }}:{% if settings.required_phone %}<span class="text-danger">&nbsp;*</span>{% endif %}</label>
+				<div class="col-lg-4 col-md-6 col-sm-9">
+					<input type="text" class="form-control" name="phone" placeholder="{{ '+12 345 678 901'|lang }}" id="phone" maxlength="32" value="{% if offer %}{{ offer.phone }}{% elseif user.id %}{{ user.phone }}{% endif %}" title="{{ 'Enter the phone number'|lang }}" {% if settings.required_phone %}required{% endif %}>
+				</div>
+			</div>
+			<div class="form-group row mb-3">
+				<label for="add_address" class="col-sm-3 col-form-label"><i class="bi bi-geo-alt me-1"></i>{{ 'Address'|lang }}:{% if settings.required_address %}<span class="text-danger">&nbsp;*</span>{% endif %}</label>
+				<div class="col-sm-9">
+					<input type="text" class="form-control getCoordinates" name="address" placeholder="{{ '1600 Pennsylvania Avenue NW, Washington, D.C. 20500'|lang }}" id="add_address" maxlength="512" value="{% if offer %}{{ offer.address }}{% elseif user.id %}{{ user.address }}{% endif %}" title="{{ 'Enter the address'|lang }}" {% if settings.required_address %}required{% endif %}>
+				</div>
+			</div>
+			<div class="form-group row mb-3">
+				{% if states %}
+					<label for="state_id" class="col-sm-3 col-form-label"><i class="bi bi-map me-1"></i>{{ 'State'|lang }}:{% if settings.required_state %}<span class="text-danger">&nbsp;*</span>{% endif %}</label>
+					<div class="col-lg-4 col-md-6 col-sm-9">
+						<select class="form-control select_state" name="state_id" id="state_id" title="{{ 'Select the appropriate state'|lang }}" {% if settings.required_state %}required{% endif %}>
+							<option value="">{{ '-- select --'|lang }}</option>
+							{% for key,state in states %}
+								<option value="{{ key }}" {% if (offer and offer.state_id==key) or (not offer and user.id and user.state_id==key) %}selected{% endif %}>{{ state.name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					{% for key,state in states %}
+						{% if state.states %}
+							<div class="col-lg-4 col-md-6 col-sm-9 offset-sm-3 mt-2 substates substate_{{ state.id }}" {% if not ((offer and offer.state_id==key) or (not offer and user.id and user.state_id==key)) %}style="display: none"{% endif %}>
+								<select class="form-control" name="state2_id" title="{{ 'Select the appropriate state'|lang }}" {% if not ((offer and offer.state_id==key) or (not offer and user.id and user.state_id==key)) %}disabled{% endif %}>
+									<option value="">{{ '-- select --'|lang }}</option>
+									{% for state2 in state.states %}
+										<option value="{{ state2.id }}" {% if (offer and offer.state2_id==state2.id) or (not offer and user.state2_id==state2.id) %}selected{% endif %}>{{ state2.name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+				{% if settings.google_maps and settings.google_maps_api %}
+					<div class="col-sm-9 offset-sm-3 mt-2">
+						<input type="button" class="btn btn-secondary btn-sm" value="{{ 'Show on map'|lang }}" id="button_get_coordinates">
+					</div>
+				{% endif %}
+			</div>
+			{% if settings.google_maps %}
+				<div class="form-group row mb-3">
+					<div class="col-12 col-md-9 offset-md-3 col-lg-12 offset-lg-0">
+						<div id="google_maps" class="border rounded mb-3"></div>
+					</div>
+				</div>
+			{% endif %}
+			<input type="hidden" name="address_lat" value="{{ offer.address_lat }}">
+			<input type="hidden" name="address_long" value="{{ offer.address_long }}">
+
+			{% if not user.id and not offer %}
+				<div class="form-group row mt-4">
+					<div class="col-sm-12 text-center">
+						<div class="form-check d-inline-block text-start">
+							<input type="checkbox" name="rules" class="form-check-input" id="accept_rules" required>
+							<label class="form-check-label" for="accept_rules">
+								{{ 'Accepts the terms and conditions and the privacy policy'|lang }} (<a href="{{ path('rules') }}" title="{{ 'Terms of service'|lang }}" target="_blank" class="main-color-2 text-decoration-none">{{ 'Terms of service'|lang }}</a> - <a href="{{ path('privacy_policy') }}" title="{{ 'Privacy policy'|lang }}" target="_blank" class="main-color-2 text-decoration-none">{{ 'Privacy policy'|lang }}</a>)<span class="text-danger">&nbsp;*</span>
+							</label>
+						</div>
+					</div>
+				</div>
+			{% endif %}
+					<div class="form-group text-center mt-5 d-flex flex-column flex-sm-row gap-3 justify-content-center align-items-center">
+						<button type="button" class="btn btn-outline-primary btn-save-offer text-uppercase d-block d-lg-none w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#livePreviewModal">
+							<i class="bi bi-eye me-2"></i>Podgląd
+						</button>
+						<input type="submit" class="btn btn-accent btn-save-offer text-uppercase w-100 w-sm-auto" id="btn_save_offer" value="{{ 'Save and Publish'|lang }}">
+					</div>
+				</div> <!-- end of col-lg-7 -->
+
+				<!-- Right Column: Sticky Preview Card -->
+				<div class="col-lg-5 d-none d-lg-block">
+					<div class="position-sticky" style="top: 100px;">
+						<h4 class="form-section-title mt-0 mb-3"><i class="bi bi-eye me-1"></i>Podgląd ogłoszenia</h4>
+						{% include 'parts/live_preview_card.tpl' %}
+					</div>
+				</div>
+			</div> <!-- end of row -->
+		</form>
+
+		<!-- Mobile Preview Modal -->
+		<div class="modal fade" id="livePreviewModal" tabindex="-1" aria-labelledby="livePreviewModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title fw-bold" id="livePreviewModalLabel"><i class="bi bi-eye me-2"></i>Podgląd ogłoszenia</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body p-4 bg-light">
+						{% include 'parts/live_preview_card.tpl' %}
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+</div>
+
+{% if offer and not offer.add_similar %}
+	<div class="modal fade" id="remove_offer">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">{{ 'Delete offer'|lang }}: {{ offer.name }}</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<form method="post" class="form">
+					<input type="hidden" name="action" value="remove_offer">
+					<input type="hidden" name="id" value="{{ offer.id }}">
+					<input type="hidden" name="code" value="{{ get.code }}">
+					<input type="hidden" name="token" value="{{ generateToken('remove_offer') }}">
+					<div class="modal-body">
+						<p>{{ 'Are you sure you want to delete offer'|lang }} {{ offer.name }}?</p>
+					</div>
+					<div class="modal-footer">
+						<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+						<input type="submit" class="btn btn-danger" value="{{ 'Remove'|lang }}">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+{% endif %}
+
+{% endblock %}

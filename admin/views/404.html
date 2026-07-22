@@ -1,0 +1,19 @@
+
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Błąd 404</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="page-header">
+	<h1 class="text-danger"><span class="bi bi-ban"></span> Error 404</h1>
+	<h3>Page does not exist</h3>
+</div>
+{% endblock %}

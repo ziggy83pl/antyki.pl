@@ -1,0 +1,120 @@
+
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Mailing</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="content-shell">
+	<div class="content-card">
+		<div class="content-title page-header">
+			<h1><span class="bi bi-list-ul"></span> {{ 'Mailing'|lang }}</h1>
+			<p class="mb-0">{{ 'Here you can send mailing to users'|lang }}</p>
+			<p class="mb-0">{{ 'You should always insert links and image paths along with the domain address (starting with http: //) or the {base_url} tag'|lang }}</p>
+		</div>
+
+		{% include 'alert.tpl' %}
+
+		{% if mails_queue %}
+
+			<div class="modal fade" id="modal_cancel_mailing" tabindex="-1" aria-labelledby="{{ 'Cancel mailing'|lang }}">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							<h5 class="modal-title">{{ 'Cancel mailing'|lang }}</h5>
+						</div>
+						<form method="post">
+							<input type="hidden" name="action" value="cancel_mailing">
+							<input type="hidden" name="token" value="{{ generateToken('admin-cancel_mailing') }}">
+							<div class="modal-body">
+								<p>{{ 'Are you sure you want to empty the mail queue?'|lang }}</p>
+							</div>
+							<div class="modal-footer">
+								<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+								<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal fade" id="modal_preview_mailing" tabindex="-1" aria-labelledby="{{ 'Preview queue'|lang }}">
+				<div class="modal-dialog modal-xl">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							<h5 class="modal-title">{{ 'Preview queue'|lang }}</h5>
+						</div>
+						<div class="modal-body">
+							<div class="table-responsive">
+								<table class="table table-striped table-hover">
+									<thead>
+										<tr>
+											<th>{{ 'Sender'|lang }}</th>
+											<th>{{ 'Receiver'|lang }}</th>
+											<th>{{ 'Title'|lang }}</th>
+											<th>{{ 'Content'|lang }}</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for email in queued_emails %}
+										<tr>
+											<td>{{ email.sender }}</td>
+											<td>{{ email.receiver }}</td>
+											<td>{{ email.subject }}</td>
+											<td>
+												<button type="button" class="btn btn-sm btn-info" data-bs-toggle="collapse" data-bs-target="#email_content_{{ email.id }}">{{ 'Show'|lang }}</button>
+												<div class="collapse mt-2" id="email_content_{{ email.id }}">
+													<div class="card card-body">
+														{{ email.message|raw }}
+													</div>
+												</div>
+											</td>
+										</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Close'|lang }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="admin-toolbar">
+				<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal_cancel_mailing">{{ 'Cancel mailing'|lang }}</button>
+				<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modal_preview_mailing">{{ 'Preview queue'|lang }}</button>
+			</div>
+		{% endif %}
+
+		<form method="post" class="row g-3" role="form">
+			<input type="hidden" name="action" value="send_mailing">
+			<input type="hidden" name="token" value="{{ generateToken('admin_send_mailing') }}">
+			<div class="col-12">
+				<label class="form-label">{{ 'Title'|lang }}</label>
+				<input type="text" name="subject" title="{{ 'Enter the message title'|lang }}" placeholder="{{ 'Title'|lang }}" required class="form-control">
+			</div>
+			<div class="col-12">
+				<label class="form-label">{{ 'Content'|lang }}</label>
+				<textarea name="message" class="form-control"></textarea>
+				<script>
+					run_ckeditor('message');
+				</script>
+			</div>
+			<div class="col-12">
+				<input type="submit" value="{{ 'Start sending emails'|lang }}" class="btn btn-primary">
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

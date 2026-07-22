@@ -1,0 +1,108 @@
+{% extends "main.tpl" %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="?controller=admin">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Artykuły</li>
+  </ol>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+	<div>
+		<h1><span class="bi bi-pencil-square text-primary"></span> {{ 'Articles'|lang }}</h1>
+		<p class="mb-0 text-muted">{{ 'Here you can edit articles'|lang }}</p>
+		{% if not settings.enable_articles %}<p class="text-danger mb-0 mt-1 fw-semibold"><i class="bi bi-exclamation-triangle-fill"></i> {{ 'Warning! Displaying articles is turned off in the settings.'|lang }}</p>{% endif %}
+	</div>
+	<a href="?controller=article" title="{{ 'Add article'|lang }}" class="btn btn-success text-uppercase fw-bold"><i class="bi bi-plus-lg me-1"></i> {{ 'Add article'|lang }}</a>
+</div>
+
+{% include 'alert.tpl' %}
+
+{% if articles %}
+	<div class="card border-0 shadow-sm rounded-4 p-4">
+		<form method="post" id="bulk-articles-form" onsubmit="return confirm('{{ 'Are you sure you want to delete selected items?'|lang }}');">
+			<input type="hidden" name="action" value="bulk_delete">
+			<input type="hidden" name="token" value="{{ generateToken('admin_bulk_delete_articles') }}">
+
+			{% if not _ADMIN_TEST_MODE_ %}
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<div>
+					<button type="submit" id="btn-bulk-delete-articles" class="btn btn-danger btn-sm text-uppercase fw-bold" disabled>
+						<i class="bi bi-trash-fill me-1"></i> {{ 'Delete selected'|lang }} (<span id="selected-count-articles">0</span>)
+					</button>
+				</div>
+			</div>
+			{% endif %}
+
+			<div class="table-responsive mb-3">
+				<table class="table table-hover border align-middle mb-0 parent_select_checkbox">
+					<thead>
+						<tr>
+							{% if not _ADMIN_TEST_MODE_ %}
+							<th style="width: 3%;" class="text-center"><input type="checkbox" id="check-all-articles" class="form-check-input"></th>
+							{% endif %}
+							<th style="width: 5%;" class="text-center">#</th>
+							<th>{{ 'Title'|lang }}</th>
+							<th class="text-center" style="width: 15%;">{{ 'Date'|lang }}</th>
+							<th class="text-center" style="width: 10%;">{{ 'Edit'|lang }}</th>
+							<th class="text-center" style="width: 10%;">{{ 'Remove'|lang }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for item in articles %}
+							<tr>
+								{% if not _ADMIN_TEST_MODE_ %}
+								<td class="text-center"><input type="checkbox" name="ids[]" value="{{ item.id }}" class="article-checkbox form-check-input"></td>
+								{% endif %}
+								<td class="text-center">{{ loop.index+pagination.limit_start }}</td>
+								<td class="fw-semibold"><a href="{{ path('article',item.id,item.slug) }}" title="{{ item.name }}" target="_blank" class="text-decoration-none">{{ item.name }}</a></td>
+								<td class="text-center text-muted">{{ item.date|date('Y-m-d') }}</td>
+								<td class="text-center"><a href="?controller=article&id={{ item.id }}" title="{{ 'Edit article'|lang }}" class="bi bi-pencil-square fs-5 text-primary"></a></td>
+								<td class="text-center"><a href="#" title="{{ 'Delete article'|lang }}" class="bi bi-x-lg text-danger fs-5" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}"></a></td>
+							</tr>
+
+							<div class="modal fade" id="remove_{{ item.id }}" tabindex="-1" aria-labelledby="{{ 'Delete article'|lang }}: {{ item.name }}">
+								<div class="modal-dialog">
+									<div class="modal-content">
+										<div class="modal-header">
+											<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+											<h4 class="modal-title">{{ 'Delete article'|lang }}</h4>
+										</div>
+										<form method="post">
+											<input type="hidden" name="action" value="remove_article">
+											<input type="hidden" name="token" value="{{ generateToken('admin_remove_article') }}">
+											<input type="hidden" name="id" value="{{ item.id }}">
+											<div class="modal-body text-start">
+												<p>{{ 'Are you sure you want to delete article'|lang }}: "<b>{{ item.name }}</b>"?</p>
+											</div>
+											<div class="modal-footer">
+												<input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="{{ 'Cancel'|lang }}">
+												<input type="submit" class="btn btn-danger" value="{{ 'Execute'|lang }}">
+											</div>
+										</form>
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</form>
+
+		<div class="d-flex justify-content-center mt-3">
+			{% include 'pagination.tpl' %}
+		</div>
+	</div>
+{% else %}
+	<div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+		<i class="bi bi-journal-x text-muted display-1 mb-3"></i>
+		<h4 class="text-danger fw-bold mb-3">{{ 'Nothing found'|lang }}</h4>
+		<p class="text-muted mb-4">W bazie danych nie znaleziono żadnych artykułów. Możesz dodać swój pierwszy artykuł już teraz.</p>
+		<a href="?controller=article" class="btn btn-success btn-lg text-uppercase fw-bold"><i class="bi bi-plus-lg me-1"></i> {{ 'Add article'|lang }}</a>
+	</div>
+{% endif %}
+{% endblock %}
