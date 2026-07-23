@@ -170,7 +170,7 @@
 				<label class="col-sm-4 col-form-label" for="add_offers_not_logged">{{ 'Allow adding offers by not logged'|lang }}</label>
 				<div class="col-sm-8">
 					<div class="form-check form-switch">
-						<input class="form-check-input" type="checkbox" name="add_offers_not_logged" id="add_offers_not_logged" role="switch" title="{{ 'Allow adding offers by not logged'|lang }}" {% if settings.add_offers_not_logged %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="add_offers_not_logged" id="add_offers_not_logged" role="switch" title="{{ 'Allow adding offers by not logged'|lang }}" {% if settings.add_offers_not_logged == '1' or settings.add_offers_not_logged == 1 %}checked{% endif %}>
 					</div>
 				</div>
 			</div>
@@ -179,7 +179,7 @@
 				<label class="col-sm-4 col-form-label" for="automatically_activate_offers">{{ 'Automatically activate added offers (applies to logged users)'|lang }}</label>
 				<div class="col-sm-8">
 					<div class="form-check form-switch">
-						<input class="form-check-input" type="checkbox" name="automatically_activate_offers" id="automatically_activate_offers" role="switch" title="{{ 'Automatically activate added offers (applies to logged users)'|lang }}" {% if settings.automatically_activate_offers %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="automatically_activate_offers" id="automatically_activate_offers" role="switch" title="{{ 'Automatically activate added offers (applies to logged users)'|lang }}" {% if settings.automatically_activate_offers == '1' or settings.automatically_activate_offers == 1 %}checked{% endif %}>
 					</div>
 				</div>
 			</div>
@@ -188,7 +188,7 @@
 				<label class="col-sm-4 col-form-label" for="check_ip_user">{{ 'Check IP user when logging or adding offers'|lang }}</label>
 				<div class="col-sm-8">
 					<div class="form-check form-switch">
-						<input class="form-check-input" type="checkbox" name="check_ip_user" id="check_ip_user" role="switch" title="{{ 'Check IP user when logging or adding offers'|lang }}" {% if settings.check_ip_user %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="check_ip_user" id="check_ip_user" role="switch" title="{{ 'Check IP user when logging or adding offers'|lang }}" {% if settings.check_ip_user == '1' or settings.check_ip_user == 1 %}checked{% endif %}>
 					</div>
 				</div>
 			</div>
@@ -227,7 +227,7 @@
 				</label>
 				<div class="col-sm-8 d-flex align-items-center gap-3">
 					<div class="form-check form-switch m-0">
-						<input class="form-check-input" type="checkbox" name="scraper_enabled" id="scraper_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z elbordo.pl" {% if settings.scraper_enabled %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="scraper_enabled" id="scraper_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z elbordo.pl" {% if settings.scraper_enabled == '1' or settings.scraper_enabled == 1 %}checked{% endif %}>
 					</div>
 					<a href="{{ settings.base_url }}/cron-scraper.php?token={{ settings.cron_token }}&amp;force=1" target="_blank" class="btn btn-outline-primary btn-sm">
 						<i class="bi bi-cloud-arrow-down-fill me-1"></i> Pobierz ogłoszenia teraz
@@ -257,7 +257,7 @@
 				</label>
 				<div class="col-sm-8 d-flex align-items-center gap-3">
 					<div class="form-check form-switch m-0">
-						<input class="form-check-input" type="checkbox" name="scraper_mylomza_enabled" id="scraper_mylomza_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z elbordo.pl" {% if settings.scraper_mylomza_enabled %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="scraper_mylomza_enabled" id="scraper_mylomza_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z elbordo.pl" {% if settings.scraper_mylomza_enabled == '1' or settings.scraper_mylomza_enabled == 1 %}checked{% endif %}>
 					</div>
 					<a href="{{ settings.base_url }}/cron-mylomza.php?token={{ settings.cron_token }}&amp;force=1" target="_blank" class="btn btn-outline-primary btn-sm">
 						<i class="bi bi-cloud-arrow-down-fill me-1"></i> Pobierz ogłoszenia teraz
@@ -287,7 +287,7 @@
 				</label>
 				<div class="col-sm-8 d-flex align-items-center gap-3">
 					<div class="form-check form-switch m-0">
-						<input class="form-check-input" type="checkbox" name="scraper_eostroleka_enabled" id="scraper_eostroleka_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z sprzedajemy.pl" {% if settings.scraper_eostroleka_enabled %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="scraper_eostroleka_enabled" id="scraper_eostroleka_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z sprzedajemy.pl" {% if settings.scraper_eostroleka_enabled == '1' or settings.scraper_eostroleka_enabled == 1 %}checked{% endif %}>
 					</div>
 					<a href="{{ settings.base_url }}/cron-eostroleka-v2.php?token={{ settings.cron_token }}&amp;force=1" target="_blank" class="btn btn-outline-primary btn-sm">
 						<i class="bi bi-cloud-arrow-down-fill me-1"></i> Pobierz ogłoszenia teraz
@@ -317,7 +317,7 @@
 				</label>
 				<div class="col-sm-8 d-flex align-items-center gap-3">
 					<div class="form-check form-switch m-0">
-						<input class="form-check-input" type="checkbox" name="scraper_mojaostroleka_enabled" id="scraper_mojaostroleka_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z Lento.pl" {% if settings.scraper_mojaostroleka_enabled %}checked{% endif %}>
+						<input class="form-check-input" type="checkbox" name="scraper_mojaostroleka_enabled" id="scraper_mojaostroleka_enabled" role="switch" title="Włącz automatyczne pobieranie ogłoszeń z Lento.pl" {% if settings.scraper_mojaostroleka_enabled == '1' or settings.scraper_mojaostroleka_enabled == 1 %}checked{% endif %}>
 					</div>
 					<a href="{{ settings.base_url }}/cron-moja-ostroleka.php?token={{ settings.cron_token }}&amp;force=1" target="_blank" class="btn btn-outline-primary btn-sm">
 						<i class="bi bi-cloud-arrow-down-fill me-1"></i> Pobierz ogłoszenia teraz
@@ -707,6 +707,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 🔒 RESTORE LAST ACTIVE TAB
+    const activeTabTarget = localStorage.getItem('activeSettingsTab');
+    if (activeTabTarget) {
+        const tabBtn = document.querySelector(`button[data-bs-target="${activeTabTarget}"]`);
+        if (tabBtn) {
+            const tabInstance = bootstrap.Tab.getOrCreateInstance(tabBtn);
+            tabInstance.show();
+        }
+    }
+    document.querySelectorAll('#settingsTabs button[data-bs-toggle="tab"]').forEach(btn => {
+        btn.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('activeSettingsTab', e.target.getAttribute('data-bs-target'));
+        });
+    });
+
     // 🔒 AUTO-FOCUS ON TAB WITH INVALID FIELDS
     const form = document.querySelector('form');
     if (form) {
