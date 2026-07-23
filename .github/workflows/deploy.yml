@@ -1,0 +1,25 @@
+name: Deploy Antyki na InfinityFree
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+
+      - name: Deploy przez FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftpupload.net
+          username: if0_42474242
+          password: BBQRGU4cNon
+          server-dir: /htdocs/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            tmp/**
