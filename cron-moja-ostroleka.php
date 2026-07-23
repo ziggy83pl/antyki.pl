@@ -71,11 +71,14 @@ $xpath = new DOMXPath($doc);
 $links = [];
 $seen = [];
 
-foreach ($xpath->query("//a[contains(@href, '.html')]") as $a) {
+foreach ($xpath->query("//a[contains(@class, 'title-list-item')] | //a[contains(@href, ',') and contains(@href, '.html')]") as $a) {
 	$href = trim($a->getAttribute("href"));
-	if (preg_match('/,[0-9]+\.html$/', $href) || preg_match('/-[0-9]+\.html$/', $href)) {
+	if (preg_match('/,[0-9]+\.html/i', $href) || preg_match('/-[0-9]+\.html/i', $href)) {
 		if (strpos($href, 'http') === false) {
 			$href = 'https://www.lento.pl/' . ltrim($href, '/');
+		}
+		if (strpos($href, '/dom-i-ogrod/') !== false) {
+			continue;
 		}
 		if (!isset($seen[$href])) {
 			$seen[$href] = true;
@@ -230,8 +233,14 @@ foreach ($links as $itemUrl) {
 	@$itemDoc->loadHTML('<?xml encoding="UTF-8">' . $itemHtml);
 	$itemXpath = new DOMXPath($itemDoc);
 
-	$h2Node = $itemXpath->query("//h2");
-	$title = $h2Node->length > 0 ? trim($h2Node->item(0)->textContent) : '';
+	$title = '';
+	foreach ($itemXpath->query("//h2 | //h1") as $hNode) {
+		$text = trim($hNode->textContent);
+		if ($text && !preg_match('/Sztuka i Antyki/i', $text) && !preg_match('/Wprowadź/i', $text) && !preg_match('/Zgłoś nadużycie/i', $text)) {
+			$title = $text;
+			break;
+		}
+	}
 
 	$descNode = $itemXpath->query("//div[contains(@class, 'desc')]");
 	$rawDesc = $descNode->length > 0 ? trim($descNode->item(0)->textContent) : '';
@@ -245,7 +254,7 @@ foreach ($links as $itemUrl) {
 
 	// Price extraction
 	$price = null;
-	$priceNode = $itemXpath->query("//*[contains(@class, 'text-23')]");
+	$priceNode = $itemXpath->query("//*[contains(@class, 'price-list-item')] | //*[contains(@class, 'text-23')]");
 	if ($priceNode->length > 0) {
 		$priceText = trim($priceNode->item(0)->textContent);
 		if (preg_match('/([0-9\s,.]+)/', $priceText, $pm)) {
@@ -259,11 +268,10 @@ foreach ($links as $itemUrl) {
 	// Photos extraction
 	$photos = [];
 	$photoSeen = [];
-	foreach ($itemXpath->query("//img | //a") as $el) {
-		$src = $el->getAttribute("data-src") ?: ($el->getAttribute("src") ?: $el->getAttribute("href"));
+	foreach ($itemXpath->query("//img | //a | //source") as $el) {
+		$src = $el->getAttribute("data-src") ?: ($el->getAttribute("srcset") ?: ($el->getAttribute("data-srcset") ?: ($el->getAttribute("src") ?: $el->getAttribute("href"))));
 		if (strpos($src, "st-lento.pl") !== false && preg_match('/\.(jpg|jpeg|png|webp)/i', $src)) {
-			// Convert thumbnail/large URL to original resolution image if available
-			$src = str_replace(['/thumbnail/', '/large/'], '/original/', $src);
+			$src = str_replace(['/thumbnail/', '/large/', '/medium/'], '/original/', $src);
 			if (!isset($photoSeen[$src])) {
 				$photoSeen[$src] = true;
 				$photos[] = $src;
