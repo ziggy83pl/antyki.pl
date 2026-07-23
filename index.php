@@ -4,11 +4,14 @@
  * Modernization in progress.
  */
 
+require_once('config/config.php');
+
 // Zabezpieczenie wyświetlania i logowania błędów krytycznych
 register_shutdown_function(function() {
     $error = error_get_last();
     if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR])) {
-        if (defined('_DEBUG_MODE_') && _DEBUG_MODE_) {
+        $show_debug = !defined('_DEBUG_MODE_') || _DEBUG_MODE_;
+        if ($show_debug) {
             echo "<div style='background:#ffdddd; color:red; padding:20px; border:2px solid red; z-index:9999; position:relative;'>";
             echo "<strong>KRYTYCZNY BŁĄD PHP:</strong><br>Plik: {$error['file']} (Linia: {$error['line']})<br>Komunikat: {$error['message']}</div>";
         } else {
@@ -18,13 +21,6 @@ register_shutdown_function(function() {
         }
     }
 });
-
-header('Content-Type: text/html; charset=utf-8');
-header('X-Frame-Options: SAMEORIGIN');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
-
-require_once('config/config.php');
 require_once('php/bootstrap.php');
 startSecureSession();
 
