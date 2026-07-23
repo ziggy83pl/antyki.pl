@@ -37,12 +37,11 @@ if ($is_local || (php_sapi_name() === 'cli' && empty($_SERVER['HTTP_HOST']))) {
     $mysql_db = $_ENV['DB_NAME'] ?? (getenv('DB_NAME') ?: "cms");
     define("_DB_PREFIX_", $_ENV['DB_PREFIX'] ?? (getenv('DB_PREFIX') !== false ? getenv('DB_PREFIX') : ""));
 } else {
-    // Ustawienia dla środowiska produkcyjnego (InfinityFree: gieldabudowlana.xo.je)
-    // UWAGA: Uzupełnij poniższe dane prawidłowymi informacjami z panelu InfinityFree!
-    $mysql_server = "sql208.infinityfree.com"; // Zmień na właściwy adres hosta bazy (zobacz w panelu InfinityFree)
-    $mysql_user = "if0_42298842";              // Twój użytkownik InfinityFree (pozostawiam z błędu)
-    $mysql_pass = "4FciISXfRI";         // Wpisz hasło do bazy danych z panelu InfinityFree
-    $mysql_db = "if0_42298842_gieldabudowlana";            // Zmień na właściwą nazwę bazy danych z panelu InfinityFree
+    // Ustawienia dla środowiska produkcyjnego (InfinityFree)
+    $mysql_server = "sql200.infinityfree.com";
+    $mysql_user = "if0_42474242";
+    $mysql_pass = "BBQRGU4cNon";
+    $mysql_db = "if0_42474242_antyki";
     
     // Zapobiegaj redefinicji stałej, jeśli przypadkiem by to nastąpiło
     if (!defined("_DB_PREFIX_")) {
