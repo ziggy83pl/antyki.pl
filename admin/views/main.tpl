@@ -275,8 +275,8 @@
 	   TOPBAR
 	══════════════════════════════════════════ #}
 	<nav class="main-nav navbar navbar-expand-lg sticky-top px-3" role="banner">
-		<a class="navbar-brand me-3" href="?" title="Panel Admina" id="logo">
-			<span class="logo-text">Giełda<span class="logo-accent">Budowlana</span></span>
+		<a class="navbar-brand me-3" href="?" title="Panel Admina - Antyki.pl" id="logo">
+			<span class="logo-text">Antyki<span class="logo-accent">.pl</span></span>
 		</a>
 
 		<button class="navbar-toggler border-0" type="button"
@@ -293,6 +293,16 @@
 						<i class="bi bi-stopwatch me-1"></i> <span id="session-time-display" class="fw-bold">30:00</span>
 					</span>
 				</li>
+				<li class="nav-item me-3 d-flex align-items-center">
+					<span class="text-secondary small">
+						<i class="bi bi-person-fill text-primary me-1 fs-6"></i> Jesteś zalogowany jako: <strong class="text-dark">{{ admin.username }}</strong>
+						{% if is_superadmin or admin.role == 'superadmin' %}
+							<span class="badge bg-danger-subtle text-danger border border-danger ms-1" style="font-size: 10px;">SuperAdmin</span>
+						{% else %}
+							<span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size: 10px;">Moderator</span>
+						{% endif %}
+					</span>
+				</li>
 				<li class="nav-item d-none d-lg-block me-3">
 					<button type="button"
 						class="btn btn-link nav-link p-1 border-0 theme-toggle-btn"
@@ -300,18 +310,18 @@
 						<i class="bi bi-moon-fill fs-6 theme-toggle-icon"></i>
 					</button>
 				</li>
-				<li class="nav-item">
+				<li class="nav-item me-2">
 					<a class="nav-link text-primary fw-semibold" href="/" target="_blank" rel="noopener">
 						<i class="bi bi-box-arrow-up-right me-1"></i>Strona główna
 					</a>
 				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="?controller=admin">
-						<i class="bi bi-person-circle me-1"></i>Admin
+				<li class="nav-item me-2">
+					<a class="nav-link" href="?controller=admin" title="Ustawienia konta {{ admin.username }}">
+						<i class="bi bi-gear-fill me-1"></i>Konto
 					</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link text-danger" href="?log_out&token={{ generateToken('admin_logout') }}">
+					<a class="nav-link text-danger fw-semibold" href="?log_out&token={{ generateToken('admin_logout') }}">
 						<i class="bi bi-box-arrow-right me-1"></i>Wyloguj
 					</a>
 				</li>
