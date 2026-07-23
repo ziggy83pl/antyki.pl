@@ -42,8 +42,12 @@ function getSettings(){
   global $db, $settings;
   $sth = $db->query('SELECT * FROM '._DB_PREFIX_.'settings');
   if(!$sth){die('Error! Incorrect database');}
+  $settings = [];
   foreach($sth as $row){
     $settings[$row['name']] = $row['value'];
+  }
+  if (class_exists('\App\Core\App')) {
+    \App\Core\App::setSettings($settings);
   }
 }
 getSettings();
