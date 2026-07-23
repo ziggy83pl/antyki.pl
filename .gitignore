@@ -9,3 +9,5 @@ config/db.php
 .DS_Store
 *.log
 db.php
+FTP Details*
+Bazy Danych*
