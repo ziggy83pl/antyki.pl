@@ -43,6 +43,7 @@ echo $twig->render($controller.'.html', array_merge($render_variables, [
 	'title' => $title,
 	'settings' => $settings,
 	'admin' => $admin->user_data,
+	'is_superadmin' => $admin->isSuperAdmin(),
 	'_ADMIN_TEST_MODE_' => _ADMIN_TEST_MODE_,
 	'get' => $_GET,
 	'controller' => $controller,

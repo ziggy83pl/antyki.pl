@@ -97,12 +97,20 @@
 	<div class="col-md-6 mb-4">
 		<div class="card border-0 shadow-sm rounded-4 p-4 h-100">
 			<h3 class="h5 mb-4 text-dark fw-bold"><span class="bi bi-person-plus-fill text-primary me-2"></span> {{ 'Add user'|lang }}</h3>
+			{% if is_superadmin %}
 			<form method="post" class="row g-3">
 				<input type="hidden" name="action" value="admin_add_user">
 				<input type="hidden" name="token" value="{{ generateToken('admin_add_user') }}">
 				<div class="col-12">
 					<label for="username" class="form-label fw-semibold">{{ 'Username'|lang }}</label>
 					<input type="text" class="form-control py-2" name="username" placeholder="administrator" id="username" required title="{{ 'Username'|lang }}" maxlength="32">
+				</div>
+				<div class="col-12">
+					<label for="role" class="form-label fw-semibold">Rola i Uprawnienia</label>
+					<select name="role" id="role" class="form-select py-2" title="Wybierz rolę administratora">
+						<option value="admin">Moderator (Podrzędny Admin)</option>
+						<option value="superadmin">Główny Administrator (SuperAdmin)</option>
+					</select>
 				</div>
 				<div class="col-12">
 					<label for="password" class="form-label fw-semibold">{{ 'Password'|lang }}</label>
@@ -137,6 +145,11 @@
 					<button type="submit" class="btn btn-primary text-uppercase fw-bold w-100 py-2">{{ 'Add user'|lang }}</button>
 				</div>
 			</form>
+			{% else %}
+			<div class="alert alert-info border-0 rounded-3 mb-0">
+				<i class="bi bi-shield-lock-fill me-2"></i> Dodawanie i zarządzenie kontami administratorów jest zastrzeżone dla <strong>Głównego Administratora (SuperAdmin)</strong>.
+			</div>
+			{% endif %}
 		</div>
 	</div>
 </div>
@@ -149,8 +162,9 @@
 					<thead>
 						<tr>
 							<th scope="col" style="width: 5%;">#</th>
-							<th scope="col" style="width: 35%;">{{ 'Username'|lang }}</th>
-							<th scope="col" style="width: 45%;">{{ 'Status'|lang }}</th>
+							<th scope="col" style="width: 25%;">{{ 'Username'|lang }}</th>
+							<th scope="col" style="width: 25%;">Rola</th>
+							<th scope="col" style="width: 30%;">{{ 'Status'|lang }}</th>
 							<th scope="col" style="width: 15%;" class="text-center">{{ 'Remove'|lang }}</th>
 						</tr>
 					</thead>
@@ -159,6 +173,13 @@
 							<tr>
 								<td>{{ loop.index }}</td>
 								<td class="fw-bold">{{ item.username }}</td>
+								<td>
+									{% if item.role == 'superadmin' or item.id == 1 %}
+										<span class="badge bg-danger-subtle border border-danger text-danger px-2 py-1"><i class="bi bi-shield-fill-check me-1"></i> Główny Admin</span>
+									{% else %}
+										<span class="badge bg-primary-subtle border border-primary text-primary px-2 py-1"><i class="bi bi-person-badge me-1"></i> Moderator</span>
+									{% endif %}
+								</td>
 								<td>
 									{% if item.id == admin.id %}
 										<span class="badge bg-success-subtle border border-success text-success px-2 py-1"><i class="bi bi-person-fill me-1"></i> {{ 'Active (You)'|lang }}</span>
@@ -172,12 +193,12 @@
 									{% endif %}
 								</td>
 								<td class="text-center">
-									{% if item.id != admin.id %}
+									{% if is_superadmin and item.id != admin.id and item.role != 'superadmin' and item.id != 1 %}
 										<a href="#" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}" title="{{ 'Delete user'|lang }}" class="bi bi-x-lg text-danger fs-5"></a>
 									{% endif %}
 								</td>
 							</tr>
-							{% if item.id != admin.id %}
+							{% if is_superadmin and item.id != admin.id and item.role != 'superadmin' and item.id != 1 %}
 								{{ macros.confirmModal('remove_' ~ item.id, 'Delete user'|lang ~ ' ' ~ item.username, 'admin_remove_user', 'admin_remove_user', 'Na pewno chcesz usunąć użytkownika ' ~ item.username ~ '?', item.id) }}
 							{% endif %}
 						{% endfor %}

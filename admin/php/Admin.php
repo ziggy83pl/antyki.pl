@@ -16,12 +16,20 @@ class Admin {
 	public array $user_data = [];
 
 	public function __construct(private readonly PDO $db) {
-		// Self-healing database updates for 2FA
+		// Self-healing database updates for 2FA and Roles
 		try {
 			$this->db->query("SELECT `twofa_secret` FROM `" . _DB_PREFIX_ . "admin` LIMIT 1");
 		} catch (\Throwable $e) {
 			try {
 				$this->db->exec("ALTER TABLE `" . _DB_PREFIX_ . "admin` ADD COLUMN `twofa_secret` varchar(32) DEFAULT NULL");
+			} catch (\Throwable $ex) {}
+		}
+		try {
+			$this->db->query("SELECT `role` FROM `" . _DB_PREFIX_ . "admin` LIMIT 1");
+		} catch (\Throwable $e) {
+			try {
+				$this->db->exec("ALTER TABLE `" . _DB_PREFIX_ . "admin` ADD COLUMN `role` varchar(20) NOT NULL DEFAULT 'admin'");
+				$this->db->exec("UPDATE `" . _DB_PREFIX_ . "admin` SET `role` = 'superadmin' WHERE id = (SELECT min_id FROM (SELECT MIN(id) as min_id FROM `" . _DB_PREFIX_ . "admin`) as tmp)");
 			} catch (\Throwable $ex) {}
 		}
 		try {
@@ -45,12 +53,15 @@ class Admin {
 				(isset($_SESSION['admin']['user_agent']) && $_SESSION['admin']['user_agent'] !== ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
 				$this->logOut();
 			} else {
-				$sth = $this->db->prepare('SELECT '._DB_PREFIX_.'admin.id, username FROM '._DB_PREFIX_.'admin_session, '._DB_PREFIX_.'admin WHERE user_id='._DB_PREFIX_.'admin.id AND '._DB_PREFIX_.'admin.id=:id AND code=:code LIMIT 1');
+				$sth = $this->db->prepare('SELECT '._DB_PREFIX_.'admin.id, username, COALESCE('._DB_PREFIX_.'admin.role, "admin") as role FROM '._DB_PREFIX_.'admin_session, '._DB_PREFIX_.'admin WHERE user_id='._DB_PREFIX_.'admin.id AND '._DB_PREFIX_.'admin.id=:id AND code=:code LIMIT 1');
 				$sth->bindValue(':id', $_SESSION['admin']['id'], PDO::PARAM_INT);
 				$sth->bindValue(':code', $_SESSION['admin']['session_code'], PDO::PARAM_STR);
 				$sth->execute();
 				$user_data = $sth->fetch(PDO::FETCH_ASSOC);
 				if ($user_data) {
+					if ((int)$user_data['id'] === 1) {
+						$user_data['role'] = 'superadmin';
+					}
 					$this->user_data = $user_data;
 				} else {
 					unset($_SESSION['admin']);
@@ -223,29 +234,43 @@ class Admin {
 		return $admin_logs;
 	}
 
+	public function isSuperAdmin(): bool {
+		return ($this->user_data['role'] ?? '') === 'superadmin' || ((int)($this->user_data['id'] ?? 0) === 1);
+	}
+
 	/**
      * @return mixed[]
      */
 	public function getUsers(): array {
 		$admin = [];
-		$sth = $this->db->query('SELECT a.id, a.username, 
+		$sth = $this->db->query('SELECT a.id, a.username, COALESCE(a.role, "admin") as role, 
 			(SELECT s.date FROM '._DB_PREFIX_.'admin_session s WHERE s.user_id = a.id ORDER BY s.date DESC LIMIT 1) as session_date,
 			(SELECT MAX(l.date) FROM '._DB_PREFIX_.'admin_logs l WHERE l.username = a.username AND l.logged = 1) as last_login
 			FROM '._DB_PREFIX_.'admin a 
-			ORDER BY a.username');
-		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) { $admin[] = $row; }
+			ORDER BY a.id ASC');
+		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			if ((int)$row['id'] === 1 && $row['role'] !== 'superadmin') {
+				$row['role'] = 'superadmin';
+			}
+			$admin[] = $row;
+		}
 		return $admin;
 	}
 
 	public function addUser(array $data): void {
+		if (!$this->isSuperAdmin()) {
+			throw new Exception(lang('Tylko Główny Administrator może dodawać nowe konta administratorów'));
+		}
 		if ($data['password'] == $data['repeat_password']) {
 			$sth = $this->db->prepare('SELECT 1 FROM '._DB_PREFIX_.'admin WHERE username=:username LIMIT 1');
 			$sth->bindValue(':username', $data['username'], PDO::PARAM_STR);
 			$sth->execute();
 			if (!$sth->fetchColumn()) {
-				$sth = $this->db->prepare('INSERT INTO '._DB_PREFIX_.'admin (username, password) VALUES(:username, :password)');
+				$role = (!empty($data['role']) && in_array($data['role'], ['superadmin', 'admin'])) ? $data['role'] : 'admin';
+				$sth = $this->db->prepare('INSERT INTO '._DB_PREFIX_.'admin (username, password, role) VALUES(:username, :password, :role)');
 				$sth->bindValue(':username', $data['username'], PDO::PARAM_STR);
 				$sth->bindValue(':password', $this->createPassword($data['password']), PDO::PARAM_STR);
+				$sth->bindValue(':role', $role, PDO::PARAM_STR);
 				$sth->execute();
 			} else {
 				throw new Exception(lang('The selected username is already taken'));
@@ -256,13 +281,25 @@ class Admin {
 	}
 
 	public function removeUser(int $id): void {
-		if ($id != $this->user_data['id']) {
-			$sth = $this->db->prepare('DELETE FROM '._DB_PREFIX_.'admin WHERE id=:id LIMIT 1');
-			$sth->bindValue(':id', $id, PDO::PARAM_INT);
-			$sth->execute();
-		} else {
+		if (!$this->isSuperAdmin()) {
+			throw new Exception(lang('Tylko Główny Administrator może usuwać konta administratorów'));
+		}
+		if ($id == $this->user_data['id']) {
 			throw new Exception(lang('You can not delete a user who is logged'));
 		}
+
+		$sthTarget = $this->db->prepare('SELECT role FROM '._DB_PREFIX_.'admin WHERE id=:id LIMIT 1');
+		$sthTarget->bindValue(':id', $id, PDO::PARAM_INT);
+		$sthTarget->execute();
+		$targetRole = $sthTarget->fetchColumn();
+
+		if ($targetRole === 'superadmin' || $id === 1) {
+			throw new Exception(lang('Nie można usunąć Głównego Administratora!'));
+		}
+
+		$sth = $this->db->prepare('DELETE FROM '._DB_PREFIX_.'admin WHERE id=:id LIMIT 1');
+		$sth->bindValue(':id', $id, PDO::PARAM_INT);
+		$sth->execute();
 	}
 
 	public function logOutAll(): never {
