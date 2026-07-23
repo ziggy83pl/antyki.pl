@@ -1,6 +1,8 @@
 .env
 /vendor/
-/upload/
+/upload/photos/
+/upload/avatars/
+/upload/ads/
 /tmp/
 config/config.php
 config/db.php
