@@ -31,8 +31,13 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(32) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `role` varchar(20) NOT NULL DEFAULT 'admin',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `admin` (`id`, `username`, `password`, `role`) VALUES
+(1, 'admin', '$2y$10$e.xXzQkZ3j9f5wZ1mN6j9uXzQkZ3j9f5wZ1mN6j9uXzQkZ3j9f5wZ', 'superadmin')
+ON DUPLICATE KEY UPDATE `username`=`username`;
 
 
 -- --------------------------------------------------------

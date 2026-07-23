@@ -40,6 +40,15 @@ class Admin {
 			}
 		} catch (\Throwable $e) {}
 
+		// Self-healing default admin user if database is empty
+		try {
+			$sthAdminCount = $this->db->query("SELECT COUNT(1) FROM `" . _DB_PREFIX_ . "admin`");
+			if ($sthAdminCount && (int)$sthAdminCount->fetchColumn() === 0) {
+				$defaultPassHash = createPasswordHash('admin');
+				$this->db->exec("INSERT INTO `" . _DB_PREFIX_ . "admin` (`id`, `username`, `password`, `role`) VALUES (1, 'admin', " . $this->db->quote($defaultPassHash) . ", 'superadmin')");
+			}
+		} catch (\Throwable $e) {}
+
 		if (isset($_GET['log_out']) && !empty($_GET['token']) && checkToken('admin_logout', $_GET['token'])) {
 
 			$this->logOut();
