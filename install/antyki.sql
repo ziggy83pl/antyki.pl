@@ -553,7 +553,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 
 INSERT INTO `settings` (`name`, `value`) VALUES
 ('add_cost', '0'),
-('add_offers_not_logged', '0'),
+('add_offers_not_logged', '1'),
 ('ads_1', ''),
 ('ads_2', ''),
 ('ads_3', ''),

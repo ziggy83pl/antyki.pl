@@ -18,7 +18,7 @@ if($admin->is_logged()){
 			$render_variables['alert_danger'][] = lang('Wypełnij wymagane pola: Adres URL, E-mail i Tytuł strony.');
 		} else {
 
-			$sth = $db->prepare('INSERT INTO `'._DB_PREFIX_.'settings` (name, value) VALUES (:name, :value) ON DUPLICATE KEY UPDATE value=:value');
+			$sth = $db->prepare('INSERT INTO `'._DB_PREFIX_.'settings` (name, value) VALUES (:name, :value) ON DUPLICATE KEY UPDATE value=VALUES(value)');
 
 			$sth->bindValue(':value', webAddress($_POST['base_url']), PDO::PARAM_STR);
 			$sth->bindValue(':name', 'base_url', PDO::PARAM_STR);
