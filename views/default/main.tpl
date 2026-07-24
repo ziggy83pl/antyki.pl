@@ -417,14 +417,12 @@
 					{% endif %}
 				{% endif %}
 
-				{% if is_lomza_region %}
-					<div class="row mt-4 pt-4 border-top" style="border-color: rgba(0,0,0,0.08) !important;">
-						<div class="col-12 text-center pb-4">
-							<div id="global-trusted-logos"></div>
-						</div>
+				<div class="row mt-4 pt-4 border-top" style="border-color: rgba(0,0,0,0.08) !important;">
+					<div class="col-12 text-center pb-4">
+						<div id="global-trusted-logos"></div>
 					</div>
-					<script src="https://ziggy83pl.github.io/zasoby/portfolio-logos.js" defer></script>
-				{% endif %}
+				</div>
+				<script src="{{ settings.base_url }}/js/portfolio-logos.js" defer></script>
 			</div>
 		</div>
 		<div id="footer_bottom" class="text-center d-none d-md-block">
