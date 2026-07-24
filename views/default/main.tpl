@@ -358,7 +358,7 @@
 						<br><br>
 						<h5 class="text-white-50">Polecamy</h5>
 						<a href="https://zamow-budowe.pages.dev/" target="_blank" rel="noopener" class="d-inline-flex align-items-center bg-white text-dark px-3 py-2 rounded text-decoration-none shadow-sm mb-4" style="border: 2px solid #facc15;">
-							<i class="bi bi-cone-striped fs-3 me-2" style="color: #ea580c;"></i>
+							<img src="{{ settings.base_url }}/views/{{ settings.template }}/images/prodom.webp" alt="PRODOM BUDOWNICTWO" width="36" height="36" class="me-2 rounded-circle" style="object-fit: contain; background: #fff; padding: 2px;">
 							<div class="text-start">
 								<span class="d-block fw-bold" style="line-height: 1;">Zamów Budowę</span>
 								<small class="text-muted" style="font-size: 0.75rem;">Profesjonalne usługi</small>
