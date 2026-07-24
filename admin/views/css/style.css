@@ -657,3 +657,92 @@ footer {
         font-size: 1.25rem;
     }
 }
+
+/* Custom Padlock Checkboxes */
+input[type="checkbox"]:not([role="switch"]),
+input[type="checkbox"].form-check-input:not([role="switch"]) {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    width: 1.75em !important;
+    height: 1.75em !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    vertical-align: -0.35em !important;
+    float: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0.45rem !important;
+    transition: transform 0.2s ease, filter 0.2s ease !important;
+}
+
+/* Container alignment for Bootstrap form-check */
+.form-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding-left: 0 !important;
+}
+
+.form-check .form-check-input:not([role="switch"]) {
+    float: none !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+}
+
+.form-check .form-check-label {
+    cursor: pointer;
+    vertical-align: middle;
+    margin-bottom: 0;
+}
+
+/* Unchecked state: Red closed padlock with shivering/shaking animation */
+input[type="checkbox"]:not([role="switch"]):not(:checked),
+input[type="checkbox"].form-check-input:not([role="switch"]):not(:checked) {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V6a5 5 0 0 1 10 0v4' fill='none' stroke='%23dc3545' stroke-width='2.5' stroke-linecap='round'/%3E%3Crect x='4' y='10' width='16' height='12' rx='3' fill='%23dc3545'/%3E%3Ccircle cx='12' cy='15' r='1.5' fill='%23ffffff'/%3E%3Cpath d='M12 16.5v2' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    animation: padlock-shiver 1.2s infinite ease-in-out !important;
+}
+
+/* Checked state: Green open padlock (steady/no shivering) */
+input[type="checkbox"]:not([role="switch"]):checked,
+input[type="checkbox"].form-check-input:not([role="switch"]):checked {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V6a5 5 0 0 1 10 0' fill='none' stroke='%23198754' stroke-width='2.5' stroke-linecap='round'/%3E%3Crect x='4' y='10' width='16' height='12' rx='3' fill='%23198754'/%3E%3Ccircle cx='12' cy='15' r='1.5' fill='%23ffffff'/%3E%3Cpath d='M12 16.5v2' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    animation: padlock-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* Hover & Focus states */
+input[type="checkbox"]:not([role="switch"]):hover {
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+input[type="checkbox"]:not([role="switch"]):focus-visible {
+    outline: 2px dashed #0d6efd !important;
+    outline-offset: 2px !important;
+}
+
+/* Shivering / Shaking animation for closed padlock */
+@keyframes padlock-shiver {
+    0%, 100% { transform: rotate(0deg) translate(0, 0); }
+    15% { transform: rotate(-5deg) translate(-0.5px, 0); }
+    30% { transform: rotate(5deg) translate(0.5px, 0); }
+    45% { transform: rotate(-4deg) translate(-0.5px, 0); }
+    60% { transform: rotate(4deg) translate(0.5px, 0); }
+    75% { transform: rotate(-2deg) translate(0, 0); }
+}
+
+/* Unlock pop animation when checked */
+@keyframes padlock-pop {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}

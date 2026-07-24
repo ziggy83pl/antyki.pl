@@ -11,24 +11,60 @@
 		color: #1f2937 !important;
 	}
 	.search-type-btn.active {
-		background: linear-gradient(135deg, #f97316 0%, #facc15 100%) !important;
+		background-color: #556b2f !important;
 		color: #ffffff !important;
-		border-color: transparent !important;
-		box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25) !important;
+		border-color: #556b2f !important;
+		box-shadow: 0 4px 12px rgba(85, 107, 47, 0.3) !important;
+	}
+	html[data-bs-theme="dark"] .search-type-btn {
+		border-color: #334155 !important;
+		background-color: #1e293b !important;
+		color: #cbd5e1 !important;
+	}
+	html[data-bs-theme="dark"] .search-type-btn:hover {
+		background-color: #334155 !important;
+		color: #ffffff !important;
+	}
+	html[data-bs-theme="dark"] .search-type-btn.active {
+		background-color: #556b2f !important;
+		color: #ffffff !important;
+		border-color: #556b2f !important;
 	}
 </style>
 
+{% if types %}
 <div class="d-flex flex-wrap justify-content-center gap-2 mb-4 px-2 search-type-toggle">
 	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if not get.type %}active{% endif %}" onclick="setSearchType('')">
-		<i class="bi bi-grid-fill me-1"></i> Wszystkie ogłoszenia
+		<i class="bi bi-grid-fill me-1"></i> Wszystkie przedmioty
+	</button>
+	{% for type in types %}
+		<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if get.type == type.slug %}active{% endif %}" onclick="setSearchType('{{ type.slug }}')">
+			{% if type.slug == 'kupie' %}
+				<i class="bi bi-search-heart me-1"></i> {{ type.name }}
+			{% elseif type.slug == 'zamiana' or type.slug == 'wymiana' %}
+				<i class="bi bi-arrow-repeat me-1"></i> {{ type.name }}
+			{% else %}
+				<i class="bi bi-tag-fill me-1"></i> {{ type.name }}
+			{% endif %}
+		</button>
+	{% endfor %}
+</div>
+{% else %}
+<div class="d-flex flex-wrap justify-content-center gap-2 mb-4 px-2 search-type-toggle">
+	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if not get.type %}active{% endif %}" onclick="setSearchType('')">
+		<i class="bi bi-grid-fill me-1"></i> Wszystkie przedmioty
+	</button>
+	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if get.type == 'sprzedam' or get.type == 'sprzedaz' %}active{% endif %}" onclick="setSearchType('sprzedam')">
+		<i class="bi bi-tag-fill me-1"></i> Sprzedaż
 	</button>
 	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if get.type == 'kupie' %}active{% endif %}" onclick="setSearchType('kupie')">
-		<i class="bi bi-briefcase-fill me-1"></i> Szukam podwykonawców (Zlecenia)
+		<i class="bi bi-search-heart me-1"></i> Poszukuję / Kupię
 	</button>
-	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if get.type == 'uslugi' %}active{% endif %}" onclick="setSearchType('uslugi')">
-		<i class="bi bi-tools me-1"></i> Szukam zleceń (Oferty usług)
+	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if get.type == 'zamiana' or get.type == 'wymiana' %}active{% endif %}" onclick="setSearchType('zamiana')">
+		<i class="bi bi-arrow-repeat me-1"></i> Wymiana kolekcjonerska
 	</button>
 </div>
+{% endif %}
 
 <script>
 function setSearchType(typeVal) {
