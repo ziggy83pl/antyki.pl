@@ -16,35 +16,78 @@ class Category {
 	{
 		$db = \App\Core\App::db();
 		$categories = [];
-		$sth = $db->prepare('SELECT c.*, (SELECT COUNT(*) FROM '._DB_PREFIX_.'offer WHERE active = 1 AND date_finish >= NOW() AND (category_id = c.id OR category_id IN (SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = c.id))) as number_offers FROM '._DB_PREFIX_.'category c WHERE c.category_id=:category_id ORDER BY c.position');
+
+		$offerCounts = [];
+		try {
+			$sthCounts = $db->query('SELECT category_id, COUNT(*) as count FROM '._DB_PREFIX_.'offer WHERE active = 1 AND (date_finish IS NULL OR date_finish >= NOW()) GROUP BY category_id');
+			if ($sthCounts) {
+				while ($row = $sthCounts->fetch(PDO::FETCH_ASSOC)) {
+					$offerCounts[(int)$row['category_id']] = (int)$row['count'];
+				}
+			}
+		} catch (Exception $e) {
+			$offerCounts = [];
+		}
+
+		$sth = $db->prepare('SELECT * FROM '._DB_PREFIX_.'category WHERE category_id = :category_id ORDER BY position');
 		$sth->bindValue(':category_id', $category_id, PDO::PARAM_INT);
 		$sth->execute();
-		while ($row = $sth->fetch(PDO::FETCH_ASSOC)){$categories[] = $row;}
+		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			$catId = (int)$row['id'];
+			$count = $offerCounts[$catId] ?? 0;
+			if ($category_id === 0) {
+				$sthSub = $db->prepare('SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = :cat_id');
+				$sthSub->bindValue(':cat_id', $catId, PDO::PARAM_INT);
+				$sthSub->execute();
+				while ($subRow = $sthSub->fetch(PDO::FETCH_ASSOC)) {
+					$count += $offerCounts[(int)$subRow['id']] ?? 0;
+				}
+			}
+			$row['number_offers'] = $count;
+			$categories[] = $row;
+		}
 		return $categories;
 	}
 
 	public static function getAllCategoriesTree(): array
 	{
 		$db = \App\Core\App::db();
-		$sth = $db->query('SELECT c.*, (SELECT COUNT(*) FROM '._DB_PREFIX_.'offer WHERE active = 1 AND date_finish >= NOW() AND (category_id = c.id OR category_id IN (SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = c.id))) as number_offers FROM '._DB_PREFIX_.'category c ORDER BY c.position');
-		$all = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+		$offerCounts = [];
+		try {
+			$sthCounts = $db->query('SELECT category_id, COUNT(*) as count FROM '._DB_PREFIX_.'offer WHERE active = 1 AND (date_finish IS NULL OR date_finish >= NOW()) GROUP BY category_id');
+			if ($sthCounts) {
+				while ($row = $sthCounts->fetch(PDO::FETCH_ASSOC)) {
+					$offerCounts[(int)$row['category_id']] = (int)$row['count'];
+				}
+			}
+		} catch (Exception $e) {
+			$offerCounts = [];
+		}
+
+		$sth = $db->query('SELECT * FROM '._DB_PREFIX_.'category ORDER BY position');
+		$all = $sth ? $sth->fetchAll(PDO::FETCH_ASSOC) : [];
 
 		$categories = [];
 		$subcategories = [];
 		foreach ($all as $cat) {
+			$cat['number_offers'] = $offerCounts[(int)$cat['id']] ?? 0;
 			if ((int)$cat['category_id'] === 0) {
-				$categories[$cat['id']] = $cat;
-				$categories[$cat['id']]['list_subcategories'] = [];
+				$categories[(int)$cat['id']] = $cat;
+				$categories[(int)$cat['id']]['list_subcategories'] = [];
 			} else {
 				$subcategories[] = $cat;
 			}
 		}
+
 		foreach ($subcategories as $subcat) {
 			$parentId = (int)$subcat['category_id'];
 			if (isset($categories[$parentId])) {
 				$categories[$parentId]['list_subcategories'][] = $subcat;
+				$categories[$parentId]['number_offers'] += (int)$subcat['number_offers'];
 			}
 		}
+
 		return array_values($categories);
 	}
 
