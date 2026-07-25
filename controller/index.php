@@ -12,11 +12,7 @@ $render_variables['slider'] = \App\Slider::getSlider();
 
 $render_variables['offers'] = \App\Offer::loadOffers($settings['limit_page_index'],'index_page');
 
-if($settings['index_box_subcategories']){
-	$render_variables['categories'] = \App\Category::getAllCategoriesTree();
-}elseif($settings['search_box_category']){
-	$render_variables['categories'] = \App\Category::getCategories();
-}
+$render_variables['categories'] = \App\Category::getAllCategoriesTree();
 
 $render_variables['states'] = getAllStates();
 if($settings['search_box_type']){
