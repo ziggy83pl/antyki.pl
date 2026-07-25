@@ -25,27 +25,36 @@ class Category {
 					$offerCounts[(int)$row['category_id']] = (int)$row['count'];
 				}
 			}
-		} catch (Exception $e) {
+		} catch (\Throwable $e) {
 			$offerCounts = [];
 		}
 
-		$sth = $db->prepare('SELECT * FROM '._DB_PREFIX_.'category WHERE category_id = :category_id ORDER BY position');
-		$sth->bindValue(':category_id', $category_id, PDO::PARAM_INT);
-		$sth->execute();
-		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-			$catId = (int)$row['id'];
-			$count = $offerCounts[$catId] ?? 0;
+		try {
 			if ($category_id === 0) {
-				$sthSub = $db->prepare('SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = :cat_id');
-				$sthSub->bindValue(':cat_id', $catId, PDO::PARAM_INT);
-				$sthSub->execute();
-				while ($subRow = $sthSub->fetch(PDO::FETCH_ASSOC)) {
-					$count += $offerCounts[(int)$subRow['id']] ?? 0;
-				}
+				$sth = $db->prepare('SELECT * FROM '._DB_PREFIX_.'category WHERE (category_id = 0 OR category_id IS NULL OR category_id = \'\') ORDER BY position');
+			} else {
+				$sth = $db->prepare('SELECT * FROM '._DB_PREFIX_.'category WHERE category_id = :category_id ORDER BY position');
+				$sth->bindValue(':category_id', $category_id, PDO::PARAM_INT);
 			}
-			$row['number_offers'] = $count;
-			$categories[] = $row;
+			$sth->execute();
+			while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$catId = (int)$row['id'];
+				$count = $offerCounts[$catId] ?? 0;
+				if ($category_id === 0) {
+					$sthSub = $db->prepare('SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = :cat_id');
+					$sthSub->bindValue(':cat_id', $catId, PDO::PARAM_INT);
+					$sthSub->execute();
+					while ($subRow = $sthSub->fetch(PDO::FETCH_ASSOC)) {
+						$count += $offerCounts[(int)$subRow['id']] ?? 0;
+					}
+				}
+				$row['number_offers'] = $count;
+				$categories[] = $row;
+			}
+		} catch (\Throwable $e) {
+			// Fail-safe
 		}
+
 		return $categories;
 	}
 
