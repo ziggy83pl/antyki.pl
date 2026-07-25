@@ -309,6 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	// 10. Categories and Subcategories repositioning grid
 	document.querySelectorAll('.index_show_subcategories').forEach(btn => {
 		btn.addEventListener('click', function(e) {
+			if (window.innerWidth < 992) {
+				return;
+			}
 			e.preventDefault();
 			const active = this.classList.contains('active');
 			const id = this.getAttribute('data-id');

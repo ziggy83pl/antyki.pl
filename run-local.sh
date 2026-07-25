@@ -48,7 +48,7 @@ if [[ $# -gt 1 ]]; then
 fi
 
 COMMAND="${1:-start}"
-BASE_URL="http://127.0.0.1:8080"
+BASE_URL="http://127.0.0.1:8081"
 
 case "$COMMAND" in
   start)

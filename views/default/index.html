@@ -345,7 +345,7 @@
 					</div>
 					<a href="{{ path('offers') }}" class="btn btn-outline-light btn-sm">{{ 'See all offers'|lang }}</a>
 				</div>
-					<div class="row g-3">
+					<div class="row g-3 categories-scroll-container">
 						{% for item in categories %}
 							{% set tile_variant = loop.index0 % 6 %}
 							<div class="col-xl-3 col-md-4 col-6 index_categories">
@@ -457,6 +457,43 @@
 
 	<script>
 		$(document).ready(function() {
+			// Horizontal scroll drag for categories
+			const scrollContainer = document.querySelector('.categories-scroll-container');
+			if (scrollContainer) {
+				let isDown = false;
+				let startX, scrollLeft;
+				let isDragging = false;
+
+				scrollContainer.addEventListener('mousedown', (e) => {
+					isDown = true;
+					isDragging = false;
+					startX = e.pageX - scrollContainer.offsetLeft;
+					scrollLeft = scrollContainer.scrollLeft;
+				});
+				scrollContainer.addEventListener('mouseleave', () => { isDown = false; });
+				scrollContainer.addEventListener('mouseup', () => {
+					setTimeout(() => { isDragging = false; }, 50);
+					isDown = false;
+				});
+				scrollContainer.addEventListener('mousemove', (e) => {
+					if (!isDown) return;
+					const x = e.pageX - scrollContainer.offsetLeft;
+					const walk = (x - startX) * 1.5;
+					if (Math.abs(x - startX) > 5) {
+						isDragging = true;
+						e.preventDefault();
+						scrollContainer.scrollLeft = scrollLeft - walk;
+					}
+				});
+
+				scrollContainer.addEventListener('click', (e) => {
+					if (isDragging) {
+						e.preventDefault();
+						e.stopPropagation();
+					}
+				}, true);
+			}
+
 			const $displayInput = $('#location_input_display');
 			const $dropdownMenu = $('#location_dropdown_menu');
 			const $clearBtn = $('#location_clear_btn');

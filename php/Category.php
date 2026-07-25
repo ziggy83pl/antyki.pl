@@ -16,7 +16,7 @@ class Category {
 	{
 		$db = \App\Core\App::db();
 		$categories = [];
-		$sth = $db->prepare('SELECT *, COALESCE((SELECT count FROM '._DB_PREFIX_.'subcategory WHERE category_id=:category_id AND id = subcategory_id ),0) as number_offers FROM '._DB_PREFIX_.'category WHERE category_id=:category_id ORDER BY position');
+		$sth = $db->prepare('SELECT c.*, (SELECT COUNT(*) FROM '._DB_PREFIX_.'offer WHERE active = 1 AND date_finish >= NOW() AND (category_id = c.id OR category_id IN (SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = c.id))) as number_offers FROM '._DB_PREFIX_.'category c WHERE c.category_id=:category_id ORDER BY c.position');
 		$sth->bindValue(':category_id', $category_id, PDO::PARAM_INT);
 		$sth->execute();
 		while ($row = $sth->fetch(PDO::FETCH_ASSOC)){$categories[] = $row;}
@@ -26,7 +26,7 @@ class Category {
 	public static function getAllCategoriesTree(): array
 	{
 		$db = \App\Core\App::db();
-		$sth = $db->query('SELECT *, COALESCE((SELECT count FROM '._DB_PREFIX_.'subcategory WHERE category_id = c.category_id AND id = subcategory_id ),0) as number_offers FROM '._DB_PREFIX_.'category c ORDER BY position');
+		$sth = $db->query('SELECT c.*, (SELECT COUNT(*) FROM '._DB_PREFIX_.'offer WHERE active = 1 AND date_finish >= NOW() AND (category_id = c.id OR category_id IN (SELECT id FROM '._DB_PREFIX_.'category WHERE category_id = c.id))) as number_offers FROM '._DB_PREFIX_.'category c ORDER BY c.position');
 		$all = $sth->fetchAll(PDO::FETCH_ASSOC);
 
 		$categories = [];
