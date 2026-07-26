@@ -33,6 +33,13 @@ class Admin {
 			} catch (\Throwable $ex) {}
 		}
 		try {
+			$this->db->query("SELECT `avatar` FROM `" . _DB_PREFIX_ . "admin` LIMIT 1");
+		} catch (\Throwable $e) {
+			try {
+				$this->db->exec("ALTER TABLE `" . _DB_PREFIX_ . "admin` ADD COLUMN `avatar` varchar(255) DEFAULT NULL");
+			} catch (\Throwable $ex) {}
+		}
+		try {
 			$sth2fa = $this->db->prepare("SELECT COUNT(1) FROM `" . _DB_PREFIX_ . "settings` WHERE name = 'security_2fa_enabled'");
 			$sth2fa->execute();
 			if ($sth2fa->fetchColumn() == 0) {
@@ -62,7 +69,7 @@ class Admin {
 				(isset($_SESSION['admin']['user_agent']) && $_SESSION['admin']['user_agent'] !== ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
 				$this->logOut();
 			} else {
-				$sth = $this->db->prepare('SELECT '._DB_PREFIX_.'admin.id, username, COALESCE('._DB_PREFIX_.'admin.role, "admin") as role FROM '._DB_PREFIX_.'admin_session, '._DB_PREFIX_.'admin WHERE user_id='._DB_PREFIX_.'admin.id AND '._DB_PREFIX_.'admin.id=:id AND code=:code LIMIT 1');
+				$sth = $this->db->prepare('SELECT '._DB_PREFIX_.'admin.id, username, COALESCE('._DB_PREFIX_.'admin.role, "admin") as role, avatar FROM '._DB_PREFIX_.'admin_session, '._DB_PREFIX_.'admin WHERE user_id='._DB_PREFIX_.'admin.id AND '._DB_PREFIX_.'admin.id=:id AND code=:code LIMIT 1');
 				$sth->bindValue(':id', $_SESSION['admin']['id'], PDO::PARAM_INT);
 				$sth->bindValue(':code', $_SESSION['admin']['session_code'], PDO::PARAM_STR);
 				$sth->execute();
@@ -202,28 +209,68 @@ class Admin {
 		$sth->execute();
 	}
 
-	public function changeUser(array $data): void {
-		if ($data['new_password'] == $data['repeat_new_password']) {
-			if ($data['new_username'] != $this->user_data['username']) {
-				$sth = $this->db->prepare('SELECT 1 FROM '._DB_PREFIX_.'admin WHERE username=:username AND id!=:id LIMIT 1');
-				$sth->bindValue(':username', $data['new_username'], PDO::PARAM_STR);
-				$sth->bindValue(':id', $this->user_data['id'], PDO::PARAM_INT);
-				$sth->execute();
-				if ($sth->fetchColumn()) {
-					throw new Exception(lang('The selected username is already taken'));
-				}
-			}
-
-			$sth = $this->db->prepare('UPDATE '._DB_PREFIX_.'admin SET username=:new_username, password=:password WHERE id=:id LIMIT 1');
-			$sth->bindValue(':new_username', $data['new_username'], PDO::PARAM_STR);
-			$sth->bindValue(':password', $this->createPassword($data['new_password']), PDO::PARAM_STR);
+	public function changeUser(array $data, array $files = []): void {
+		if ($data['new_username'] != $this->user_data['username']) {
+			$sth = $this->db->prepare('SELECT 1 FROM '._DB_PREFIX_.'admin WHERE username=:username AND id!=:id LIMIT 1');
+			$sth->bindValue(':username', $data['new_username'], PDO::PARAM_STR);
 			$sth->bindValue(':id', $this->user_data['id'], PDO::PARAM_INT);
 			$sth->execute();
-
-			$this->user_data['username'] = $data['new_username'];
-		} else {
-			throw new Exception(lang('Entered passwords are different'));
+			if ($sth->fetchColumn()) {
+				throw new Exception(lang('The selected username is already taken'));
+			}
 		}
+
+		$updatePassword = false;
+		if (!empty($data['new_password'])) {
+			if ($data['new_password'] !== ($data['repeat_new_password'] ?? '')) {
+				throw new Exception(lang('Entered passwords are different'));
+			}
+			$updatePassword = true;
+		}
+
+		$avatarPath = $this->user_data['avatar'] ?? null;
+		$uploadDir = defined('_FOLDER_AVATARS_') ? _FOLDER_AVATARS_ : __DIR__ . '/../../upload/avatars/';
+
+		if (!empty($data['remove_avatar'])) {
+			if (!empty($avatarPath) && file_exists($uploadDir . $avatarPath)) {
+				@unlink($uploadDir . $avatarPath);
+			}
+			$avatarPath = null;
+		}
+
+		if (isset($files['avatar']) && isset($files['avatar']['tmp_name']) && $files['avatar']['error'] === UPLOAD_ERR_OK && !empty($files['avatar']['tmp_name'])) {
+			$ext = strtolower(pathinfo($files['avatar']['name'], PATHINFO_EXTENSION));
+			$allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+			if (in_array($ext, $allowedExts) && @getimagesize($files['avatar']['tmp_name'])) {
+				if (!is_dir($uploadDir)) {
+					@mkdir($uploadDir, 0777, true);
+				}
+				if (!empty($avatarPath) && file_exists($uploadDir . $avatarPath)) {
+					@unlink($uploadDir . $avatarPath);
+				}
+				$newFileName = 'admin_avatar_' . $this->user_data['id'] . '_' . time() . '.' . $ext;
+				if (move_uploaded_file($files['avatar']['tmp_name'], $uploadDir . $newFileName)) {
+					$avatarPath = $newFileName;
+				}
+			} else {
+				throw new Exception(lang('Dozwolone są tylko pliki graficzne (JPG, PNG, WEBP, GIF).'));
+			}
+		}
+
+		if ($updatePassword) {
+			$sth = $this->db->prepare('UPDATE '._DB_PREFIX_.'admin SET username=:new_username, password=:password, avatar=:avatar WHERE id=:id LIMIT 1');
+			$sth->bindValue(':password', $this->createPassword($data['new_password']), PDO::PARAM_STR);
+		} else {
+			$sth = $this->db->prepare('UPDATE '._DB_PREFIX_.'admin SET username=:new_username, avatar=:avatar WHERE id=:id LIMIT 1');
+		}
+
+		$sth->bindValue(':new_username', $data['new_username'], PDO::PARAM_STR);
+		$sth->bindValue(':avatar', $avatarPath, $avatarPath === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+		$sth->bindValue(':id', $this->user_data['id'], PDO::PARAM_INT);
+		$sth->execute();
+
+		$this->user_data['username'] = $data['new_username'];
+		$this->user_data['avatar'] = $avatarPath;
 	}
 
 	public function removeLogs(): void {
@@ -252,7 +299,7 @@ class Admin {
      */
 	public function getUsers(): array {
 		$admin = [];
-		$sth = $this->db->query('SELECT a.id, a.username, COALESCE(a.role, "admin") as role, 
+		$sth = $this->db->query('SELECT a.id, a.username, COALESCE(a.role, "admin") as role, a.avatar, 
 			(SELECT s.date FROM '._DB_PREFIX_.'admin_session s WHERE s.user_id = a.id ORDER BY s.date DESC LIMIT 1) as session_date,
 			(SELECT MAX(l.date) FROM '._DB_PREFIX_.'admin_logs l WHERE l.username = a.username AND l.logged = 1) as last_login
 			FROM '._DB_PREFIX_.'admin a 

@@ -335,7 +335,7 @@
 
 	{% if controller == 'offers' %}
 		<div class="container d-lg-none mt-5 pt-4 mb-2">
-			<button class="btn btn-primary w-100 py-3 shadow-sm d-flex align-items-center justify-content-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#search_box" aria-expanded="false" aria-controls="search_box">
+			<button class="btn btn-primary w-100 py-3 shadow-sm d-flex align-items-center justify-content-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#form_search_offers" aria-expanded="false" aria-controls="form_search_offers">
 				<i class="bi bi-sliders"></i> {{ 'Filter'|lang }}
 			</button>
 		</div>

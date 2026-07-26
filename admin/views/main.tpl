@@ -294,12 +294,17 @@
 					</span>
 				</li>
 				<li class="nav-item me-3 d-flex align-items-center">
-					<span class="text-secondary small">
-						<i class="bi bi-person-fill text-primary me-1 fs-6"></i> Jesteś zalogowany jako: <strong class="text-dark">{{ admin.username }}</strong>
-						{% if is_superadmin or admin.role == 'superadmin' %}
-							<span class="badge bg-danger-subtle text-danger border border-danger ms-1" style="font-size: 10px;">SuperAdmin</span>
+					<span class="text-secondary small d-inline-flex align-items-center">
+						{% if admin.avatar %}
+							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border me-1 shadow-sm" style="width: 24px; height: 24px; object-fit: cover;">
 						{% else %}
-							<span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size: 10px;">Moderator</span>
+							<i class="bi bi-person-fill text-primary me-1 fs-6"></i>
+						{% endif %}
+						Jesteś zalogowany jako:&nbsp;<strong class="text-dark me-1">{{ admin.username }}</strong>
+						{% if is_superadmin or admin.role == 'superadmin' %}
+							<span class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 10px;">SuperAdmin</span>
+						{% else %}
+							<span class="badge bg-primary-subtle text-primary border border-primary" style="font-size: 10px;">Moderator</span>
 						{% endif %}
 					</span>
 				</li>

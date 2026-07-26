@@ -15,10 +15,10 @@ if($admin->is_logged()){
 
 	if(isset($_POST['action'])){
 
-		if($_POST['action'] == 'admin_change_user' and !empty($_POST['new_username']) and !empty($_POST['new_password']) and !empty($_POST['repeat_new_password']) and checkToken('admin_change_user')){
+		if($_POST['action'] == 'admin_change_user' and !empty($_POST['new_username']) and checkToken('admin_change_user')){
 
 			try{
-				$admin->changeUser($_POST);
+				$admin->changeUser($_POST, $_FILES);
 				$render_variables['alert_success'][] = lang('The data have been updated');
 			}catch(Exception $e) {
 				$render_variables['alert_danger'][] = $e->getMessage();

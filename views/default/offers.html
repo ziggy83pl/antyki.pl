@@ -137,10 +137,6 @@
 		<div class="col-lg-3">
 			{% if settings.ads_side_1 %}<div class="ads mb-3">{{ settings.ads_side_1|raw }}</div>{% endif %}
 
-			<div class="d-block d-lg-none text-center mb-3">
-				<button data-bs-toggle="collapse" data-bs-target="#form_search_offers" class="btn btn-outline-primary w-100"><i class="bi bi-filter me-2"></i>{{ 'Show / hide search box'|lang }}</button>
-			</div>
-
 			<form class="form-search collapse show card border-0 shadow-sm p-4 mb-4" method="get" id="form_search_offers">
 				<input type="hidden" name="search">
 				{% if get.category>0 %}

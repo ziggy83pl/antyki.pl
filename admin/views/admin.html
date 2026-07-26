@@ -44,24 +44,58 @@
 {{ macros.confirmModal('modal_logout', 'Logout all users'|lang, 'admin_logout_all', 'admin_logout_all', 'This will remove from the database all sessions of users'|lang) }}
 
 <div class="page-header mb-4">
-	<h1><span class="bi bi-person-fill text-primary"></span> {{ 'Admin Panel Settings'|lang }}</h1>
+	<h1>
+		{% if admin.avatar %}
+			<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm me-2" style="width: 40px; height: 40px; object-fit: cover; vertical-align: middle;">
+		{% else %}
+			<span class="bi bi-person-fill text-primary"></span>
+		{% endif %}
+		{{ 'Admin Panel Settings'|lang }}
+	</h1>
 </div>
 {% include 'alert.tpl' %}
 <div class="row">
 	<div class="col-md-6 mb-4">
 		<div class="card border-0 shadow-sm rounded-4 p-4 h-100">
-			<h3 class="h5 mb-4 text-dark fw-bold"><span class="bi bi-person-fill text-primary me-2"></span> {{ 'Change the access data to the Admin Panel'|lang }}</h3>
-			<form method="post" class="row g-3">
+			<h3 class="h5 mb-4 text-dark fw-bold d-flex align-items-center gap-2">
+				{% if admin.avatar %}
+					<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover;">
+				{% else %}
+					<span class="bi bi-person-fill text-primary me-2"></span>
+				{% endif %}
+				{{ 'Change the access data to the Admin Panel'|lang }}
+			</h3>
+			<form method="post" enctype="multipart/form-data" class="row g-3">
 				<input type="hidden" name="action" value="admin_change_user">
 				<input type="hidden" name="token" value="{{ generateToken('admin_change_user') }}">
+				<div class="col-12">
+					<label for="avatar" class="form-label fw-semibold">Zdjęcie profilowe (Avatar)</label>
+					<div class="d-flex align-items-center gap-3">
+						{% if admin.avatar %}
+							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm" style="width: 52px; height: 52px; object-fit: cover;">
+						{% else %}
+							<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' fill='%230d6efd' class='bi bi-person-circle' viewBox='0 0 16 16'%3E%3Cpath d='M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z'/%3E%3Cpath fill-rule='evenodd' d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z'/%3E%3C/svg%3E" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm bg-light p-1" style="width: 52px; height: 52px; object-fit: cover;">
+						{% endif %}
+						<div class="flex-grow-1">
+							<input type="file" class="form-control" name="avatar" id="avatar" accept="image/jpeg,image/png,image/webp,image/gif">
+							<small class="text-muted" style="font-size: 11px;">Max 5MB. Format: JPG, PNG, WEBP, GIF</small>
+						</div>
+					</div>
+					{% if admin.avatar %}
+						<div class="form-check mt-2">
+							<input class="form-check-input" type="checkbox" name="remove_avatar" id="remove_avatar" value="1">
+							<label class="form-check-label text-danger small fw-semibold" for="remove_avatar">Usuń aktualne zdjęcie profilowe</label>
+						</div>
+					{% endif %}
+				</div>
 				<div class="col-12">
 					<label for="new_username" class="form-label fw-semibold">{{ 'New username'|lang }}</label>
 					<input type="text" class="form-control py-2" name="new_username" placeholder="administrator" id="new_username" required value="{{ admin.username }}" title="{{ 'New username'|lang }}" maxlength="32">
 				</div>
 				<div class="col-12">
-					<label for="new_password" class="form-label fw-semibold">{{ 'New password'|lang }}</label>
+					<label for="new_password" class="form-label fw-semibold">{{ 'New password'|lang }} <small class="text-muted font-normal">(pozostaw puste, jeśli nie zmieniasz)</small></label>
 					<div class="input-group">
-						<input type="password" class="form-control py-2" name="new_password" placeholder="****" id="new_password" required title="{{ 'New password'|lang }}">
+						<input type="password" class="form-control py-2" name="new_password" placeholder="****" id="new_password" title="{{ 'New password'|lang }}">
 						<button class="btn btn-outline-secondary px-3" type="button" id="toggle_new_password" title="{{ 'Show/hide password'|lang }}">
 							<i class="bi bi-eye"></i>
 						</button>
@@ -81,7 +115,7 @@
 				<div class="col-12 mb-2">
 					<label for="repeat_new_password" class="form-label fw-semibold">{{ 'Repeat new password'|lang }}</label>
 					<div class="input-group">
-						<input type="password" class="form-control py-2" name="repeat_new_password" placeholder="****" id="repeat_new_password" required title="{{ 'Repeat new password'|lang }}">
+						<input type="password" class="form-control py-2" name="repeat_new_password" placeholder="****" id="repeat_new_password" title="{{ 'Repeat new password'|lang }}">
 						<button class="btn btn-outline-secondary px-3" type="button" id="toggle_repeat_new_password" title="{{ 'Show/hide password'|lang }}">
 							<i class="bi bi-eye"></i>
 						</button>
@@ -172,7 +206,16 @@
 						{% for item in admin_users %}
 							<tr>
 								<td>{{ loop.index }}</td>
-								<td class="fw-bold">{{ item.username }}</td>
+								<td class="fw-bold d-flex align-items-center gap-2">
+									{% if item.avatar %}
+										<img src="{{ settings.base_url }}/upload/avatars/{{ item.avatar }}" alt="{{ item.username }}" class="rounded-circle border shadow-sm" style="width: 30px; height: 30px; object-fit: cover;">
+									{% else %}
+										<div class="rounded-circle bg-secondary-subtle border d-flex align-items-center justify-content-center text-secondary" style="width: 30px; height: 30px;">
+											<i class="bi bi-person-fill" style="font-size: 14px;"></i>
+										</div>
+									{% endif %}
+									<span>{{ item.username }}</span>
+								</td>
 								<td>
 									{% if item.role == 'superadmin' or item.id == 1 %}
 										<span class="badge bg-danger-subtle border border-danger text-danger px-2 py-1"><i class="bi bi-shield-fill-check me-1"></i> Główny Admin</span>
@@ -274,4 +317,25 @@
 		</div>
 	</div>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const avatarInput = document.getElementById('avatar');
+	if (avatarInput) {
+		avatarInput.addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(evt) {
+					const preview = document.getElementById('avatar-preview-img');
+					if (preview) {
+						preview.src = evt.target.result;
+					}
+				};
+				reader.readAsDataURL(file);
+			}
+		});
+	}
+});
+</script>
 {% endblock %}

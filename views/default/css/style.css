@@ -371,7 +371,7 @@ body.dragging, body.dragging * {
 	#slider .carousel-caption{
 		bottom: 40px;
 	}
-	#offers_page #search_box:not(.show){
+	#offers_page #form_search_offers:not(.show){
 		display: none;
 	}
 }
