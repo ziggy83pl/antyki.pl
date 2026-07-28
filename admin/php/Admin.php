@@ -128,6 +128,13 @@ class Admin {
 						$user_data['role'] = 'superadmin';
 					}
 					$this->user_data = $user_data;
+
+					// Update active session timestamp in real time
+					try {
+						$sthTouch = $this->db->prepare('UPDATE '._DB_PREFIX_.'admin_session SET date=NOW() WHERE code=:code LIMIT 1');
+						$sthTouch->bindValue(':code', $_SESSION['admin']['session_code'], PDO::PARAM_STR);
+						$sthTouch->execute();
+					} catch (\Throwable $ex) {}
 				} else {
 					unset($_SESSION['admin']);
 				}

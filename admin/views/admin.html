@@ -220,7 +220,7 @@
 					<tbody>
 						{% for item in admin_users %}
 							{% set is_active_you = (item.id == admin.id) %}
-							{% set is_online = (item.session_date and item.session_date|date('U') > ("now"|date('U') - 7200)) %}
+							{% set is_online = (item.session_date and item.session_date|date('U') > ("now"|date('U') - 900)) %}
 							<tr class="{% if is_active_you %}user-row-active-you{% elseif is_online %}user-row-online{% else %}user-row-offline{% endif %}">
 								<td>{{ loop.index }}</td>
 								<td class="fw-bold d-flex align-items-center gap-2">
