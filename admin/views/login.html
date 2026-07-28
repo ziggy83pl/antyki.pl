@@ -53,17 +53,17 @@
 	}
 
 	.login-card {
-		background: rgba(8, 18, 36, 0.60);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
-		border: 1px solid rgba(255, 255, 255, 0.09);
+		background: rgba(18, 20, 26, 0.78);
+		backdrop-filter: blur(24px);
+		-webkit-backdrop-filter: blur(24px);
+		border: 1px solid rgba(217, 119, 6, 0.28);
 		border-radius: 1.5rem;
-		box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
-		transition: transform 0.3s ease;
+		box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 35px rgba(217, 119, 6, 0.12);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
 		position: relative;
 	}
 
-	/* Gradientowa linia na górze karty — zieleń → fiolet */
+	/* Gradientowa linia na górze karty — bursztyn i złoto */
 	.login-card::before {
 		content: '';
 		position: absolute;
@@ -72,13 +72,14 @@
 		right: 1.8rem;
 		height: 2px;
 		border-radius: 2px;
-		background: linear-gradient(90deg, transparent, #34d399 25%, #818cf8 75%, transparent);
-		opacity: 0.9;
+		background: linear-gradient(90deg, transparent, #f59e0b 25%, #d97706 75%, transparent);
+		opacity: 0.95;
 		pointer-events: none;
 	}
 
 	.login-card:hover {
 		transform: translateY(-2px);
+		box-shadow: 0 28px 56px rgba(0, 0, 0, 0.8), 0 0 40px rgba(245, 158, 11, 0.18);
 	}
 
 	.logo-text {
@@ -86,63 +87,77 @@
 		font-weight: 800;
 		letter-spacing: -0.03em;
 		color: #ffffff;
-		text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+		text-shadow: 0 2px 10px rgba(0,0,0,0.6);
 	}
 	.logo-accent {
-		color: #34d399;
-		text-shadow: 0 0 18px rgba(52, 211, 153, 0.7);
+		color: #fbbf24;
+		text-shadow: 0 0 20px rgba(251, 191, 36, 0.75);
 	}
 
 	.form-label {
-		color: #012112;
+		color: #f3f4f6;
 		font-weight: 500;
 		font-size: 0.85rem;
-		opacity: 0.85;
+		letter-spacing: 0.02em;
+		opacity: 0.95;
+	}
+
+	.input-group-text {
+		background: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(245, 158, 11, 0.25) !important;
+		color: #fbbf24 !important;
 	}
 
 	.form-control {
-		background: rgba(142, 235, 213, 0.6) !important;
-		border: 1px solid rgba(255, 255, 255, 0.08) !important;
-		color: #f0fdf4 !important;
+		background: rgba(255, 255, 255, 0.06) !important;
+		border: 1px solid rgba(245, 158, 11, 0.25) !important;
+		color: #ffffff !important;
 		border-radius: 0.75rem;
 		padding: 0.75rem 1rem;
 		transition: all 0.2s ease;
 	}
+	.form-control::placeholder {
+		color: rgba(255, 255, 255, 0.45) !important;
+	}
 	.form-control:focus {
-		border-color: #818cf8 !important;
-		box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.30), 0 0 0 4px rgba(129, 140, 248, 0.18) !important;
-		background: rgba(53, 193, 160, 0.85) !important;
+		border-color: #fbbf24 !important;
+		box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), 0 0 15px rgba(217, 119, 6, 0.2) !important;
+		background: rgba(255, 255, 255, 0.1) !important;
 	}
 
 	.input-group-text-btn {
-		background: rgba(2, 44, 34, 0.6) !important;
-		border: 1px solid rgba(255, 255, 255, 0.08) !important;
+		background: rgba(245, 158, 11, 0.1) !important;
+		border: 1px solid rgba(245, 158, 11, 0.25) !important;
 		border-left: none !important;
-		color: #a7f3d0 !important;
+		color: #fbbf24 !important;
 		border-radius: 0 0.75rem 0.75rem 0;
 		transition: all 0.2s ease;
-		opacity: 0.8;
+		opacity: 0.9;
 	}
 	.input-group-text-btn:hover {
-		color: #f0fdf4 !important;
+		background: rgba(245, 158, 11, 0.2) !important;
+		color: #ffffff !important;
 		opacity: 1;
 	}
 
 	.btn-login {
-		background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-		border: none;
+		background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #78350f 100%);
+		border: 1px solid rgba(251, 191, 36, 0.35);
 		border-radius: 0.75rem;
-		padding: 0.8rem;
-		font-weight: 600;
+		padding: 0.85rem;
+		font-weight: 700;
 		font-size: 0.95rem;
-		box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-		transition: all 0.2s ease;
+		letter-spacing: 0.03em;
+		box-shadow: 0 4px 20px rgba(217, 119, 6, 0.4);
+		transition: all 0.25s ease;
 		color: #ffffff;
+		text-transform: uppercase;
 	}
 	.btn-login:hover {
-		background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
 		transform: translateY(-1px);
-		box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+		box-shadow: 0 6px 25px rgba(245, 158, 11, 0.55);
+		color: #ffffff;
 	}
 
 	.login-footer {
@@ -152,15 +167,15 @@
 		z-index: 5;
 	}
 	.login-footer p {
-		color: #6ee7b7;
+		color: #e5e7eb;
 		font-size: 0.8rem;
-		opacity: 0.6;
+		opacity: 0.75;
 	}
 
 	.captcha-badge {
-		background: rgba(245, 158, 11, 0.15);
+		background: rgba(245, 158, 11, 0.18);
 		color: #fbbf24;
-		border: 1px solid rgba(245, 158, 11, 0.2);
+		border: 1px solid rgba(245, 158, 11, 0.35);
 		font-family: monospace;
 		font-size: 1.1rem !important;
 		letter-spacing: 0.05em;
@@ -219,7 +234,7 @@
 							<label for="twofa_code" class="form-label" style="color: #ffffff; opacity: 0.85;">Kod weryfikacyjny (TOTP)</label>
 							<div class="input-group">
 								<span class="input-group-text bg-transparent border-end-0 border-white border-opacity-10 text-secondary" style="border-radius: 0.75rem 0 0 0.75rem;"><i class="bi bi-key-fill"></i></span>
-								<input type="text" class="form-control border-start-0 text-center fs-4 fw-bold" name="twofa_code" placeholder="000000" id="twofa_code" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required autofocus style="border-radius: 0 0.75rem 0.75rem 0; letter-spacing: 0.2em; color: #34d399 !important;">
+								<input type="text" class="form-control border-start-0 text-center fs-4 fw-bold" name="twofa_code" placeholder="000000" id="twofa_code" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required autofocus style="border-radius: 0 0.75rem 0.75rem 0; letter-spacing: 0.2em; color: #fbbf24 !important;">
 							</div>
 						</div>
 
@@ -238,7 +253,7 @@
 							<i class="bi bi-check-circle me-1"></i> Potwierdź i zaloguj
 						</button>
 						<div class="text-center mt-3">
-							<a href="?" class="text-decoration-none small" style="color: #a7f3d0;"><i class="bi bi-arrow-left"></i> Anuluj logowanie</a>
+							<a href="?" class="text-decoration-none small" style="color: #fbbf24;"><i class="bi bi-arrow-left"></i> Anuluj logowanie</a>
 						</div>
 					
 					{% else %}
@@ -286,14 +301,14 @@
 
 	<div class="login-footer">
 		<p class="mb-0">Admin Panel v2.2 &copy; 2026. Wszystkie prawa zastrzeżone.</p>
-		<p class="mb-0 mt-1" style="color:#e25e0c;opacity:0.7;font-size:0.72rem;"><i class="bi bi-shield-lock-fill me-1"></i>Panel chroniony przez AI Claude Firewall</p>
+		<p class="mb-0 mt-1" style="color:#fbbf24;opacity:0.75;font-size:0.72rem;"><i class="bi bi-shield-lock-fill me-1"></i>Panel chroniony przez AI Claude Firewall</p>
 	</div>
 </div>
 
 <script>
 /* ============================================================
    AURORA BOREALIS — animowane tło zorzy polarnej
-   Mix: zieleń + fiolet + tirkis
+   Motyw: Złoto, Bursztyn i Brąz
    ============================================================ */
 (function () {
 	const canvas = document.getElementById('aurora-canvas');
@@ -307,16 +322,89 @@
 	resize();
 	window.addEventListener('resize', resize);
 
-	/* Definicje fal zorzy — każda ma inny kolor, prędkość i pozycję */
+	/* Definicje fal zorzy — zbalansowane odcienie antycznego złota i ciepłego bursztynu */
 	const waves = [
-		{ rgb: [52,  211, 153], speed: 0.0007, amp: 0.22, freq: 1.2, phase: 0.0,  yRel: 0.35 },
-		{ rgb: [99,  102, 241], speed: 0.0009, amp: 0.18, freq: 0.9, phase: 2.1,  yRel: 0.50 },
-		{ rgb: [20,  184, 166], speed: 0.0006, amp: 0.20, freq: 1.5, phase: 1.0,  yRel: 0.28 },
-		{ rgb: [167, 243, 208], speed: 0.0011, amp: 0.14, freq: 1.8, phase: 3.5,  yRel: 0.62 },
-		{ rgb: [139, 92,  246], speed: 0.0008, amp: 0.16, freq: 1.1, phase: 0.8,  yRel: 0.43 },
-		{ rgb: [45,  212, 191], speed: 0.0010, amp: 0.12, freq: 2.0, phase: 4.2,  yRel: 0.20 },
-		{ rgb: [16,  185, 129], speed: 0.0005, amp: 0.10, freq: 0.7, phase: 5.1,  yRel: 0.70 },
+		{ rgb: [245, 197,  66], speed: 0.0007, amp: 0.22, freq: 1.2, phase: 0.0,  yRel: 0.35 },
+		{ rgb: [217, 119,   6], speed: 0.0009, amp: 0.18, freq: 0.9, phase: 2.1,  yRel: 0.50 },
+		{ rgb: [202, 138,   4], speed: 0.0006, amp: 0.20, freq: 1.5, phase: 1.0,  yRel: 0.28 },
+		{ rgb: [251, 191,  36], speed: 0.0011, amp: 0.14, freq: 1.8, phase: 3.5,  yRel: 0.62 },
+		{ rgb: [180,  83,   9], speed: 0.0008, amp: 0.16, freq: 1.1, phase: 0.8,  yRel: 0.43 },
+		{ rgb: [245, 158,  11], speed: 0.0010, amp: 0.12, freq: 2.0, phase: 4.2,  yRel: 0.20 },
+		{ rgb: [212, 160,  23], speed: 0.0005, amp: 0.10, freq: 0.7, phase: 5.1,  yRel: 0.70 },
 	];
+
+	/* ============================================================
+	   DIAMENTY I GWIAZDY — subtelne punktowe migotanie w górnej części tła
+	   ============================================================ */
+	const numStars = 35; // Zmniejszone o połowę dla subtelniejszego efektu
+	const stars = [];
+	for (let i = 0; i < numStars; i++) {
+		stars.push({
+			xRel: Math.random(),
+			yRel: Math.pow(Math.random(), 1.7) * 0.42, // Skupione głównie w górnej strefie czarnego tła
+			size: Math.random() < 0.3 ? Math.random() * 3.0 + 2.5 : Math.random() * 1.5 + 0.8,
+			isDiamond: Math.random() < 0.35,
+			twinkleSpeed: 0.008 + Math.random() * 0.025, // Spowolnione, spokojniejsze migotanie
+			twinklePhase: Math.random() * Math.PI * 2,
+			baseAlpha: 0.2 + Math.random() * 0.6,
+			color: Math.random() < 0.4 ? '#ffffff' : (Math.random() < 0.5 ? '#fef3c7' : '#fbbf24')
+		});
+	}
+
+	function drawStars(t) {
+		stars.forEach(s => {
+			const x = s.xRel * W;
+			const y = s.yRel * H;
+
+			// Subtelne migotanie z miękkim blaskiem
+			const sinVal = Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+			const alpha = Math.max(0.03, s.baseAlpha * Math.pow(Math.max(0, sinVal), 4.0));
+
+			if (alpha <= 0.02) return;
+
+			ctx.save();
+			ctx.globalAlpha = alpha;
+
+			if (s.isDiamond) {
+				// Diamentowy kształt z subtelnym 4-ramiennym promieniem przy rozbłysku
+				const sz = s.size;
+				ctx.fillStyle = s.color;
+				ctx.beginPath();
+				ctx.moveTo(x, y - sz);
+				ctx.lineTo(x + sz * 0.3, y);
+				ctx.lineTo(x, y + sz);
+				ctx.lineTo(x - sz * 0.3, y);
+				ctx.closePath();
+				ctx.fill();
+
+				// Promienie krzyżowe diamentu podczas rozbłysku
+				if (alpha > 0.3) {
+					const flareLen = sz * (1.5 + alpha * 1.8);
+					ctx.strokeStyle = s.color;
+					ctx.lineWidth = 0.65;
+					ctx.beginPath();
+					ctx.moveTo(x - flareLen, y); ctx.lineTo(x + flareLen, y);
+					ctx.moveTo(x, y - flareLen); ctx.lineTo(x, y + flareLen);
+					ctx.stroke();
+				}
+			} else {
+				// Klasyczna punktowa gwiazda
+				ctx.fillStyle = s.color;
+				ctx.beginPath();
+				ctx.arc(x, y, s.size * 0.8, 0, Math.PI * 2);
+				ctx.fill();
+
+				// Subtelny bursztynowo-złoty blask
+				if (alpha > 0.4) {
+					ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
+					ctx.beginPath();
+					ctx.arc(x, y, s.size * 2.0, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			}
+			ctx.restore();
+		});
+	}
 
 	function drawWave(w, t) {
 		const [r, g, b] = w.rgb;
@@ -356,12 +444,15 @@
 		tick++;
 		ctx.clearRect(0, 0, W, H);
 
-		/* Ciemne granatowe tło */
+		/* Ciemny grafitowo-stalowy gradient tła */
 		const bg = ctx.createLinearGradient(0, 0, 0, H);
-		bg.addColorStop(0, '#040d1a');
-		bg.addColorStop(1, '#071424');
+		bg.addColorStop(0, '#090a0f');
+		bg.addColorStop(1, '#131620');
 		ctx.fillStyle = bg;
 		ctx.fillRect(0, 0, W, H);
+
+		/* Rysowanie migoczących gwiazd i diamentów na ciemnym tle */
+		drawStars(tick);
 
 		/* Fale zorzy — tryb screen daje efekt świetlny */
 		ctx.globalCompositeOperation = 'screen';
