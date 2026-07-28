@@ -520,14 +520,20 @@
 					{# ── System ── #}
 					<li class="sidebar-section-label">System</li>
 
+					<li class="nav-item {% if controller=='logs_activity' %}active{% endif %}">
+						<a class="nav-link" href="?controller=logs_activity">
+							<i class="bi bi-journal-check"></i> Dziennik Akcji
+						</a>
+					</li>
+
 					{# Logi (submenu) #}
 					<li class="nav-item">
 						<a class="nav-link dropdown-toggle" href="#submenu_logs"
 							data-bs-toggle="collapse" role="button"
-							aria-expanded="{{ controller in ['logs_offers','logs_users','logs_mails','logs_security','reset_password'] ? 'true' : 'false' }}">
+							aria-expanded="{{ controller in ['logs_activity','logs_offers','logs_users','logs_mails','logs_security','reset_password'] ? 'true' : 'false' }}">
 							<i class="bi bi-database"></i> {{ 'Logs'|lang }}
 						</a>
-						<div class="collapse {% if controller in ['logs_offers','logs_users','logs_mails','logs_security','reset_password'] %}show{% endif %}" id="submenu_logs">
+						<div class="collapse {% if controller in ['logs_activity','logs_offers','logs_users','logs_mails','logs_security','reset_password'] %}show{% endif %}" id="submenu_logs">
 							<ul class="submenu-list">
 								<li {% if controller=='logs_activity' %}class="active"{% endif %}>
 									<a href="?controller=logs_activity"><i class="bi bi-journal-check me-1"></i>Dziennik Akcji</a>
