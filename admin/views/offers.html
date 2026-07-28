@@ -178,11 +178,57 @@
 							<td class="text-center">
 								<div class="d-flex gap-1 justify-content-center">
 									<a href="#" title="Zmień czas wygasania" class="btn btn-sm btn-outline-success px-2 py-1" data-bs-toggle="modal" data-bs-target="#change_date_{{ item.id }}" style="font-size: 0.85rem;"><i class="bi bi-calendar-event"></i></a>
+									<a href="#" title="Notatki zespołu" class="btn btn-sm btn-outline-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#note_offer_{{ item.id }}" style="font-size: 0.85rem;"><i class="bi bi-sticky"></i></a>
 									<a href="{{ path('edit',item.id,item.slug) }}" title="{{ 'Edit offer'|lang }}" class="btn btn-sm btn-outline-primary px-2 py-1" target="_blank" style="font-size: 0.85rem;"><i class="bi bi-pencil-square"></i></a>
 									<a href="#" title="{{ 'Delete offer'|lang }}" class="btn btn-sm btn-outline-danger px-2 py-1" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}" style="font-size: 0.85rem;"><i class="bi bi-trash"></i></a>
 								</div>
 							</td>
 						</tr>
+
+						<!-- Modal notatki zespołu -->
+						<div class="modal fade" id="note_offer_{{ item.id }}" tabindex="-1" aria-labelledby="Notatka dla: {{ item.name }}">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title fw-bold text-dark"><i class="bi bi-sticky-fill text-warning me-2"></i>Notatki Zespołu - Ogłoszenie #{{ item.id }}</h5>
+										<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+									</div>
+									<form method="post">
+										<input type="hidden" name="action" value="add_offer_note">
+										<input type="hidden" name="offer_id" value="{{ item.id }}">
+										<input type="hidden" name="token" value="{{ generateToken('admin_offer_note') }}">
+										<div class="modal-body text-start">
+											<p class="mb-2">Dodaj wewnętrzną notatkę widoczną dla moderatorów dotyczącą ogłoszenia:<br><strong class="text-dark">"{{ item.name }}"</strong></p>
+											
+											{% set offer_notes = admin_obj.getNotes('offer', item.id) %}
+											{% if offer_notes %}
+												<div class="mb-3 p-3 bg-light rounded-3 border style-scrollable" style="max-height: 180px; overflow-y: auto;">
+													<label class="form-label fw-bold small text-secondary">Poprzednie notatki:</label>
+													{% for note_item in offer_notes %}
+														<div class="border-bottom pb-2 mb-2">
+															<div class="d-flex justify-content-between text-muted small">
+																<strong><i class="bi bi-person-fill me-1"></i>{{ note_item.admin_username }}</strong>
+																<span>{{ note_item.date|date("d-m-Y H:i") }}</span>
+															</div>
+															<div class="text-dark mt-1" style="font-size: 0.85rem;">{{ note_item.note|nl2br }}</div>
+														</div>
+													{% endfor %}
+												</div>
+											{% endif %}
+
+											<div class="mb-2">
+												<label for="note_text_{{ item.id }}" class="form-label fw-bold">Nowa treść notatki:</label>
+												<textarea name="note" id="note_text_{{ item.id }}" class="form-control" rows="3" placeholder="Wpisz uwagę lub powód zatrzymania ogłoszenia..." required></textarea>
+											</div>
+										</div>
+										<div class="modal-footer">
+											<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ 'Cancel'|lang }}</button>
+											<button type="submit" class="btn btn-warning btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>Dodaj notatkę</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
 
 						<!-- Destrukcyjny modal usuwania oferty (z opcją dodania e-maila/IP do czarnej listy) -->
 						<div class="modal fade" id="remove_{{ item.id }}" tabindex="-1" aria-labelledby="{{ 'Delete offer'|lang }}: {{ item.name }}">

@@ -529,6 +529,9 @@
 						</a>
 						<div class="collapse {% if controller in ['logs_offers','logs_users','logs_mails','logs_security','reset_password'] %}show{% endif %}" id="submenu_logs">
 							<ul class="submenu-list">
+								<li {% if controller=='logs_activity' %}class="active"{% endif %}>
+									<a href="?controller=logs_activity"><i class="bi bi-journal-check me-1"></i>Dziennik Akcji</a>
+								</li>
 								<li {% if controller=='logs_offers' %}class="active"{% endif %}>
 									<a href="?controller=logs_offers"><i class="bi bi-list-ul me-1"></i>{{ 'Offers'|lang }}</a>
 								</li>

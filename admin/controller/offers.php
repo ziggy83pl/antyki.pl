@@ -16,6 +16,7 @@ if($admin->is_logged()){
 	if(!_ADMIN_TEST_MODE_ and isset($_POST['action'])){
 		if($_POST['action']=='remove_offer' and isset($_POST['id']) and $_POST['id']>0 and checkToken('admin_remove_offer')){
 			\App\Offer::remove($_POST['id']);
+			$admin->logActivity('Usunięcie ogłoszenia', 'ID ogłoszenia: #'.$_POST['id']);
 			if(isset($_POST['add_email_black_list']) and !empty($_POST['email'])){
 				addEmailToBlackList($_POST['email']);
 			}
@@ -25,43 +26,44 @@ if($admin->is_logged()){
 			$render_variables['alert_danger'][] = lang('The offer has been deleted');
 		}elseif($_POST['action']=='deactivate_offer' and isset($_POST['id']) and $_POST['id']>0 and checkToken('admin_deactivate_offer')){
 			\App\Offer::deactivate($_POST['id']);
+			$admin->logActivity('Dezaktywacja ogłoszenia', 'ID: #'.$_POST['id']);
 			$render_variables['alert_success'][] = lang('Changes have been saved');
 		}elseif($_POST['action']=='activate_offer' and isset($_POST['id']) and $_POST['id']>0 and !empty($_POST['date_finish']) and checkToken('admin_activate_offer')){
 			\App\Offer::activate($_POST['id'],$_POST['date_finish'],1);
+			$admin->logActivity('Aktywacja/Zatwierdzenie ogłoszenia', 'ID: #'.$_POST['id']);
 			$render_variables['alert_success'][] = lang('Changes have been saved');
-		}elseif($_POST['action']=='disable_promote_offer' and isset($_POST['id']) and $_POST['id']>0 and checkToken('admin_disable_promote_offer')){
-			\App\Offer::disablePromote($_POST['id']);
-			$render_variables['alert_success'][] = lang('Changes have been saved');
-		}elseif($_POST['action']=='enable_promote_offer' and isset($_POST['id']) and $_POST['id']>0 and !empty($_POST['date']) and checkToken('admin_enable_promote_offer')){
-			\App\Offer::enablePromote($_POST['id'],$_POST['date']);
-			$render_variables['alert_success'][] = lang('Changes have been saved');
-		}elseif($_POST['action']=='change_date_finish' and isset($_POST['id']) and $_POST['id']>0 and !empty($_POST['date_finish']) and checkToken('admin_change_date_finish')){
-			global $db;
-			$sth = $db->prepare('UPDATE `'._DB_PREFIX_.'offer` SET date_finish=:date_finish WHERE id=:id LIMIT 1');
-			$sth->bindValue(':date_finish', $_POST['date_finish'], PDO::PARAM_STR);
-			$sth->bindValue(':id', $_POST['id'], PDO::PARAM_INT);
-			$sth->execute();
-			$render_variables['alert_success'][] = lang('Changes have been saved');
+		}elseif($_POST['action']=='add_offer_note' and isset($_POST['offer_id']) and $_POST['offer_id']>0 and !empty($_POST['note']) and checkToken('admin_offer_note')){
+			$admin->addNote('offer', (int)$_POST['offer_id'], trim($_POST['note']));
+			$render_variables['alert_success'][] = 'Dodano notatkę wewnętrzną do ogłoszenia';
 		}elseif($_POST['action']=='remove_offers' and isset($_POST['offers']) and is_array($_POST['offers']) and checkToken('admin_action_offers')){
+			$count = 0;
 			foreach($_POST['offers'] as $key => $value){
 				if($value>0){
 					\App\Offer::remove($value);
+					$count++;
 				}
 			}
+			$admin->logActivity('Masowe usunięcie ogłoszeń', 'Usunięto '.$count.' ogłoszeń');
 			$render_variables['alert_danger'][] = lang('The offer has been deleted');
 		}elseif($_POST['action']=='active_offers' and isset($_POST['offers']) and is_array($_POST['offers']) and checkToken('admin_action_offers')){
+			$count = 0;
 			foreach($_POST['offers'] as $key => $value){
 				if($value>0){
 					\App\Offer::activate($value);
+					$count++;
 				}
 			}
+			$admin->logActivity('Masowe zatwierdzenie/aktywacja ogłoszeń', 'Aktywowano '.$count.' ogłoszeń');
 			$render_variables['alert_success'][] = lang('Changes have been saved');
-		}elseif($_POST['action']=='deactive_offers' and isset($_POST['offers']) and is_array($_POST['offers'] and checkToken('admin_action_offers'))){
+		}elseif($_POST['action']=='deactive_offers' and isset($_POST['offers']) and is_array($_POST['offers']) and checkToken('admin_action_offers')){
+			$count = 0;
 			foreach($_POST['offers'] as $key => $value){
 				if($value>0){
 					\App\Offer::deactivate($value);
+					$count++;
 				}
 			}
+			$admin->logActivity('Masowa dezaktywacja ogłoszeń', 'Zdeaktywowano '.$count.' ogłoszeń');
 			$render_variables['alert_success'][] = lang('Changes have been saved');
 		}
 	}

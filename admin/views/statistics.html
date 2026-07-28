@@ -134,44 +134,115 @@
         </div>
     </div>
 
-    {# Drugi rzad #}
+    {# Drugi rzad - Finanse i Analityka Biznesowa #}
     <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <a href="?controller=offers" class="card stat-card h-100 border-0 text-decoration-none text-reset">
-                <div class="card-body text-center py-3">
-                    <i class="bi bi-images text-secondary fs-2 mb-2 d-block"></i>
-                    <h5 class="mb-0 fw-bold">{{ statistics.photos|e|number_format(0, ',', ' ') }}</h5>
-                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Photos'|lang }}</small>
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100 border-0 bg-white shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="bi bi-credit-card-2-front-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem;">Płatności Przelewy24</h6>
+                        <h4 class="mb-0 fw-bold">{{ statistics.payments_p24_count|e }} transakcji</h4>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-md-3 col-6">
-            <a href="?controller=categories" class="card stat-card h-100 border-0 text-decoration-none text-reset">
-                <div class="card-body text-center py-3">
-                    <i class="bi bi-folder-fill text-secondary fs-2 mb-2 d-block"></i>
-                    <h5 class="mb-0 fw-bold">{{ statistics.categories|e|number_format(0, ',', ' ') }}</h5>
-                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Categories'|lang }}</small>
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100 border-0 bg-white shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="bi bi-paypal fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem;">Płatności PayPal</h6>
+                        <h4 class="mb-0 fw-bold">{{ statistics.payments_paypal_count|e }} transakcji</h4>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-md-3 col-6">
-            <a href="?controller=reset_password" class="card stat-card h-100 border-0 text-decoration-none text-reset">
-                <div class="card-body text-center py-3">
-                    <i class="bi bi-key-fill text-secondary fs-2 mb-2 d-block"></i>
-                    <h5 class="mb-0 fw-bold">{{ statistics.reset_password|e|number_format(0, ',', ' ') }}</h5>
-                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Reset password'|lang }}</small>
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100 border-0 bg-white shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="bi bi-stars fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem;">Promowane Ogłoszenia</h6>
+                        <h4 class="mb-0 fw-bold">{{ statistics.offers_promoted|e }} aktywne</h4>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-md-3 col-6">
-            <a href="?controller=mailing" class="card stat-card h-100 border-0 text-decoration-none text-reset">
-                <div class="card-body text-center py-3">
-                    <i class="bi bi-envelope-exclamation-fill text-secondary fs-2 mb-2 d-block"></i>
-                    <h5 class="mb-0 fw-bold">{{ statistics.mails_queue|e|number_format(0, ',', ' ') }}</h5>
-                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;">{{ 'Mails in queue'|lang }}</small>
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100 border-0 bg-white shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                        <i class="bi bi-shield-check fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.7rem;">Czarna lista IP / E-mail</h6>
+                        <h4 class="mb-0 fw-bold">{{ (statistics.black_list_ip + statistics.black_list_email)|e }} rekordów</h4>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>
+    </div>
+
+    {# Trzeci rzad - Rozkład Kategorii i Aktywność Moderatorów #}
+    <div class="row g-3 mb-4">
+        {% if top_categories %}
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary me-2"></i> Najpopularniejsze Kategorie</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover border align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Kategoria</th>
+                                <th class="text-end">Liczba Ogłoszeń</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in top_categories %}
+                                <tr>
+                                    <td class="fw-bold"><i class="bi bi-folder2-open text-primary me-2"></i>{{ cat.name }}</td>
+                                    <td class="text-end"><span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1">{{ cat.total }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if moderator_activity %}
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-trophy-fill text-warning me-2"></i> Ranking Aktywności Moderatorów</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover border align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Moderator</th>
+                                <th class="text-end">Liczba Wykonanych Akcji</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mod in moderator_activity %}
+                                <tr>
+                                    <td class="fw-bold"><i class="bi bi-person-badge-fill text-success me-2"></i>{{ mod.admin_username }}</td>
+                                    <td class="text-end"><span class="badge bg-success-subtle text-success border border-success px-2 py-1">{{ mod.total_actions }} akcji</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     {# Wykres #}

@@ -47,6 +47,41 @@ class Admin {
 			} catch (\Throwable $ex) {}
 		}
 		try {
+			$this->db->query("SELECT 1 FROM `" . _DB_PREFIX_ . "admin_activity_log` LIMIT 1");
+		} catch (\Throwable $e) {
+			try {
+				$this->db->exec("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "admin_activity_log` (
+					`id` int(11) NOT NULL AUTO_INCREMENT,
+					`admin_username` varchar(64) NOT NULL,
+					`action` varchar(128) NOT NULL,
+					`details` text DEFAULT NULL,
+					`ip` varchar(45) NOT NULL,
+					`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+					PRIMARY KEY (`id`),
+					KEY `admin_username` (`admin_username`),
+					KEY `date` (`date`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+			} catch (\Throwable $ex) {}
+		}
+
+		try {
+			$this->db->query("SELECT 1 FROM `" . _DB_PREFIX_ . "admin_notes` LIMIT 1");
+		} catch (\Throwable $e) {
+			try {
+				$this->db->exec("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "admin_notes` (
+					`id` int(11) NOT NULL AUTO_INCREMENT,
+					`target_type` varchar(32) NOT NULL,
+					`target_id` int(11) NOT NULL,
+					`admin_username` varchar(64) NOT NULL,
+					`note` text NOT NULL,
+					`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+					PRIMARY KEY (`id`),
+					KEY `target` (`target_type`, `target_id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+			} catch (\Throwable $ex) {}
+		}
+
+		try {
 			$sth2fa = $this->db->prepare("SELECT COUNT(1) FROM `" . _DB_PREFIX_ . "settings` WHERE name = 'security_2fa_enabled'");
 			$sth2fa->execute();
 			if ($sth2fa->fetchColumn() == 0) {
@@ -564,5 +599,60 @@ class Admin {
 			'offers' => array_column($stats, 'offers'),
 			'users' => array_column($stats, 'users'),
 		];
+	}
+
+	public function logActivity(string $action, string $details = ''): void {
+		try {
+			$adminUsername = $this->user_data['username'] ?? 'system';
+			$sth = $this->db->prepare("INSERT INTO `" . _DB_PREFIX_ . "admin_activity_log` (`admin_username`, `action`, `details`, `ip`, `date`) VALUES (:username, :action, :details, :ip, NOW())");
+			$sth->bindValue(':username', $adminUsername, PDO::PARAM_STR);
+			$sth->bindValue(':action', $action, PDO::PARAM_STR);
+			$sth->bindValue(':details', $details, PDO::PARAM_STR);
+			$sth->bindValue(':ip', getClientIp(), PDO::PARAM_STR);
+			$sth->execute();
+		} catch (\Throwable $e) {}
+	}
+
+	public function getActivityLogs(int $limit = 100): array {
+		$logs = [];
+		try {
+			$total = (int)$this->db->query("SELECT COUNT(1) FROM `" . _DB_PREFIX_ . "admin_activity_log`")->fetchColumn();
+			$sth = $this->db->query("SELECT * FROM `" . _DB_PREFIX_ . "admin_activity_log` ORDER BY id DESC LIMIT " . paginationPageFrom($limit) . ", " . $limit);
+			while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$logs[] = $row;
+			}
+			generatePagination($limit, $total);
+		} catch (\Throwable $e) {}
+		return $logs;
+	}
+
+	public function addNote(string $targetType, int $targetId, string $note): void {
+		if (empty($note) || $targetId <= 0) {
+			return;
+		}
+		try {
+			$adminUsername = $this->user_data['username'] ?? 'system';
+			$sth = $this->db->prepare("INSERT INTO `" . _DB_PREFIX_ . "admin_notes` (`target_type`, `target_id`, `admin_username`, `note`, `date`) VALUES (:type, :id, :username, :note, NOW())");
+			$sth->bindValue(':type', $targetType, PDO::PARAM_STR);
+			$sth->bindValue(':id', $targetId, PDO::PARAM_INT);
+			$sth->bindValue(':username', $adminUsername, PDO::PARAM_STR);
+			$sth->bindValue(':note', $note, PDO::PARAM_STR);
+			$sth->execute();
+			$this->logActivity('Dodano notatkę', "Target: $targetType #$targetId");
+		} catch (\Throwable $e) {}
+	}
+
+	public function getNotes(string $targetType, int $targetId): array {
+		$notes = [];
+		try {
+			$sth = $this->db->prepare("SELECT * FROM `" . _DB_PREFIX_ . "admin_notes` WHERE target_type=:type AND target_id=:id ORDER BY id DESC");
+			$sth->bindValue(':type', $targetType, PDO::PARAM_STR);
+			$sth->bindValue(':id', $targetId, PDO::PARAM_INT);
+			$sth->execute();
+			while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$notes[] = $row;
+			}
+		} catch (\Throwable $e) {}
+		return $notes;
 	}
 }

@@ -31,7 +31,31 @@ if($admin->is_logged()){
 	$statistics['black_list_ip'] = $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'black_list_ip');
 	$statistics['black_list_email'] = $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'black_list_email');
 
+	// Financial payments summary
+	$statistics['payments_p24_count'] = $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'log_przelewy24 WHERE status="1" OR status="true"');
+	$statistics['payments_paypal_count'] = $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'log_paypal WHERE status="1" OR status="Completed"');
+
+	// Top Categories distribution
+	$topCategories = [];
+	try {
+		$sthCat = $db->query('SELECT c.name, COUNT(o.id) as total FROM '._DB_PREFIX_.'category c LEFT JOIN '._DB_PREFIX_.'offer o ON o.category_id = c.id GROUP BY c.id ORDER BY total DESC LIMIT 6');
+		if ($sthCat) {
+			$topCategories = $sthCat->fetchAll(PDO::FETCH_ASSOC);
+		}
+	} catch (\Throwable $e) {}
+
+	// Moderator Activity Stats
+	$moderatorActivity = [];
+	try {
+		$sthMod = $db->query('SELECT admin_username, COUNT(1) as total_actions FROM '._DB_PREFIX_.'admin_activity_log GROUP BY admin_username ORDER BY total_actions DESC LIMIT 10');
+		if ($sthMod) {
+			$moderatorActivity = $sthMod->fetchAll(PDO::FETCH_ASSOC);
+		}
+	} catch (\Throwable $e) {}
+
 	$render_variables['statistics'] = $statistics;
+	$render_variables['top_categories'] = $topCategories;
+	$render_variables['moderator_activity'] = $moderatorActivity;
 
 	$title = lang('Statistics').' - '.$title_default;
 }

@@ -37,6 +37,7 @@ if ($admin->is_logged()) {
             'states' => 'additional_data',
             'types' => 'additional_data',
             'options' => 'additional_data',
+            'logs_activity' => 'logs_and_security',
             'logs_offers' => 'logs_and_security',
             'logs_users' => 'logs_and_security',
             'logs_mails' => 'logs_and_security',

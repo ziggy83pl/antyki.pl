@@ -19,6 +19,7 @@ if($admin->is_logged()){
 
 			try{
 				$admin->changeUser($_POST, $_FILES);
+				$admin->logActivity('Zmiana własnych danych', 'Zaktualizowano profil/awatar');
 				$render_variables['alert_success'][] = lang('The data have been updated');
 			}catch(Exception $e) {
 				$render_variables['alert_danger'][] = $e->getMessage();
@@ -27,12 +28,14 @@ if($admin->is_logged()){
 		}elseif($_POST['action'] == 'admin_remove_logs' and checkToken('admin_remove_logs')){
 
 			$admin->removeLogs();
+			$admin->logActivity('Usunięcie logów logowania');
 			$render_variables['alert_success'][] = lang('Logs logon to the Admin Panel has been successfully removed');
 
 		}elseif($_POST['action'] == 'admin_add_user' and !empty($_POST['username']) and !empty($_POST['password']) and !empty($_POST['repeat_password']) and checkToken('admin_add_user')){
 
 			try{
 				$admin->addUser($_POST);
+				$admin->logActivity('Dodanie administratora/moderatora', 'Użytkownik: '.$_POST['username'].' (Rola: '.($_POST['role'] ?? 'admin').')');
 				$render_variables['alert_success'][] = lang('Added new user');
 			}catch(Exception $e) {
 				$render_variables['alert_danger'][] = $e->getMessage();
@@ -42,6 +45,7 @@ if($admin->is_logged()){
 
 			try{
 				$admin->editUser($_POST, $_FILES);
+				$admin->logActivity('Edycja administratora/moderatora', 'ID #'.$_POST['id'].' ('.$_POST['username'].')');
 				$render_variables['alert_success'][] = lang('Zaktualizowano dane administratora/moderatora');
 			}catch(Exception $e) {
 				$render_variables['alert_danger'][] = $e->getMessage();
@@ -51,6 +55,7 @@ if($admin->is_logged()){
 
 			try{
 				$admin->removeUser($_POST['id']);
+				$admin->logActivity('Usunięcie administratora/moderatora', 'ID #'.$_POST['id']);
 				$render_variables['alert_success'][] = lang('User has been successfully removed');
 			}catch(Exception $e) {
 				$render_variables['alert_danger'][] = $e->getMessage();
@@ -58,6 +63,7 @@ if($admin->is_logged()){
 
 		}elseif($_POST['action'] == 'admin_logout_all' and checkToken('admin_logout_all')){
 
+			$admin->logActivity('Wylogowanie wszystkich sesji');
 			$admin->logOutAll();
 
 		}
