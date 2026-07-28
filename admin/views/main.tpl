@@ -114,6 +114,33 @@
 		[data-theme="dark"] .text-warning {
 			color: #fde047 !important;
 		}
+		[data-theme="dark"] .form-check-label {
+			color: #e2e8f0 !important;
+		}
+		[data-theme="dark"] .bg-light-subtle {
+			background-color: #252932 !important;
+			border-color: #3b4252 !important;
+		}
+
+		/* ── Status Tabela Adminów (Light & Dark Mode) ── */
+		.user-row-active-you {
+			background-color: rgba(25, 135, 84, 0.08) !important;
+		}
+		.user-row-online {
+			background-color: rgba(13, 202, 240, 0.08) !important;
+		}
+		.user-row-offline {
+			background-color: rgba(108, 117, 125, 0.03) !important;
+		}
+		[data-theme="dark"] .user-row-active-you {
+			background-color: rgba(25, 135, 84, 0.22) !important;
+		}
+		[data-theme="dark"] .user-row-online {
+			background-color: rgba(13, 202, 240, 0.18) !important;
+		}
+		[data-theme="dark"] .user-row-offline {
+			background-color: rgba(255, 255, 255, 0.02) !important;
+		}
 
 		/* ── Body ── */
 		body {
@@ -296,9 +323,9 @@
 				<li class="nav-item me-3 d-flex align-items-center">
 					<span class="text-secondary small d-inline-flex align-items-center">
 						{% if admin.avatar %}
-							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border me-1 shadow-sm" style="width: 24px; height: 24px; object-fit: cover;">
+							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border me-2 shadow-sm" style="width: 36px; height: 36px; object-fit: cover;">
 						{% else %}
-							<i class="bi bi-person-fill text-primary me-1 fs-6"></i>
+							<i class="bi bi-person-fill text-primary me-1 fs-5"></i>
 						{% endif %}
 						Jesteś zalogowany jako:&nbsp;<strong class="text-dark me-1">{{ admin.username }}</strong>
 						{% if is_superadmin or admin.role == 'superadmin' %}
@@ -357,6 +384,7 @@
 							<i class="bi bi-graph-up"></i> {{ 'Statistics'|lang }}
 						</a>
 					</li>
+					{% if admin_obj.hasPermission('offers') %}
 					<li class="nav-item {% if controller=='offers' %}active{% endif %}">
 						<a class="nav-link" href="?controller=offers">
 							<i class="bi bi-list-ul"></i> {{ 'Offers'|lang }}
@@ -365,12 +393,16 @@
 							{% endif %}
 						</a>
 					</li>
+					{% endif %}
+					{% if admin_obj.hasPermission('users') %}
 					<li class="nav-item {% if controller=='users' %}active{% endif %}">
 						<a class="nav-link" href="?controller=users">
 							<i class="bi bi-people"></i> {{ 'Users'|lang }}
 						</a>
 					</li>
+					{% endif %}
 
+					{% if admin_obj.hasPermission('communication') %}
 					{# ── Komunikacja ── #}
 					<li class="sidebar-section-label">Komunikacja</li>
 
@@ -394,10 +426,12 @@
 							<i class="bi bi-chat-left-dots"></i> Czat
 						</a>
 					</li>
+					{% endif %}
 
 					{# ── Dane ── #}
 					<li class="sidebar-section-label">Dane</li>
 
+					{% if admin_obj.hasPermission('categories') or admin_obj.hasPermission('additional_data') %}
 					{# Dodatkowe (submenu) #}
 					<li class="nav-item">
 						<a class="nav-link dropdown-toggle" href="#submenu_additional"
@@ -407,9 +441,12 @@
 						</a>
 						<div class="collapse {% if controller in ['categories','states','types','options'] %}show{% endif %}" id="submenu_additional">
 							<ul class="submenu-list">
+								{% if admin_obj.hasPermission('categories') %}
 								<li {% if controller=='categories' %}class="active"{% endif %}>
 									<a href="?controller=categories"><i class="bi bi-tag me-1"></i>{{ 'Categories'|lang }}</a>
 								</li>
+								{% endif %}
+								{% if admin_obj.hasPermission('additional_data') %}
 								<li {% if controller=='states' %}class="active"{% endif %}>
 									<a href="?controller=states"><i class="bi bi-geo me-1"></i>{{ 'States'|lang }}</a>
 								</li>
@@ -419,10 +456,13 @@
 								<li {% if controller=='options' %}class="active"{% endif %}>
 									<a href="?controller=options"><i class="bi bi-sliders me-1"></i>{{ 'Additional options'|lang }}</a>
 								</li>
+								{% endif %}
 							</ul>
 						</div>
 					</li>
+					{% endif %}
 
+					{% if admin_obj.hasPermission('articles') %}
 					{# Treści (submenu) #}
 					<li class="nav-item">
 						<a class="nav-link dropdown-toggle" href="#submenu_contents"
@@ -450,7 +490,9 @@
 							</ul>
 						</div>
 					</li>
+					{% endif %}
 
+					{% if admin_obj.hasPermission('payments') %}
 					{# ── Finansowe ── #}
 					<li class="sidebar-section-label">Finansowe</li>
 
@@ -472,7 +514,9 @@
 							</ul>
 						</div>
 					</li>
+					{% endif %}
 
+					{% if admin_obj.hasPermission('logs_and_security') %}
 					{# ── System ── #}
 					<li class="sidebar-section-label">System</li>
 
@@ -503,7 +547,9 @@
 							</ul>
 						</div>
 					</li>
+					{% endif %}
 
+					{% if admin_obj.hasPermission('settings') %}
 					{# Ustawienia (submenu) #}
 					<li class="nav-item">
 						<a class="nav-link dropdown-toggle" href="#submenu_settings"
@@ -540,6 +586,7 @@
 							</ul>
 						</div>
 					</li>
+					{% endif %}
 
 					{# ── Mobile-only linki ── #}
 					<li class="nav-item d-lg-none mt-2">

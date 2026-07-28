@@ -19,8 +19,47 @@ $controller = 'index';
 if ($admin->is_logged()) {
     $requestedController = $_GET['controller'] ?? '';
     if ($requestedController && isSlug($requestedController) && file_exists('controller/'.$requestedController.'.php')) {
-        $controller = $requestedController;
-        $title = ucfirst($controller).' - '.$title_default;
+        // Map controller names to permission keys
+        $controllerPermMap = [
+            'categories' => 'categories',
+            'offers' => 'offers',
+            'articles' => 'articles',
+            'index_page' => 'articles',
+            'login_page' => 'articles',
+            'mails' => 'articles',
+            'info' => 'articles',
+            'logs_payments' => 'payments',
+            'users' => 'users',
+            'mailing' => 'communication',
+            'suggestions' => 'communication',
+            'opinions' => 'communication',
+            'chat' => 'communication',
+            'states' => 'additional_data',
+            'types' => 'additional_data',
+            'options' => 'additional_data',
+            'logs_offers' => 'logs_and_security',
+            'logs_users' => 'logs_and_security',
+            'logs_mails' => 'logs_and_security',
+            'logs_security' => 'logs_and_security',
+            'reset_password' => 'logs_and_security',
+            'settings_black_list' => 'settings',
+            'settings_days' => 'settings',
+            'settings_appearance' => 'settings',
+            'settings_social_media' => 'settings',
+            'settings_ads' => 'settings',
+            'settings_payments' => 'settings',
+            'settings_security' => 'settings',
+            'settings' => 'settings'
+        ];
+
+        $requiredPerm = $controllerPermMap[$requestedController] ?? null;
+        if ($requiredPerm && !$admin->hasPermission($requiredPerm)) {
+            $controller = '404';
+            $title = 'Brak uprawnień - '.$title_default;
+        } else {
+            $controller = $requestedController;
+            $title = ucfirst($controller).' - '.$title_default;
+        }
     } else {
         $title = $title_default;
     }
@@ -43,6 +82,7 @@ echo $twig->render($controller.'.html', array_merge($render_variables, [
 	'title' => $title,
 	'settings' => $settings,
 	'admin' => $admin->user_data,
+	'admin_obj' => $admin,
 	'is_superadmin' => $admin->isSuperAdmin(),
 	'_ADMIN_TEST_MODE_' => _ADMIN_TEST_MODE_,
 	'get' => $_GET,

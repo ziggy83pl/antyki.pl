@@ -38,6 +38,15 @@ if($admin->is_logged()){
 				$render_variables['alert_danger'][] = $e->getMessage();
 			}
 
+		}elseif($_POST['action'] == 'admin_edit_user' and isset($_POST['id']) and $_POST['id']>0 and !empty($_POST['username']) and checkToken('admin_edit_user')){
+
+			try{
+				$admin->editUser($_POST, $_FILES);
+				$render_variables['alert_success'][] = lang('Zaktualizowano dane administratora/moderatora');
+			}catch(Exception $e) {
+				$render_variables['alert_danger'][] = $e->getMessage();
+			}
+
 		}elseif($_POST['action'] == 'admin_remove_user' and isset($_POST['id']) and $_POST['id']>0 and checkToken('admin_remove_user')){
 
 			try{
@@ -57,6 +66,7 @@ if($admin->is_logged()){
 
 	$render_variables['admin_users'] = $admin->getUsers();
 	$render_variables['admin_logs'] = $admin->getLogs();
+	$render_variables['available_permissions'] = \App\Admin\Admin::getAvailablePermissions();
 	
 	$title = lang('Admin Panel Settings').' - '.$title_default;
 

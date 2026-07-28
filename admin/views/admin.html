@@ -46,7 +46,7 @@
 <div class="page-header mb-4">
 	<h1>
 		{% if admin.avatar %}
-			<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm me-2" style="width: 40px; height: 40px; object-fit: cover; vertical-align: middle;">
+			<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm me-2" style="width: 52px; height: 52px; object-fit: cover; vertical-align: middle;">
 		{% else %}
 			<span class="bi bi-person-fill text-primary"></span>
 		{% endif %}
@@ -59,7 +59,7 @@
 		<div class="card border-0 shadow-sm rounded-4 p-4 h-100">
 			<h3 class="h5 mb-4 text-dark fw-bold d-flex align-items-center gap-2">
 				{% if admin.avatar %}
-					<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover;">
+					<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" class="rounded-circle border shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
 				{% else %}
 					<span class="bi bi-person-fill text-primary me-2"></span>
 				{% endif %}
@@ -72,9 +72,9 @@
 					<label for="avatar" class="form-label fw-semibold">Zdjęcie profilowe (Avatar)</label>
 					<div class="d-flex align-items-center gap-3">
 						{% if admin.avatar %}
-							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm" style="width: 52px; height: 52px; object-fit: cover;">
+							<img src="{{ settings.base_url }}/upload/avatars/{{ admin.avatar }}" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
 						{% else %}
-							<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' fill='%230d6efd' class='bi bi-person-circle' viewBox='0 0 16 16'%3E%3Cpath d='M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z'/%3E%3Cpath fill-rule='evenodd' d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z'/%3E%3C/svg%3E" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm bg-light p-1" style="width: 52px; height: 52px; object-fit: cover;">
+							<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%230d6efd' class='bi bi-person-circle' viewBox='0 0 16 16'%3E%3Cpath d='M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z'/%3E%3Cpath fill-rule='evenodd' d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z'/%3E%3C/svg%3E" alt="{{ admin.username }}" id="avatar-preview-img" class="rounded-circle border shadow-sm bg-light p-1" style="width: 80px; height: 80px; object-fit: cover;">
 						{% endif %}
 						<div class="flex-grow-1">
 							<input type="file" class="form-control" name="avatar" id="avatar" accept="image/jpeg,image/png,image/webp,image/gif">
@@ -140,11 +140,26 @@
 					<input type="text" class="form-control py-2" name="username" placeholder="administrator" id="username" required title="{{ 'Username'|lang }}" maxlength="32">
 				</div>
 				<div class="col-12">
-					<label for="role" class="form-label fw-semibold">Rola i Uprawnienia</label>
+					<label for="role" class="form-label fw-semibold">Rola</label>
 					<select name="role" id="role" class="form-select py-2" title="Wybierz rolę administratora">
 						<option value="admin">Moderator (Podrzędny Admin)</option>
 						<option value="superadmin">Główny Administrator (SuperAdmin)</option>
 					</select>
+				</div>
+				<div class="col-12 border rounded-3 p-3 bg-light-subtle">
+					<label class="form-label fw-bold text-dark d-flex align-items-center gap-2 mb-2">
+						<i class="bi bi-sliders text-primary"></i> Dostęp i Uprawnienia Sekcji
+					</label>
+					<div class="row g-2">
+						{% for perm_key, perm_name in available_permissions %}
+							<div class="col-md-6">
+								<div class="form-check form-switch">
+									<input class="form-check-input" type="checkbox" name="permissions[]" value="{{ perm_key }}" id="add_perm_{{ perm_key }}" {% if perm_key in ['categories', 'offers', 'articles', 'payments', 'users'] %}checked{% endif %}>
+									<label class="form-check-label small fw-semibold" for="add_perm_{{ perm_key }}">{{ perm_name }}</label>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
 				</div>
 				<div class="col-12">
 					<label for="password" class="form-label fw-semibold">{{ 'Password'|lang }}</label>
@@ -199,19 +214,21 @@
 							<th scope="col" style="width: 25%;">{{ 'Username'|lang }}</th>
 							<th scope="col" style="width: 25%;">Rola</th>
 							<th scope="col" style="width: 30%;">{{ 'Status'|lang }}</th>
-							<th scope="col" style="width: 15%;" class="text-center">{{ 'Remove'|lang }}</th>
+							<th scope="col" style="width: 15%;" class="text-center">Akcje</th>
 						</tr>
 					</thead>
 					<tbody>
 						{% for item in admin_users %}
-							<tr>
+							{% set is_active_you = (item.id == admin.id) %}
+							{% set is_online = (item.session_date and item.session_date|date('U') > ("now"|date('U') - 7200)) %}
+							<tr class="{% if is_active_you %}user-row-active-you{% elseif is_online %}user-row-online{% else %}user-row-offline{% endif %}">
 								<td>{{ loop.index }}</td>
 								<td class="fw-bold d-flex align-items-center gap-2">
 									{% if item.avatar %}
-										<img src="{{ settings.base_url }}/upload/avatars/{{ item.avatar }}" alt="{{ item.username }}" class="rounded-circle border shadow-sm" style="width: 30px; height: 30px; object-fit: cover;">
+										<img src="{{ settings.base_url }}/upload/avatars/{{ item.avatar }}" alt="{{ item.username }}" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover;">
 									{% else %}
-										<div class="rounded-circle bg-secondary-subtle border d-flex align-items-center justify-content-center text-secondary" style="width: 30px; height: 30px;">
-											<i class="bi bi-person-fill" style="font-size: 14px;"></i>
+										<div class="rounded-circle bg-secondary-subtle border d-flex align-items-center justify-content-center text-secondary" style="width: 32px; height: 32px;">
+											<i class="bi bi-person-fill" style="font-size: 16px;"></i>
 										</div>
 									{% endif %}
 									<span>{{ item.username }}</span>
@@ -224,23 +241,111 @@
 									{% endif %}
 								</td>
 								<td>
-									{% if item.id == admin.id %}
-										<span class="badge bg-success-subtle border border-success text-success px-2 py-1"><i class="bi bi-person-fill me-1"></i> {{ 'Active (You)'|lang }}</span>
-									{% elseif item.session_date and item.session_date|date('U') > ("now"|date('U') - 7200) %}
-										<span class="badge bg-info-subtle border border-info text-info px-2 py-1"><i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i> Online</span>
+									{% if is_active_you %}
+										<span class="badge bg-success border border-success text-white px-2 py-1 shadow-sm"><i class="bi bi-person-check-fill me-1"></i> {{ 'Active (You)'|lang }}</span>
+									{% elseif is_online %}
+										<span class="badge bg-info text-dark border border-info px-2 py-1 shadow-sm"><i class="bi bi-broadcast me-1"></i> Online</span>
 									{% else %}
-										<span class="badge bg-secondary-subtle border border-secondary text-secondary px-2 py-1">Offline</span>
+										<span class="badge bg-secondary-subtle border border-secondary text-secondary px-2 py-1"><i class="bi bi-moon-fill me-1" style="font-size: 10px;"></i> Offline</span>
 									{% endif %}
 									{% if item.last_login %}
 										<br><small class="text-muted" style="font-size: 11px;">Ostatnie logowanie: {{ item.last_login|date("d-m-Y H:i") }}</small>
 									{% endif %}
 								</td>
 								<td class="text-center">
+									{% if is_superadmin and (item.id != admin.id or is_superadmin) %}
+										<button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" data-bs-toggle="modal" data-bs-target="#edit_user_{{ item.id }}" title="Edytuj użytkownika">
+											<i class="bi bi-pencil-square fs-5"></i>
+										</button>
+									{% endif %}
 									{% if is_superadmin and item.id != admin.id and item.role != 'superadmin' and item.id != 1 %}
-										<a href="#" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}" title="{{ 'Delete user'|lang }}" class="bi bi-x-lg text-danger fs-5"></a>
+										<a href="#" data-bs-toggle="modal" data-bs-target="#remove_{{ item.id }}" title="{{ 'Delete user'|lang }}" class="bi bi-x-lg text-danger fs-5 align-middle"></a>
 									{% endif %}
 								</td>
 							</tr>
+							{% if is_superadmin %}
+								<div class="modal fade" id="edit_user_{{ item.id }}" tabindex="-1" aria-labelledby="editUserModalLabel_{{ item.id }}">
+									<div class="modal-dialog modal-lg">
+										<div class="modal-content">
+											<div class="modal-header">
+												<h5 class="modal-title fw-bold" id="editUserModalLabel_{{ item.id }}"><i class="bi bi-pencil-square text-primary me-2"></i> Edycja użytkownika {{ item.username }}</h5>
+												<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+											</div>
+											<form method="post" enctype="multipart/form-data">
+												<input type="hidden" name="action" value="admin_edit_user">
+												<input type="hidden" name="token" value="{{ generateToken('admin_edit_user') }}">
+												<input type="hidden" name="id" value="{{ item.id }}">
+												<div class="modal-body text-start">
+													<div class="mb-3">
+														<label for="edit_avatar_{{ item.id }}" class="form-label fw-semibold">Zdjęcie profilowe (Avatar)</label>
+														<div class="d-flex align-items-center gap-3 mb-2">
+															{% if item.avatar %}
+																<img src="{{ settings.base_url }}/upload/avatars/{{ item.avatar }}" alt="{{ item.username }}" class="rounded-circle border shadow-sm" style="width: 52px; height: 52px; object-fit: cover;">
+															{% else %}
+																<div class="rounded-circle bg-secondary-subtle border d-flex align-items-center justify-content-center text-secondary" style="width: 52px; height: 52px;">
+																	<i class="bi bi-person-fill" style="font-size: 24px;"></i>
+																</div>
+															{% endif %}
+															<div class="flex-grow-1">
+																<input type="file" class="form-control" name="avatar" id="edit_avatar_{{ item.id }}" accept="image/jpeg,image/png,image/webp,image/gif">
+																<small class="text-muted" style="font-size: 11px;">Max 5MB (JPG, PNG, WEBP, GIF)</small>
+															</div>
+														</div>
+														{% if item.avatar %}
+															<div class="form-check">
+																<input class="form-check-input" type="checkbox" name="remove_avatar" id="edit_remove_avatar_{{ item.id }}" value="1">
+																<label class="form-check-label text-danger small fw-semibold" for="edit_remove_avatar_{{ item.id }}">Usuń zdjęcie profilowe</label>
+															</div>
+														{% endif %}
+													</div>
+													<div class="mb-3">
+														<label for="edit_username_{{ item.id }}" class="form-label fw-semibold">Nazwa użytkownika</label>
+														<input type="text" class="form-control" name="username" id="edit_username_{{ item.id }}" value="{{ item.username }}" required maxlength="32">
+													</div>
+													<div class="mb-3">
+														<label for="edit_role_{{ item.id }}" class="form-label fw-semibold">Rola</label>
+														<select name="role" id="edit_role_{{ item.id }}" class="form-select" {% if item.id == 1 %}disabled{% endif %}>
+															<option value="admin" {% if item.role != 'superadmin' %}selected{% endif %}>Moderator (Podrzędny Admin)</option>
+															<option value="superadmin" {% if item.role == 'superadmin' %}selected{% endif %}>Główny Administrator (SuperAdmin)</option>
+														</select>
+														{% if item.id == 1 %}
+															<input type="hidden" name="role" value="superadmin">
+														{% endif %}
+													</div>
+													<div class="mb-3 border rounded-3 p-3 bg-light-subtle">
+														<label class="form-label fw-bold text-dark d-flex align-items-center gap-2 mb-2">
+															<i class="bi bi-shield-lock text-primary"></i> Przydział Uprawnień i Decyzji
+														</label>
+														<div class="row g-2">
+															{% for perm_key, perm_name in available_permissions %}
+																<div class="col-md-6">
+																	<div class="form-check form-switch">
+																		<input class="form-check-input" type="checkbox" name="permissions[]" value="{{ perm_key }}" id="edit_perm_{{ item.id }}_{{ perm_key }}" {% if perm_key in item.permissions_array or item.role == 'superadmin' %}checked{% endif %} {% if item.role == 'superadmin' %}disabled{% endif %}>
+																		<label class="form-check-label small fw-semibold" for="edit_perm_{{ item.id }}_{{ perm_key }}">{{ perm_name }}</label>
+																	</div>
+																</div>
+															{% endfor %}
+														</div>
+														<small class="text-muted mt-2 d-block" style="font-size: 11px;">* Główny Administrator automatycznie posiada dostęp do wszystkich funkcji.</small>
+													</div>
+													<div class="mb-3">
+														<label for="edit_password_{{ item.id }}" class="form-label fw-semibold">Nowe hasło <small class="text-muted font-normal">(pozostaw puste, aby nie zmieniać)</small></label>
+														<input type="password" class="form-control" name="password" id="edit_password_{{ item.id }}" placeholder="****">
+													</div>
+													<div class="mb-3">
+														<label for="edit_repeat_password_{{ item.id }}" class="form-label fw-semibold">Powtórz nowe hasło</label>
+														<input type="password" class="form-control" name="repeat_password" id="edit_repeat_password_{{ item.id }}" placeholder="****">
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+													<button type="submit" class="btn btn-primary fw-bold">Zapisz zmiany</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+							{% endif %}
 							{% if is_superadmin and item.id != admin.id and item.role != 'superadmin' and item.id != 1 %}
 								{{ macros.confirmModal('remove_' ~ item.id, 'Delete user'|lang ~ ' ' ~ item.username, 'admin_remove_user', 'admin_remove_user', 'Na pewno chcesz usunąć użytkownika ' ~ item.username ~ '?', item.id) }}
 							{% endif %}
