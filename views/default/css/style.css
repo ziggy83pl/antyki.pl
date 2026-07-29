@@ -1992,6 +1992,7 @@ html[data-bs-theme="dark"] #form_search_offers,
 html[data-bs-theme="dark"] .modal-content,
 html[data-bs-theme="dark"] #index_text,
 html[data-bs-theme="dark"] #index_categories,
+html[data-bs-theme="dark"] .search-bar-modern .input-group,
 html[data-bs-theme="dark"] .category-tile {
     background-color: #1e293b !important; /* slate-800 */
     background: #1e293b !important; /* slate-800 override gradient */

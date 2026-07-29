@@ -281,7 +281,7 @@
 				<span class="logo-text">Giełda <span class="logo-accent">Antyków & Militariów</span></span>
 			</a>
 			<div class="d-flex align-items-center gap-3.5 d-lg-none ms-auto me-3">
-				<a href="{{ path('add') }}" title="{{ 'Add offer'|lang }}" class="btn btn-accent btn-sm p-0 d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; border-radius: 50%;"><i class="bi bi-plus-lg" style="font-size: 1.1rem; line-height: 1;"></i></a>
+				<a href="{{ path('add') }}" title="{{ 'Add offer'|lang }}" class="btn btn-accent btn-sm p-0 d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.75);"><i class="bi bi-plus-lg" style="font-size: 1.1rem; line-height: 1;"></i></a>
 				<button class="dark-mode-toggle btn btn-outline-light btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;" title="Przełącz tryb ciemny" type="button">
 					<i class="bi bi-moon-fill dark-mode-icon" style="font-size: 1.1rem; line-height: 1;"></i>
 				</button>

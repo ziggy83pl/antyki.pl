@@ -96,7 +96,7 @@ function setSearchType(typeVal) {
 			
 			<!-- Keywords -->
 			<div class="col-12 col-md-5 border-end-md position-relative d-flex align-items-center">
-				<div class="input-group border-0 align-items-center w-100">
+				<div class="input-group border rounded-3 align-items-center w-100 px-1 bg-white">
 					<span class="input-group-text search-icon-circle text-muted fs-5"><i class="bi bi-search"></i></span>
 					<input class="form-control border-0 ps-1 fs-5 py-2" type="text" name="keywords" id="search_keywords" placeholder="{{ 'Enter your keywords...'|lang }}" title="{{ 'Enter your keywords...'|lang }}" value="{{ get.keywords }}" autocomplete="off">
 				</div>
@@ -106,7 +106,7 @@ function setSearchType(typeVal) {
 			<!-- Location Selector -->
 			<div class="col-12 col-md-4 d-flex align-items-center">
 				<div class="position-relative w-100" id="location_selector_container">
-					<div class="input-group border-0 align-items-center">
+					<div class="input-group border rounded-3 align-items-center w-100 px-1 bg-white">
 						<span class="input-group-text search-icon-circle text-muted fs-5"><i class="bi bi-geo-alt"></i></span>
 						<input type="text" class="form-control border-0 ps-1 fs-5 py-2" id="location_input_display" placeholder="{{ 'Whole Poland'|lang }}" readonly style="cursor: pointer; background-color: transparent !important;" value="{% if get.address %}{{ get.address }}{% elseif get.state2 %}{{ get.state2 }}{% elseif get.state %}{{ get.state }}{% endif %}">
 						<span class="input-group-text bg-transparent border-0 text-muted fs-5 cursor-pointer px-2" id="location_clear_btn" style="{% if get.state or get.state2 or get.address %}display: flex;{% else %}display: none;{% endif %}"><i class="bi bi-x-lg"></i></span>
