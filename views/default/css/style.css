@@ -472,7 +472,7 @@ html, body {
     top: 0;
 }
 .btn-accent{
-	background: linear-gradient(135deg, #556b2f 0%, #facc15 100%);
+	background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
 	color: #fff;
 	border: 0;
 	box-shadow: 0 10px 25px rgba(37, 99, 235, 0.18);
@@ -528,6 +528,51 @@ html, body {
 }
 .hero-panel-body{
 	padding: 1rem 1.1rem 1.2rem;
+}
+.py-2\.5 {
+	padding-top: 0.625rem !important;
+	padding-bottom: 0.625rem !important;
+}
+.gap-3\.5 {
+	gap: 1.15rem !important;
+}
+/* Custom Search Submit Button & Animated Circular Icon */
+.btn-search-submit {
+	background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+	color: #ffffff !important;
+	border: 0 !important;
+	font-size: 1.15rem !important;
+	letter-spacing: 0.04em;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	position: relative;
+	box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3) !important;
+}
+.btn-search-submit:hover {
+	transform: translateY(-2px);
+	background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%) !important;
+	box-shadow: 0 8px 25px rgba(37, 99, 235, 0.45) !important;
+}
+.btn-search-submit:active {
+	transform: translateY(0) scale(0.98);
+}
+.btn-search-icon-circle {
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	border-radius: 50% !important;
+	border: 1px solid rgba(255, 255, 255, 0.75) !important;
+	background-color: rgba(255, 255, 255, 0.2) !important;
+	color: #ffffff !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	font-size: 0.95rem;
+	transition: transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+}
+.btn-search-submit:hover .btn-search-icon-circle {
+	transform: rotate(15deg) scale(1.1);
+	border-color: #ffffff !important;
+	background-color: rgba(255, 255, 255, 0.35) !important;
 }
 .index-section{
 	background: linear-gradient(180deg, #f4f1ea 0%, #eef2f7 100%);
@@ -1952,6 +1997,22 @@ html[data-bs-theme="dark"] .category-tile {
     background: #1e293b !important; /* slate-800 override gradient */
     color: #e2e8f0 !important; /* slate-200 */
     border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-bs-theme="dark"] .search-icon-circle {
+    border: 1px solid #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+html[data-bs-theme="dark"] .btn-accent,
+html[data-bs-theme="dark"] .btn-search-submit {
+    background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
+}
+html[data-bs-theme="dark"] .btn-search-submit:hover {
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
 }
 html[data-bs-theme="dark"] .category-tile-name {
     color: #e2e8f0 !important;

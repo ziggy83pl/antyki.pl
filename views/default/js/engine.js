@@ -368,32 +368,33 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	// 12. Dark Mode Toggle Logic
-	const toggleBtn = document.getElementById('dark-mode-toggle');
-	const modeIcon = document.getElementById('dark-mode-icon');
+	const toggleBtns = document.querySelectorAll('.dark-mode-toggle, #dark-mode-toggle');
+	const modeIcons = document.querySelectorAll('.dark-mode-icon, #dark-mode-icon');
 	
-	function updateIcon(theme) {
-		if (!modeIcon) return;
-		if (theme === 'dark') {
-			modeIcon.classList.remove('bi-moon-fill');
-			modeIcon.classList.add('bi-sun-fill');
-		} else {
-			modeIcon.classList.remove('bi-sun-fill');
-			modeIcon.classList.add('bi-moon-fill');
-		}
+	function updateIcons(theme) {
+		modeIcons.forEach(icon => {
+			if (theme === 'dark') {
+				icon.classList.remove('bi-moon-fill');
+				icon.classList.add('bi-sun-fill');
+			} else {
+				icon.classList.remove('bi-sun-fill');
+				icon.classList.add('bi-moon-fill');
+			}
+		});
 	}
 	
 	// Initialize theme icon
 	const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
-	updateIcon(currentTheme);
+	updateIcons(currentTheme);
 	
-	if (toggleBtn) {
-		toggleBtn.addEventListener('click', () => {
+	toggleBtns.forEach(btn => {
+		btn.addEventListener('click', () => {
 			const theme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
 			document.documentElement.setAttribute('data-bs-theme', theme);
 			localStorage.setItem('theme', theme);
-			updateIcon(theme);
+			updateIcons(theme);
 		});
-	}
+	});
 
 	// 13. Custom Live Search Autocomplete Function
 	function setupLiveSearch(inputElement, suggestionsContainer) {

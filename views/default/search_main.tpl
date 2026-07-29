@@ -92,24 +92,24 @@ function setSearchType(typeVal) {
 	<form action="{{ path('offers') }}" method="get" class="mb-0">
 		<input type="hidden" name="search">
 		<input type="hidden" name="type" id="search_type_hidden" value="{{ get.type }}">
-		<div class="row g-2 align-items-center">
+		<div class="row g-2 align-items-center justify-content-center">
 			
 			<!-- Keywords -->
-			<div class="col-12 col-md-5 border-end-md position-relative">
-				<div class="input-group border-0">
-					<span class="input-group-text bg-white border-0 text-muted fs-5"><i class="bi bi-search"></i></span>
+			<div class="col-12 col-md-5 border-end-md position-relative d-flex align-items-center">
+				<div class="input-group border-0 align-items-center w-100">
+					<span class="input-group-text search-icon-circle text-muted fs-5"><i class="bi bi-search"></i></span>
 					<input class="form-control border-0 ps-1 fs-5 py-2" type="text" name="keywords" id="search_keywords" placeholder="{{ 'Enter your keywords...'|lang }}" title="{{ 'Enter your keywords...'|lang }}" value="{{ get.keywords }}" autocomplete="off">
 				</div>
 				<div id="search_keywords_suggestions" class="search-suggestions-dropdown"></div>
 			</div>
 			
 			<!-- Location Selector -->
-			<div class="col-12 col-md-4 mt-2 mt-md-0">
+			<div class="col-12 col-md-4 d-flex align-items-center">
 				<div class="position-relative w-100" id="location_selector_container">
-					<div class="input-group border-0">
-						<span class="input-group-text bg-white border-0 text-muted fs-5"><i class="bi bi-geo-alt"></i></span>
-						<input type="text" class="form-control border-0 ps-1 fs-5 py-2" id="location_input_display" placeholder="{{ 'Whole Poland'|lang }}" readonly style="cursor: pointer; background-color: #fff !important;" value="{% if get.address %}{{ get.address }}{% elseif get.state2 %}{{ get.state2 }}{% elseif get.state %}{{ get.state }}{% endif %}">
-						<span class="input-group-text bg-white border-0 text-muted fs-5 cursor-pointer px-2" id="location_clear_btn" style="{% if get.state or get.state2 or get.address %}display: flex;{% else %}display: none;{% endif %}"><i class="bi bi-x-lg"></i></span>
+					<div class="input-group border-0 align-items-center">
+						<span class="input-group-text search-icon-circle text-muted fs-5"><i class="bi bi-geo-alt"></i></span>
+						<input type="text" class="form-control border-0 ps-1 fs-5 py-2" id="location_input_display" placeholder="{{ 'Whole Poland'|lang }}" readonly style="cursor: pointer; background-color: transparent !important;" value="{% if get.address %}{{ get.address }}{% elseif get.state2 %}{{ get.state2 }}{% elseif get.state %}{{ get.state }}{% endif %}">
+						<span class="input-group-text bg-transparent border-0 text-muted fs-5 cursor-pointer px-2" id="location_clear_btn" style="{% if get.state or get.state2 or get.address %}display: flex;{% else %}display: none;{% endif %}"><i class="bi bi-x-lg"></i></span>
 					</div>
 					
 					<input type="hidden" name="state" id="search_state_hidden" value="{{ get.state }}">
@@ -162,8 +162,11 @@ function setSearchType(typeVal) {
 			</div>
 			
 			<!-- Search Button -->
-			<div class="col-12 col-md-3 mt-2 mt-md-0">
-				<button type="submit" class="btn btn-accent btn-lg w-100 py-3 text-uppercase fw-bold rounded-3 fs-6 d-flex align-items-center justify-content-center gap-2 shadow-sm"><i class="bi bi-search"></i> {{ 'Search'|lang }}</button>
+			<div class="col-12 col-md-3 d-flex justify-content-center align-items-center">
+				<button type="submit" class="btn btn-accent btn-lg w-100 py-2.5 text-uppercase fw-bold rounded-3 d-flex align-items-center justify-content-center gap-3 shadow-sm btn-search-submit">
+					<span class="btn-search-icon-circle me-1"><i class="bi bi-search"></i></span>
+					<span class="fs-5 fw-bold">{{ 'Search'|lang }}</span>
+				</button>
 			</div>
 			
 		</div>
