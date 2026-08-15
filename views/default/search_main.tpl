@@ -30,10 +30,18 @@
 		color: #ffffff !important;
 		border-color: #556b2f !important;
 	}
+	.search-type-toggle {
+		margin-top: 2rem !important;
+	}
+	@media (max-width: 991.98px) {
+		.search-type-toggle {
+			margin-top: 2.5rem !important;
+		}
+	}
 </style>
 
 {% if types %}
-<div class="d-flex flex-wrap justify-content-center gap-2 mb-4 px-2 search-type-toggle">
+<div class="d-flex flex-wrap justify-content-center gap-2 mb-4 mt-4 px-2 search-type-toggle">
 	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if not get.type %}active{% endif %}" onclick="setSearchType('')">
 		<i class="bi bi-grid-fill me-1"></i> Wszystkie przedmioty
 	</button>
@@ -50,7 +58,7 @@
 	{% endfor %}
 </div>
 {% else %}
-<div class="d-flex flex-wrap justify-content-center gap-2 mb-4 px-2 search-type-toggle">
+<div class="d-flex flex-wrap justify-content-center gap-2 mb-4 mt-4 px-2 search-type-toggle">
 	<button type="button" class="btn btn-sm search-type-btn px-4 py-2.5 rounded-pill fw-bold {% if not get.type %}active{% endif %}" onclick="setSearchType('')">
 		<i class="bi bi-grid-fill me-1"></i> Wszystkie przedmioty
 	</button>

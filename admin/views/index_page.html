@@ -60,32 +60,35 @@
 
 		{% include 'alert.tpl' %}
 
-		<form method="post" class="row g-3">
+		<form id="index_page_form" method="post" class="row g-3">
 			<input type="hidden" name="action" value="save_index_page">
 			<input type="hidden" name="token" value="{{ generateToken('admin_save_index_page') }}">
-			<div class="col-12 mb-3">
-				<div class="form-check form-switch">
-					<input class="form-check-input" type="checkbox" name="show_modernization_alert" id="show_modernization_alert" role="switch" {% if settings.show_modernization_alert %}checked{% endif %}>
-					<label class="form-check-label fw-semibold" for="show_modernization_alert">Pokaż komunikat o modernizacji strony na stronie głównej</label>
+			<div class="col-12">
+				<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 bg-light rounded-3 border">
+					<div class="form-check form-switch mb-0 d-inline-flex align-items-center gap-2 ps-0">
+						<input class="form-check-input ms-0 me-2" type="checkbox" name="show_modernization_alert" id="show_modernization_alert" role="switch" style="float: none; margin-top: 0; width: 2.6em; height: 1.35em; cursor: pointer;" {% if settings.show_modernization_alert and settings.show_modernization_alert != '0' %}checked{% endif %}>
+						<label class="form-check-label fw-semibold mb-0" for="show_modernization_alert" style="cursor: pointer;">Pokaż komunikat o modernizacji strony na stronie głównej</label>
+					</div>
+					<button type="submit" class="btn btn-primary text-uppercase fw-bold px-4 shadow-sm"><i class="bi bi-check2-circle me-1"></i> {{ 'Save'|lang }}</button>
 				</div>
 			</div>
 			<div class="col-12">
-				<label class="form-label">{{ 'Content'|lang }}:</label>
+				<label class="form-label fw-semibold">{{ 'Content'|lang }}:</label>
 				<textarea name="index_page" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control">{{ settings.index_page }}</textarea>
 				<script>run_ckeditor('index_page');</script>
 			</div>
 			<div class="col-12 mb-3">
-				<label for="footer_bottom" class="form-label">Stopka na stronie głównej (duży ekran) - część główna:</label>
+				<label for="footer_bottom" class="form-label fw-semibold">Stopka na stronie głównej (duży ekran) - część główna:</label>
 				<textarea name="footer_bottom" id="footer_bottom" placeholder="Stopka na stronie głównej (duży ekran)" title="Stopka na stronie głównej (duży ekran)" class="form-control">{{ settings.footer_bottom }}</textarea>
 				<script>run_ckeditor('footer_bottom');</script>
 			</div>
 			<div class="col-12 mb-3">
-				<label for="footer_text" class="form-label">Stopka na stronie głównej (duży ekran) - prawa autorskie i dodatkowe info:</label>
+				<label for="footer_text" class="form-label fw-semibold">Stopka na stronie głównej (duży ekran) - prawa autorskie i dodatkowe info:</label>
 				<textarea name="footer_text" id="footer_text" placeholder="Prawa autorskie / dodatkowe info" title="Prawa autorskie / dodatkowe info" class="form-control">{{ settings.footer_text }}</textarea>
 				<script>run_ckeditor('footer_text');</script>
 			</div>
 			<div class="col-12">
-				<input type="submit" value="{{ 'Save'|lang }}" class="btn btn-primary text-uppercase">
+				<button type="submit" class="btn btn-primary text-uppercase fw-bold px-4 shadow-sm"><i class="bi bi-check2-circle me-1"></i> {{ 'Save'|lang }}</button>
 			</div>
 		</form>
 	</div>

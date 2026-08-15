@@ -9,7 +9,7 @@
 	{% set og_type = "website" %}
 	
 	{% if controller == 'index' %}
-		{% set meta_desc = "Giełda Antyków, Militariów i Znalezisk - lokalny portal ogłoszeniowy (C2C)" %}
+		{% set meta_desc = "Giełda Antyków, Militariów i Znalezisk - internetowy portal ogłoszeniowy i aukcyjny dla kolekcjonerów" %}
 	{% elseif controller == 'offer' and offer %}
 		{% set meta_title = offer.name ~ " - " ~ settings.title %}
 		{% set meta_desc = offer.description|striptags|slice(0, 200) %}
@@ -19,15 +19,13 @@
 		{% set og_type = "article" %}
 	{% endif %}
 
-	{% set og_image = settings.base_url ~ "/upload/images/building_materials.png" %}
+	{% set og_image = settings.og_image ? (settings.base_url ~ "/" ~ settings.og_image) : (settings.base_url ~ "/upload/images/og_image.png") %}
 	{% if profile.avatar %}
 		{% set og_image = settings.base_url ~ "/upload/avatars/" ~ profile.avatar %}
 	{% elseif controller == 'offer' and offer.photos %}
 		{% set og_image = settings.base_url ~ "/upload/photos/" ~ offer.photos[0].folder ~ offer.photos[0].url %}
 	{% elseif controller == 'article' and article.thumb %}
 		{% set og_image = settings.base_url ~ "/" ~ article.thumb %}
-	{% elseif settings.og_image %}
-		{% set og_image = settings.base_url ~ "/" ~ settings.og_image %}
 	{% endif %}
 
 	<title>{{ meta_title }}</title>
@@ -35,8 +33,8 @@
 	<meta name="keywords" content="{{ settings.seo_keywords|default(settings.keywords) }}">
 
 	<!-- Geo targeting -->
-	<meta name="geo.region" content="PL-PD" />
-	<meta name="geo.placename" content="Łomża" />
+	<meta name="geo.region" content="PL" />
+	<meta name="geo.placename" content="Polska" />
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="{{ og_type }}">

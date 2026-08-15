@@ -8,6 +8,17 @@
 			padding-top: 0 !important;
 		}
 
+		/* Clearance margin under fixed navbar #menu_box */
+		.hero-section {
+			padding-top: 110px !important;
+		}
+
+		@media (max-width: 991.98px) {
+			.hero-section {
+				padding-top: 135px !important;
+			}
+		}
+
 		/* Spacing adjustment */
 		#search_box {
 			margin-top: 35px !important;
@@ -220,8 +231,8 @@
 				<div class="col-lg-10 text-center">
 					<div class="hero-copy">
 						<!-- Modernization Alert -->
-						{% if settings.show_modernization_alert %}
-						<div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm rounded-4 mx-auto mb-4 text-start d-flex align-items-start gap-3 p-3 animate__animated animate__fadeInDown" role="alert" style="max-width: 650px; background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border-left: 5px solid #f97316 !important; margin-top: 80px;">
+						{% if settings.show_modernization_alert and settings.show_modernization_alert != '0' %}
+						<div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm rounded-4 mx-auto mb-4 text-start d-flex align-items-start gap-3 p-3 animate__animated animate__fadeInDown" role="alert" style="max-width: 650px; background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border-left: 5px solid #f97316 !important; margin-top: 10px;">
 							<div class="rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background-color: #ffedd5;">
 								<i class="bi bi-cone-striped fs-5" style="color: #ea580c;"></i>
 							</div>
@@ -452,11 +463,10 @@
 {% endblock %}
 
 {% block javascript %}
-	<script src="js/jquery-3.3.1.min.js"></script>
 	{{ parent() }}
 
 	<script>
-		$(document).ready(function() {
+		document.addEventListener('DOMContentLoaded', function() {
 			// Horizontal scroll drag for categories
 			const scrollContainer = document.querySelector('.categories-scroll-container');
 			if (scrollContainer) {
@@ -494,108 +504,128 @@
 				}, true);
 			}
 
-			const $displayInput = $('#location_input_display');
-			const $dropdownMenu = $('#location_dropdown_menu');
-			const $clearBtn = $('#location_clear_btn');
-			const $stateHidden = $('#search_state_hidden');
-			const $state2Hidden = $('#search_state2_hidden');
-			const $addressHidden = $('#search_address_hidden');
-			
-			// Show dropdown on click/focus
-			$('#location_input_display, #location_selector_container .input-group-text:not(#location_clear_btn)').on('click focus', function(e) {
-				e.stopPropagation();
-				$dropdownMenu.fadeIn(200);
-			});
-			
-			// Close dropdown on click outside
-			$(document).on('click', function(e) {
-				if (!$(e.target).closest('#location_selector_container').length) {
-					$dropdownMenu.fadeOut(150);
+			// Location dropdown selector (Vanilla JS)
+			const displayInput = document.getElementById('location_input_display');
+			const dropdownMenu = document.getElementById('location_dropdown_menu');
+			const clearBtn = document.getElementById('location_clear_btn');
+			const stateHidden = document.getElementById('search_state_hidden');
+			const state2Hidden = document.getElementById('search_state2_hidden');
+			const addressHidden = document.getElementById('search_address_hidden');
+			const selectorContainer = document.getElementById('location_selector_container');
+			const btnAllPoland = document.getElementById('btn_all_poland');
+
+			if (dropdownMenu && displayInput) {
+				const showDropdown = (e) => {
+					e.stopPropagation();
+					dropdownMenu.style.display = 'block';
+				};
+
+				const hideDropdown = () => {
+					dropdownMenu.style.display = 'none';
+				};
+
+				displayInput.addEventListener('click', showDropdown);
+				displayInput.addEventListener('focus', showDropdown);
+
+				if (selectorContainer) {
+					selectorContainer.querySelectorAll('.input-group-text:not(#location_clear_btn)').forEach(el => {
+						el.addEventListener('click', showDropdown);
+					});
 				}
-			});
-			
-			// Prevent closing when clicking inside the dropdown menu (except on selections)
-			$dropdownMenu.on('click', function(e) {
-				e.stopPropagation();
-			});
-			
-			// Click Cała Polska
-			$('#btn_all_poland').on('click', function() {
-				$stateHidden.val('');
-				$state2Hidden.val('');
-				$addressHidden.val('');
-				$displayInput.val('');
-				$displayInput.attr('placeholder', 'Cała Polska');
-				$clearBtn.hide();
-				$dropdownMenu.fadeOut(150);
-			});
-			
-			// Click State Header (selects whole state)
-			$('.state-header').on('click', function(e) {
-				if ($(e.target).closest('.toggle-substates-btn').length) {
-					return;
+
+				document.addEventListener('click', (e) => {
+					if (selectorContainer && !selectorContainer.contains(e.target)) {
+						hideDropdown();
+					}
+				});
+
+				dropdownMenu.addEventListener('click', (e) => {
+					e.stopPropagation();
+				});
+
+				if (btnAllPoland) {
+					btnAllPoland.addEventListener('click', () => {
+						if (stateHidden) stateHidden.value = '';
+						if (state2Hidden) state2Hidden.value = '';
+						if (addressHidden) addressHidden.value = '';
+						displayInput.value = '';
+						displayInput.setAttribute('placeholder', 'Cała Polska');
+						if (clearBtn) clearBtn.style.display = 'none';
+						hideDropdown();
+					});
 				}
-				const stateSlug = $(this).data('state-slug');
-				const stateName = $(this).data('state-name');
-				
-				$stateHidden.val(stateSlug);
-				$state2Hidden.val('');
-				$addressHidden.val(stateName);
-				$displayInput.val(stateName);
-				$clearBtn.css('display', 'flex');
-				$dropdownMenu.fadeOut(150);
-			});
-			
-			// Click Arrow to Toggle Substates
-			$('.toggle-substates-btn').on('click', function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				const stateSlug = $(this).data('state-slug');
-				const $sublist = $('#substates_list_' + stateSlug);
-				const isVisible = $sublist.is(':visible');
-				
-				$('.substates-list').slideUp(200);
-				$('.toggle-substates-btn').removeClass('active');
-				
-				if (!isVisible) {
-					$sublist.slideDown(200);
-					$(this).addClass('active');
+
+				document.querySelectorAll('.state-header').forEach(header => {
+					header.addEventListener('click', function(e) {
+						if (e.target.closest('.toggle-substates-btn')) {
+							return;
+						}
+						const stateSlug = this.getAttribute('data-state-slug') || '';
+						const stateName = this.getAttribute('data-state-name') || '';
+
+						if (stateHidden) stateHidden.value = stateSlug;
+						if (state2Hidden) state2Hidden.value = '';
+						if (addressHidden) addressHidden.value = stateName;
+						displayInput.value = stateName;
+						if (clearBtn) clearBtn.style.display = 'flex';
+						hideDropdown();
+					});
+				});
+
+				document.querySelectorAll('.toggle-substates-btn').forEach(btn => {
+					btn.addEventListener('click', function(e) {
+						e.preventDefault();
+						e.stopPropagation();
+						const stateSlug = this.getAttribute('data-state-slug');
+						const sublist = document.getElementById('substates_list_' + stateSlug);
+						const isVisible = sublist && sublist.style.display === 'block';
+
+						document.querySelectorAll('.substates-list').forEach(list => {
+							list.style.display = 'none';
+						});
+						document.querySelectorAll('.toggle-substates-btn').forEach(b => {
+							b.classList.remove('active');
+						});
+
+						if (sublist && !isVisible) {
+							sublist.style.display = 'block';
+							this.classList.add('active');
+						}
+					});
+				});
+
+				document.querySelectorAll('.substate-item').forEach(item => {
+					item.addEventListener('click', function() {
+						const stateSlug = this.getAttribute('data-state-slug') || '';
+						const stateName = this.getAttribute('data-state-name') || '';
+						const substateSlug = this.getAttribute('data-substate-slug') || '';
+						const substateName = this.getAttribute('data-substate-name') || '';
+
+						if (stateHidden) stateHidden.value = stateSlug;
+						if (state2Hidden) state2Hidden.value = substateSlug;
+
+						const fullAddress = (substateSlug === '') ? stateName : (substateName + ', ' + stateName);
+						if (addressHidden) addressHidden.value = fullAddress;
+						displayInput.value = fullAddress;
+
+						if (clearBtn) clearBtn.style.display = 'flex';
+						hideDropdown();
+					});
+				});
+
+				if (clearBtn) {
+					clearBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						if (stateHidden) stateHidden.value = '';
+						if (state2Hidden) state2Hidden.value = '';
+						if (addressHidden) addressHidden.value = '';
+						displayInput.value = '';
+						displayInput.setAttribute('placeholder', 'Cała Polska');
+						clearBtn.style.display = 'none';
+						hideDropdown();
+					});
 				}
-			});
-			
-			// Click Substate Item (City/Town)
-			$('.substate-item').on('click', function() {
-				const stateSlug = $(this).data('state-slug');
-				const stateName = $(this).data('state-name');
-				const substateSlug = $(this).data('substate-slug');
-				const substateName = $(this).data('substate-name');
-				
-				$stateHidden.val(stateSlug);
-				$state2Hidden.val(substateSlug);
-				
-				if (substateSlug === '') {
-					$addressHidden.val(stateName);
-					$displayInput.val(stateName);
-				} else {
-					$addressHidden.val(substateName + ', ' + stateName);
-					$displayInput.val(substateName + ', ' + stateName);
-				}
-				
-				$clearBtn.css('display', 'flex');
-				$dropdownMenu.fadeOut(150);
-			});
-			
-			// Click Clear button (X)
-			$clearBtn.on('click', function(e) {
-				e.stopPropagation();
-				$stateHidden.val('');
-				$state2Hidden.val('');
-				$addressHidden.val('');
-				$displayInput.val('');
-				$displayInput.attr('placeholder', 'Cała Polska');
-				$clearBtn.hide();
-				$dropdownMenu.fadeOut(150);
-			});
+			}
 		});
 	</script>
 {% endblock %}

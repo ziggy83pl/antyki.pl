@@ -11,10 +11,20 @@ date_default_timezone_set('Europe/Warsaw');
 require_once __DIR__ . '/db.php';
 
 try{
-  $db = new PDO('mysql:host='.$mysql_server.';dbname='.$mysql_db, $mysql_user, $mysql_pass, [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"]);
+  $db = new PDO('mysql:host='.$mysql_server.';dbname='.$mysql_db, $mysql_user, $mysql_pass, [
+    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+  ]);
 }
 catch (PDOException $e){
-  die ("Error connecting to database!");
+  if (php_sapi_name() === 'cli') {
+    fwrite(STDERR, "Database connection error: " . $e->getMessage() . PHP_EOL);
+    exit(1);
+  }
+  http_response_code(503);
+  header('Content-Type: text/html; charset=utf-8');
+  echo '<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Przerwa techniczna - Giełda Antyków</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"></head><body class="bg-light d-flex align-items-center justify-content-center min-vh-100"><div class="card shadow-sm p-4 text-center" style="max-width:500px;border-radius:1rem;"><h1 class="h4 text-dark mb-3">Chwilowa przerwa techniczna</h1><p class="text-secondary mb-3">Trwają prace konserwacyjne lub serwer bazy danych jest chwilowo niedostępny. Prosimy spróbować ponownie za chwilę.</p><a href="javascript:location.reload()" class="btn btn-dark px-4 rounded-pill">Odśwież stronę</a></div></body></html>';
+  exit;
 }
 
 // Ensure missing user table columns exist
