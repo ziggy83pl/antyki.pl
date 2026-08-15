@@ -278,6 +278,7 @@ class User {
 		}
 
 		if(isset($error)){
+			\App\Core\App::logAuth('register_failed', 'failed', (string)($data['username'] ?? $data['email'] ?? ''), is_array($error) ? implode('; ', $error) : 'Błąd rejestracji');
 			return ['status'=>false,'error'=>$error];
 		}else{
 
@@ -292,6 +293,8 @@ class User {
 			$sth->bindValue(':activation_code', $activation_code, PDO::PARAM_STR);
 			$sth->bindValue(':register_ip', getClientIp(), PDO::PARAM_STR);
 			$sth->execute();
+
+			\App\Core\App::logAuth('register_success', 'success', (string)$data['username'], 'Pomyślna rejestracja użytkownika (email: ' . $data['email'] . ')');
 
 			return ['status'=>true];
 		}
@@ -447,6 +450,7 @@ class User {
 		setRememberMeCookie('user_code', $session_code, time() + (86400 * 30));
 
 		static::logUserLoginAndNotify((int)$user['id'], (string)$user['username'], (string)$user['email']);
+		\App\Core\App::logAuth('login_success', 'success', (string)$user['username'], 'Pomyślne logowanie hasłem');
 
 	}
 
@@ -1096,6 +1100,7 @@ class User {
 		$sth->execute();
 
 		static::logUserLoginAndNotify((int)$user['id'], (string)$user['username'], (string)$user['email']);
+		\App\Core\App::logAuth('magic_link_login', 'success', (string)$user['email'], 'Pomyślne logowanie przez Magic Link');
 
 		header("Location: " . $settings['base_url']);
 		die('redirect');

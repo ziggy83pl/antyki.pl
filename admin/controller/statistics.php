@@ -53,9 +53,57 @@ if($admin->is_logged()){
 		}
 	} catch (\Throwable $e) {}
 
+	// Auth & Registration & Magic Link Statistics
+	\App\Core\App::ensureLogsAuthTable();
+
+	$authStats = [
+		'login_success' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_success"'),
+		'login_success_today' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_success" AND DATE(date)=CURDATE()'),
+		'login_failed' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_failed"'),
+		'login_failed_today' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_failed" AND DATE(date)=CURDATE()'),
+		'magic_link_request' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="magic_link_request"'),
+		'magic_link_request_today' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="magic_link_request" AND DATE(date)=CURDATE()'),
+		'magic_link_login' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="magic_link_login"'),
+		'register_success' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="register_success"'),
+		'register_success_today' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="register_success" AND DATE(date)=CURDATE()'),
+		'register_failed' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="register_failed"'),
+		'page_views' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_page_view"'),
+		'page_views_today' => $getStatCount('SELECT COUNT(1) FROM '._DB_PREFIX_.'logs_auth WHERE action_type="login_page_view" AND DATE(date)=CURDATE()'),
+	];
+
+	// Ostatnie 40 interakcji
+	$recentAuthLogs = [];
+	try {
+		$sthAuth = $db->query('SELECT * FROM '._DB_PREFIX_.'logs_auth ORDER BY id DESC LIMIT 40');
+		if ($sthAuth) {
+			$recentAuthLogs = $sthAuth->fetchAll(PDO::FETCH_ASSOC);
+		}
+	} catch (\Throwable $e) {}
+
+	// Top IP podejmujące próby logowania / rejestracji / magic link
+	$topAuthIps = [];
+	try {
+		$sthIp = $db->query('SELECT ip, 
+			COUNT(1) as total_interactions,
+			SUM(CASE WHEN action_type IN ("login_success", "magic_link_login", "register_success") THEN 1 ELSE 0 END) as success_count,
+			SUM(CASE WHEN status="failed" THEN 1 ELSE 0 END) as failed_count,
+			SUM(CASE WHEN action_type LIKE "magic_link%" THEN 1 ELSE 0 END) as magic_link_count,
+			MAX(date) as last_activity
+			FROM '._DB_PREFIX_.'logs_auth 
+			GROUP BY ip 
+			ORDER BY total_interactions DESC 
+			LIMIT 10');
+		if ($sthIp) {
+			$topAuthIps = $sthIp->fetchAll(PDO::FETCH_ASSOC);
+		}
+	} catch (\Throwable $e) {}
+
 	$render_variables['statistics'] = $statistics;
 	$render_variables['top_categories'] = $topCategories;
 	$render_variables['moderator_activity'] = $moderatorActivity;
+	$render_variables['auth_stats'] = $authStats;
+	$render_variables['recent_auth_logs'] = $recentAuthLogs;
+	$render_variables['top_auth_ips'] = $topAuthIps;
 
 	$title = lang('Statistics').' - '.$title_default;
 }

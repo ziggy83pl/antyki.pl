@@ -25,14 +25,17 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
         ]);
 		$user->login($_POST);
     } catch (\App\Core\ValidationException $e) {
+        \App\Core\App::logAuth('login_failed', 'failed', (string)($_POST['username'] ?? ''), getSafeExceptionMessage($e));
         $render_variables['alert_danger'][] = getSafeExceptionMessage($e);
 	} catch(Exception $e) {
+        \App\Core\App::logAuth('login_failed', 'failed', (string)($_POST['username'] ?? ''), getSafeExceptionMessage($e));
 		$render_variables['alert_danger'][] = getSafeExceptionMessage($e);
 	}
 
 }elseif(isset($_POST['action']) and $_POST['action'] == 'request_magic_link'){
 
 	if(!checkToken('request_magic_link')){
+		\App\Core\App::logAuth('magic_link_request', 'failed', (string)($_POST['email'] ?? ''), 'Nieprawidłowy token sesji lub wygasła sesja');
 		$render_variables['alert_danger'][] = lang('Session expired or invalid token. Please try again.');
 		$render_variables['input'] = $_POST;
 	}else{
@@ -42,11 +45,14 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
                 'captcha' => ['required']
             ]);
 			$user->requestMagicLink($_POST);
+			\App\Core\App::logAuth('magic_link_request', 'success', (string)$_POST['email'], 'Wysłano magiczny link na podany adres e-mail');
 			$render_variables['alert_success'][] = lang('A login link has been sent to your email address.');
         } catch (\App\Core\ValidationException $e) {
+            \App\Core\App::logAuth('magic_link_request', 'failed', (string)($_POST['email'] ?? ''), getSafeExceptionMessage($e));
             $render_variables['alert_danger'][] = getSafeExceptionMessage($e);
             $render_variables['input'] = $_POST;
 		}catch(Exception $e) {
+            \App\Core\App::logAuth('magic_link_request', 'failed', (string)($_POST['email'] ?? ''), getSafeExceptionMessage($e));
 			$render_variables['alert_danger'][] = getSafeExceptionMessage($e);
 			$render_variables['input'] = $_POST;
 		}
@@ -58,6 +64,7 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
 	try{
 		$user->loginWithMagicToken($_GET['magic_token']);
 	}catch(Exception $e) {
+		\App\Core\App::logAuth('magic_link_failed', 'failed', (string)$_GET['magic_token'], getSafeExceptionMessage($e));
 		$render_variables['alert_danger'][] = getSafeExceptionMessage($e);
 	}
 
@@ -130,6 +137,7 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
 }elseif(isset($_POST['action']) and $_POST['action'] == 'reset_password'){
 
 	if(!checkToken('reset_password')){
+		\App\Core\App::logAuth('reset_password_request', 'failed', (string)($_POST['username'] ?? ''), 'Nieprawidłowy token sesji resetowania');
 		$render_variables['alert_danger'][] = lang('Session expired or invalid token. Please try again.');
 		$render_variables['input'] = $_POST;
 	}else{
@@ -139,11 +147,14 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
                 'captcha' => ['required']
             ]);
 			$user->resetPassword($_POST);
+			\App\Core\App::logAuth('reset_password_request', 'success', (string)$_POST['username'], 'Wysłano link resetujący hasło');
 			$render_variables['alert_success'][] = lang('Link to change your password has been sent to your email address.');
         } catch (\App\Core\ValidationException $e) {
+            \App\Core\App::logAuth('reset_password_request', 'failed', (string)($_POST['username'] ?? ''), getSafeExceptionMessage($e));
             $render_variables['alert_danger'][] = getSafeExceptionMessage($e);
             $render_variables['input'] = $_POST;
 		}catch(Exception $e) {
+            \App\Core\App::logAuth('reset_password_request', 'failed', (string)($_POST['username'] ?? ''), getSafeExceptionMessage($e));
 			$render_variables['alert_danger'][] = getSafeExceptionMessage($e);
 			$render_variables['input'] = $_POST;
 		}
@@ -162,6 +173,7 @@ if(isset($_POST['action']) and $_POST['action'] == 'login'){
 			}else{
 				try{
 					$user->resetPasswordNewCheck($user_id,$_POST,$_GET['new_password']);
+					\App\Core\App::logAuth('password_changed', 'success', (string)$user_id, 'Hasło zostało pomyślnie zmienione');
 					$render_variables['alert_success'][] = lang('The password has been changed successfully. You can now login to the site');
 					$tab_active = 'login';
 				}catch(Exception $e) {
@@ -188,6 +200,10 @@ if($get_new_session_code){
 		$render_variables['google_redirect_uri'] = 'https://accounts.google.com/o/oauth2/v2/auth?scope=' . urlencode('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email') . '&redirect_uri='.urlencode(path('login')).'&response_type=code&client_id=' .$settings['google_id'].'&access_type=online';
 	}
 	$render_variables['session_code'] = \App\User::newSessionCode();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($_GET['magic_token']) && empty($_GET['activation_code']) && empty($_GET['complete_data']) && empty($_GET['new_password']) && empty($_GET['facebook_login'])) {
+	\App\Core\App::logAuth('login_page_view', 'info', '', 'Odwiedziny podstrony logowania/rejestracji (karta: ' . $tab_active . ')');
 }
 
 $render_variables['tab_active'] = $tab_active;

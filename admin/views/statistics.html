@@ -245,6 +245,204 @@
         {% endif %}
     </div>
 
+    {# Sekcja: Aktywność logowania, rejestracji i Magic Link wg IP #}
+    <div class="content-card mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <h5 class="mb-1 fw-bold">
+                    <i class="bi bi-shield-lock-fill text-warning me-2"></i>
+                    Aktywność Logowania, Rejestracji i Magicznego Linku
+                </h5>
+                <p class="text-muted small mb-0">Rejestracja prób uwierzytelniania i interakcji użytkowników na podstawie adresu IP</p>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2">
+                    <i class="bi bi-eye me-1"></i> Wizyty /login: <strong>{{ auth_stats.page_views|default(0) }}</strong> (dziś: +{{ auth_stats.page_views_today|default(0) }})
+                </span>
+            </div>
+        </div>
+
+        {# KPI Cards #}
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card h-100 border-0 bg-success bg-opacity-10 p-3 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-success small fw-semibold text-uppercase" style="font-size: 0.72rem;">Logowania Udane</span>
+                            <h3 class="fw-bold mb-0 text-success">{{ auth_stats.login_success|default(0) }}</h3>
+                            <span class="text-muted small">Dzisiaj: +{{ auth_stats.login_success_today|default(0) }}</span>
+                        </div>
+                        <div class="fs-1 text-success opacity-75">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card h-100 border-0 bg-danger bg-opacity-10 p-3 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-danger small fw-semibold text-uppercase" style="font-size: 0.72rem;">Nieudane Próby Logowania</span>
+                            <h3 class="fw-bold mb-0 text-danger">{{ auth_stats.login_failed|default(0) }}</h3>
+                            <span class="text-muted small">Dzisiaj: +{{ auth_stats.login_failed_today|default(0) }}</span>
+                        </div>
+                        <div class="fs-1 text-danger opacity-75">
+                            <i class="bi bi-x-octagon-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card h-100 border-0 bg-warning bg-opacity-10 p-3 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-warning-emphasis small fw-semibold text-uppercase" style="font-size: 0.72rem;">Magiczny Link (Magic Link)</span>
+                            <h3 class="fw-bold mb-0 text-warning-emphasis">{{ auth_stats.magic_link_request|default(0) }}</h3>
+                            <span class="text-muted small">Użyte tokeny: {{ auth_stats.magic_link_login|default(0) }} (dziś: +{{ auth_stats.magic_link_request_today|default(0) }})</span>
+                        </div>
+                        <div class="fs-1 text-warning opacity-75">
+                            <i class="bi bi-magic"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card h-100 border-0 bg-primary bg-opacity-10 p-3 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-primary small fw-semibold text-uppercase" style="font-size: 0.72rem;">Rejestracje Kont</span>
+                            <h3 class="fw-bold mb-0 text-primary">{{ auth_stats.register_success|default(0) }}</h3>
+                            <span class="text-muted small">Błędy/Odrzucenia: {{ auth_stats.register_failed|default(0) }} (dziś: +{{ auth_stats.register_success_today|default(0) }})</span>
+                        </div>
+                        <div class="fs-1 text-primary opacity-75">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Tabele: Ostatnie interakcje & Top IP #}
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Ostatnie interakcje auth</h6>
+                    <span class="badge bg-secondary-subtle text-secondary small">Czas rzeczywisty</span>
+                </div>
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                    <table class="table table-hover table-sm align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Data</th>
+                                <th>Adres IP</th>
+                                <th>Zdarzenie / Metoda</th>
+                                <th>Identyfikator</th>
+                                <th>Status</th>
+                                <th>Szczegóły</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_auth_logs %}
+                                <tr>
+                                    <td class="small text-nowrap text-muted">{{ log.date }}</td>
+                                    <td>
+                                        <code class="text-dark bg-light px-2 py-1 rounded small border">{{ log.ip }}</code>
+                                    </td>
+                                    <td>
+                                        {% if log.action_type == 'login_success' %}
+                                            <span class="badge bg-success-subtle text-success"><i class="bi bi-box-arrow-in-right me-1"></i>Logowanie</span>
+                                        {% elseif log.action_type == 'login_failed' %}
+                                            <span class="badge bg-danger-subtle text-danger"><i class="bi bi-shield-x me-1"></i>Błąd logowania</span>
+                                        {% elseif log.action_type == 'magic_link_request' %}
+                                            <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-magic me-1"></i>Magic Link (Wysłanie)</span>
+                                        {% elseif log.action_type == 'magic_link_login' %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-check-all me-1"></i>Magic Link (Login)</span>
+                                        {% elseif log.action_type == 'magic_link_failed' %}
+                                            <span class="badge bg-danger text-white"><i class="bi bi-x me-1"></i>Magic Link Błąd</span>
+                                        {% elseif log.action_type == 'register_success' %}
+                                            <span class="badge bg-primary-subtle text-primary"><i class="bi bi-person-check me-1"></i>Rejestracja</span>
+                                        {% elseif log.action_type == 'register_failed' %}
+                                            <span class="badge bg-danger-subtle text-danger"><i class="bi bi-person-x me-1"></i>Błąd rejestracji</span>
+                                        {% elseif log.action_type == 'login_page_view' %}
+                                            <span class="badge bg-light text-muted border"><i class="bi bi-eye me-1"></i>Wizyta /login</span>
+                                        {% elseif log.action_type == 'reset_password_request' %}
+                                            <span class="badge bg-info-subtle text-info"><i class="bi bi-key me-1"></i>Reset hasła</span>
+                                        {% elseif log.action_type == 'password_changed' %}
+                                            <span class="badge bg-success-subtle text-success"><i class="bi bi-check2-circle me-1"></i>Zmieniono hasło</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ log.action_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small fw-semibold text-truncate" style="max-width: 150px;" title="{{ log.identifier }}">{{ log.identifier|default('-') }}</td>
+                                    <td>
+                                        {% if log.status == 'success' %}
+                                            <span class="badge bg-success">Sukces</span>
+                                        {% elseif log.status == 'failed' %}
+                                            <span class="badge bg-danger">Błąd</span>
+                                        {% else %}
+                                            <span class="badge bg-info text-dark">Info</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-muted text-truncate" style="max-width: 200px;" title="{{ log.details }}">{{ log.details|default('-') }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">Brak zarejestrowanych interakcji uwierzytelniania w logach.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-hdd-network-fill me-2 text-primary"></i>Top Aktywne Adresy IP</h6>
+                    <span class="badge bg-secondary-subtle text-secondary small">Aktywność</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Adres IP</th>
+                                <th class="text-center">Próby</th>
+                                <th class="text-center">Magic</th>
+                                <th class="text-end">Ostatnia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ip_stat in top_auth_ips %}
+                                <tr>
+                                    <td>
+                                        <code class="text-dark bg-light px-2 py-1 rounded small border">{{ ip_stat.ip }}</code>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1">{{ ip_stat.total_interactions }}</span>
+                                        {% if ip_stat.failed_count > 0 %}
+                                            <span class="badge bg-danger-subtle text-danger px-1" title="Nieudane próby">! {{ ip_stat.failed_count }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if ip_stat.magic_link_count > 0 %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-magic"></i> {{ ip_stat.magic_link_count }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end small text-muted text-nowrap">{{ ip_stat.last_activity|date('d.m H:i') }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">Brak danych dla adresów IP.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {# Wykres #}
     <div class="content-card">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">

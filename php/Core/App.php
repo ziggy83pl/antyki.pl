@@ -48,4 +48,43 @@ class App {
         }
         return self::$purifier;
     }
+
+    public static function ensureLogsAuthTable(): void {
+        try {
+            $db = self::db();
+            $db->exec("CREATE TABLE IF NOT EXISTS `"._DB_PREFIX_."logs_auth` (
+                `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                `ip` varchar(45) NOT NULL,
+                `action_type` varchar(32) NOT NULL,
+                `status` varchar(16) NOT NULL,
+                `identifier` varchar(255) DEFAULT '',
+                `details` text DEFAULT NULL,
+                `user_agent` varchar(255) DEFAULT '',
+                `date` datetime NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_ip` (`ip`),
+                KEY `idx_action` (`action_type`),
+                KEY `idx_status` (`status`),
+                KEY `idx_date` (`date`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        } catch (\Throwable $e) {}
+    }
+
+    public static function logAuth(string $actionType, string $status, string $identifier = '', string $details = ''): void {
+        try {
+            self::ensureLogsAuthTable();
+            $db = self::db();
+            $ip = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
+            $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255);
+            $sth = $db->prepare('INSERT INTO `'._DB_PREFIX_.'logs_auth` (`ip`, `action_type`, `status`, `identifier`, `details`, `user_agent`, `date`) VALUES (:ip, :action_type, :status, :identifier, :details, :user_agent, NOW())');
+            $sth->execute([
+                ':ip' => $ip,
+                ':action_type' => $actionType,
+                ':status' => $status,
+                ':identifier' => substr($identifier, 0, 255),
+                ':details' => $details,
+                ':user_agent' => $userAgent
+            ]);
+        } catch (\Throwable $e) {}
+    }
 }
