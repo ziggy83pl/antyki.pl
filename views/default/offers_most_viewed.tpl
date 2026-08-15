@@ -42,7 +42,7 @@
 						<i class="bi {{ icon_data[0] }}" style="font-size: 3rem !important;"></i>
 					</div>
 
-					<span class="badge bg-danger text-white position-absolute top-0 start-0 m-2 shadow-sm rounded-pill px-2 py-1 fw-bold" style="font-size: 0.72rem; z-index: 5;">
+					<span class="badge bg-danger text-white position-absolute bottom-0 start-0 m-2 shadow-sm rounded-pill px-2 py-1 fw-bold" style="font-size: 0.72rem; z-index: 5;">
 						<i class="bi bi-fire me-1"></i>TOP
 					</span>
 
