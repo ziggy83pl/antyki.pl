@@ -1074,4 +1074,46 @@ class Offer {
 		}
 		return $names;
 	}
+
+	/**
+	 * Pobiera najczęściej oglądane aktywne ogłoszenia
+	 * @return mixed[]
+	 */
+	public static function getMostViewedOffers(int $limit = 3): array {
+		global $user;
+		$db = \App\Core\App::db();
+		if ($limit <= 0) $limit = 3;
+
+		$offers = [];
+		$select = ', c.name as category_name, c.slug as category_slug, s.name as state_name, s.slug as state_slug, s2.name as state2_name, s2.slug as state2_slug, t.name as type_name, t.slug as type_slug, u.username as username, u.verified_email, u.verified_phone, u.verified_company';
+		$select .= ', (SELECT count(1) FROM '._DB_PREFIX_.'logs_offer WHERE offer_id=o.id) AS view_all';
+		$select .= ', (SELECT count(Distinct lo.ip) FROM '._DB_PREFIX_.'logs_offer lo WHERE offer_id=o.id) AS view_unique';
+
+		if (is_object($user) && method_exists($user, 'getId') && $user->getId()) {
+			$select .= ', (SELECT count(1) FROM '._DB_PREFIX_.'clipboard WHERE user_id='.$user->getId().' and offer_id=o.id LIMIT 1) AS clipboard';
+		}
+
+		$join = 'LEFT JOIN '._DB_PREFIX_.'category c ON o.category_id = c.id
+			LEFT JOIN '._DB_PREFIX_.'state s ON o.state_id = s.id
+			LEFT JOIN '._DB_PREFIX_.'state s2 ON o.state2_id = s2.id
+			LEFT JOIN '._DB_PREFIX_.'type t ON o.type_id = t.id
+			LEFT JOIN '._DB_PREFIX_.'user u ON o.user_id = u.id ';
+
+		$sql = 'SELECT o.* ' . $select . ', 
+			(SELECT CONCAT(folder,thumb) FROM '._DB_PREFIX_.'photo WHERE offer_id=o.id ORDER BY position LIMIT 1) AS thumb 
+			FROM '._DB_PREFIX_.'offer o ' . $join . '
+			WHERE o.active = 1 AND o.date_finish > NOW()
+			ORDER BY view_all DESC, o.promoted DESC, o.id DESC 
+			LIMIT :limit';
+
+		$sth = $db->prepare($sql);
+		$sth->bindValue(':limit', $limit, PDO::PARAM_INT);
+		$sth->execute();
+
+		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			$offers[] = $row;
+		}
+
+		return $offers;
+	}
 }

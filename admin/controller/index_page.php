@@ -36,6 +36,10 @@ if($admin->is_logged()){
 				\App\Settings::save('footer_text');
 			}
 			\App\Settings::save('show_modernization_alert', 'isset');
+			\App\Settings::save('show_most_viewed_offers', 'isset');
+			if (isset($_POST['number_most_viewed_offers'])) {
+				\App\Settings::save('number_most_viewed_offers');
+			}
 			$render_variables['alert_success'][] = lang('Changes have been saved');
 			getSettings();
 		}elseif($_POST['action']=='add_slide' and checkToken('admin_add_slide')){

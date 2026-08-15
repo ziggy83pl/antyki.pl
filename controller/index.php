@@ -12,6 +12,11 @@ $render_variables['slider'] = \App\Slider::getSlider();
 
 $render_variables['offers'] = \App\Offer::loadOffers($settings['limit_page_index'],'index_page');
 
+if (!empty($settings['show_most_viewed_offers']) && $settings['show_most_viewed_offers'] !== '0') {
+	$most_viewed_limit = !empty($settings['number_most_viewed_offers']) ? (int)$settings['number_most_viewed_offers'] : 3;
+	$render_variables['most_viewed_offers'] = \App\Offer::getMostViewedOffers($most_viewed_limit);
+}
+
 $render_variables['categories'] = \App\Category::getAllCategoriesTree();
 
 $render_variables['states'] = getAllStates();

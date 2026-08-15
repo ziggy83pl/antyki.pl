@@ -73,6 +73,26 @@
 				</div>
 			</div>
 			<div class="col-12">
+				<div class="p-3 bg-light rounded-3 border">
+					<div class="row align-items-center g-3">
+						<div class="col-md-8">
+							<div class="form-check form-switch mb-0 d-inline-flex align-items-center gap-2 ps-0">
+								<input class="form-check-input ms-0 me-2" type="checkbox" name="show_most_viewed_offers" id="show_most_viewed_offers" role="switch" style="float: none; margin-top: 0; width: 2.6em; height: 1.35em; cursor: pointer;" {% if settings.show_most_viewed_offers and settings.show_most_viewed_offers != '0' %}checked{% endif %}>
+								<label class="form-check-label fw-semibold mb-0" for="show_most_viewed_offers" style="cursor: pointer;">
+									🔥 Pokaż sekcję najczęściej oglądanych ogłoszeń na dole strony głównej
+								</label>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="d-flex align-items-center justify-content-md-end gap-2">
+								<label for="number_most_viewed_offers" class="form-label fw-semibold mb-0 text-nowrap">Liczba ofert:</label>
+								<input type="number" name="number_most_viewed_offers" id="number_most_viewed_offers" min="1" max="24" class="form-control" style="max-width: 90px;" value="{{ settings.number_most_viewed_offers|default(3) }}">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-12">
 				<label class="form-label fw-semibold">{{ 'Content'|lang }}:</label>
 				<textarea name="index_page" placeholder="{{ 'Content'|lang }}" title="{{ 'Content'|lang }}" class="form-control">{{ settings.index_page }}</textarea>
 				<script>run_ckeditor('index_page');</script>
