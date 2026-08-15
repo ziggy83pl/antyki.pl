@@ -619,18 +619,21 @@ html, body {
 
 	.categories-scroll-container .index_categories {
 		flex: 0 0 auto !important;
-		width: 105px !important;
-		max-width: 105px !important;
+		width: 120px !important;
+		max-width: 120px !important;
 		padding-left: 0.35rem !important;
 		padding-right: 0.35rem !important;
 		scroll-snap-align: start;
 	}
 
 	.categories-scroll-container .category-tile {
-		padding: 0.75rem 0.35rem !important;
-		border-radius: 1rem !important;
-		min-height: 115px !important;
-		gap: 0.45rem !important;
+		width: 110px !important;
+		height: 110px !important;
+		aspect-ratio: 1 / 1 !important;
+		border-radius: 50% !important;
+		padding: 0.5rem 0.25rem !important;
+		min-height: unset !important;
+		gap: 0.25rem !important;
 		display: flex !important;
 		flex-direction: column !important;
 		align-items: center !important;
@@ -639,10 +642,10 @@ html, body {
 	}
 
 	.categories-scroll-container .category-tile-icon {
-		width: 3.5rem !important;
-		height: 3.5rem !important;
+		width: 2.35rem !important;
+		height: 2.35rem !important;
 		border-radius: 50% !important;
-		font-size: 1.4rem !important;
+		font-size: 1.15rem !important;
 		display: inline-flex !important;
 		align-items: center !important;
 		justify-content: center !important;
@@ -657,8 +660,8 @@ html, body {
 	}
 
 	.categories-scroll-container .category-tile-name {
-		font-size: 0.78rem !important;
-		line-height: 1.15 !important;
+		font-size: 0.72rem !important;
+		line-height: 1.1 !important;
 		text-align: center !important;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -666,6 +669,12 @@ html, body {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		word-break: break-word;
+		max-width: 85px;
+	}
+
+	.categories-scroll-container .badge {
+		font-size: 0.65rem !important;
+		padding: 0.2em 0.5em !important;
 	}
 
 	.search-type-toggle {
@@ -674,14 +683,18 @@ html, body {
 }
 .category-tile{
 	background: linear-gradient(180deg, #ffffff 0%, #f4f1ea 100%);
-	border-radius: 1rem;
-	padding: 1rem;
-	min-height: 100%;
+	border-radius: 50%;
+	aspect-ratio: 1 / 1;
+	max-width: 220px;
+	margin: 0 auto;
+	padding: 1.25rem 0.75rem;
+	min-height: unset;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	text-align: center;
-	gap: .75rem;
+	gap: .4rem;
 	text-decoration: none;
 	color: #111827;
 	border: 1px solid #e5e7eb;
@@ -694,25 +707,29 @@ html, body {
 	color: #111827;
 }
 .category-tile-icon{
-	width: 4rem;
-	height: 4rem;
-	border-radius: 1rem;
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 50%;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	background: linear-gradient(135deg, #e2e8f0, #f4f1ea);
 	color: #475569;
-	font-size: 1.6rem;
+	font-size: 1.5rem;
 	overflow: hidden;
+	flex-shrink: 0;
 }
 .category-tile-icon img{
 	width: 100%;
 	height: 100%;
+	border-radius: 50%;
 	object-fit: cover;
 }
 .category-tile-name{
 	font-weight: 700;
 	line-height: 1.2;
+	font-size: 0.95rem;
+	max-width: 140px;
 }
 .subcategories-panel{
 	margin-top: 1rem;
