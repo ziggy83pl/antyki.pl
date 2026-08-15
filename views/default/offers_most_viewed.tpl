@@ -29,7 +29,7 @@
 	{% endif %}
 
 	<div class="{{ col_size }}">
-		<div class="card offer-card h-100 border-warning-subtle shadow-sm position-relative overflow-hidden" itemscope itemtype="https://schema.org/Product">
+		<div class="card offer-card h-100 shadow-sm position-relative overflow-hidden {% if offer.promoted %}offer-card-promoted{% endif %}" itemscope itemtype="https://schema.org/Product">
 			<div class="position-relative">
 				<a href="{{ path('offer',offer.id,offer.slug) }}" title="{{ offer.name }}" itemprop="url" class="offer-card-image d-block">
 					{% if offer.thumb %}

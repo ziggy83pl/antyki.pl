@@ -767,9 +767,13 @@ html, body {
 	box-shadow: 0 10px 25px rgba(15, 23, 42, .06);
 }
 .offer-card-promoted{
-	box-shadow: 0 14px 30px rgba(37, 99, 235, .12);
-	outline: 1px solid rgba(37, 99, 235, .12);
-	background-color: #f4f9ff !important;
+	border: 1.5px solid #f59e0b !important;
+	box-shadow: 0 10px 25px rgba(245, 158, 11, 0.18) !important;
+	background: #fffdfa !important;
+}
+.offer-card-promoted:hover{
+	border-color: #d97706 !important;
+	box-shadow: 0 14px 32px rgba(217, 119, 6, 0.25) !important;
 }
 .offer-card-image{
 	position: relative;
@@ -1129,8 +1133,13 @@ html, body {
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
 }
 .offer-list-card.offer-card-promoted {
-    border: 1px solid rgba(37, 99, 235, 0.2) !important;
-    background-color: #f4f1ea;
+    border: 1.5px solid #f59e0b !important;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.18) !important;
+    background-color: #fffdfa !important;
+}
+.offer-list-card.offer-card-promoted:hover {
+    border-color: #d97706 !important;
+    box-shadow: 0 14px 32px rgba(217, 119, 6, 0.25) !important;
 }
 .offer-list-img-wrapper {
     overflow: hidden;
@@ -2064,6 +2073,13 @@ html[data-bs-theme="dark"] .category-tile:hover {
     background-color: #334155 !important;
     background: #334155 !important;
     color: #556b2f !important;
+}
+html[data-bs-theme="dark"] .offer-card-promoted,
+html[data-bs-theme="dark"] .offer-list-card.offer-card-promoted {
+    border: 1.5px solid #f59e0b !important;
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2) !important;
 }
 html[data-bs-theme="dark"] .list-group-item-action:hover,
 html[data-bs-theme="dark"] .list-group-item-action:focus,
