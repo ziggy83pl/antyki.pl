@@ -1,10 +1,14 @@
 <?php
-session_start();
-// Basic authentication check
-if (!isset($_SESSION['admin']['id'])) {
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../php/bootstrap.php';
+startSecureSession();
+
+$admin = new \App\Admin\Admin($db);
+if (!$admin->is_logged()) {
     die('Odmowa dostępu. Zaloguj się jako administrator.');
 }
 
+$csrf_token = \App\Core\Csrf::getToken();
 $upload_dir = '../upload/images/';
 
 // Ensure directory exists
@@ -14,6 +18,11 @@ if (!is_dir($upload_dir)) {
 
 // Handle Upload
 if (isset($_FILES['file'])) {
+    if (!isset($_POST['csrf_token']) || !\App\Core\Csrf::checkToken($_POST['csrf_token'])) {
+        echo json_encode(['success' => false, 'error' => 'Nieprawidłowy token sesji (CSRF).']);
+        exit;
+    }
+
     $file = $_FILES['file'];
     $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -43,6 +52,11 @@ if (isset($_FILES['file'])) {
 
 // Handle Delete
 if (isset($_POST['delete'])) {
+    if (!isset($_POST['csrf_token']) || !\App\Core\Csrf::checkToken($_POST['csrf_token'])) {
+        echo json_encode(['success' => false, 'error' => 'Nieprawidłowy token sesji.']);
+        exit;
+    }
+
     $file_to_delete = basename($_POST['delete']);
     $path = $upload_dir . $file_to_delete;
     if (file_exists($path) && is_file($path)) {
@@ -201,18 +215,21 @@ usort($images, function($a, $b) use ($upload_dir) {
             }
         }
 
+        const csrfToken = '<?= $csrf_token ?>';
+
         // Delete image
         function deleteImage(filename, event) {
             event.stopPropagation(); // Prevent triggering selectImage
             if (confirm('Czy na pewno chcesz bezpowrotnie usunąć ten plik?')) {
                 const fd = new FormData();
                 fd.append('delete', filename);
+                fd.append('csrf_token', csrfToken);
                 fetch('media_manager.php', {
                     method: 'POST',
                     body: fd
                 }).then(res => res.json()).then(data => {
                     if(data.success) location.reload();
-                    else alert('Wystąpił błąd podczas usuwania.');
+                    else alert(data.error || 'Wystąpił błąd podczas usuwania.');
                 });
             }
         }
@@ -250,6 +267,7 @@ usort($images, function($a, $b) use ($upload_dir) {
             for(let i=0; i<files.length; i++) {
                 const fd = new FormData();
                 fd.append('file', files[i]);
+                fd.append('csrf_token', csrfToken);
                 
                 fetch('media_manager.php', {
                     method: 'POST',

@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
-	<meta name="author" content="PRODOM Budownictwo">
+	<meta name="author" content="Antyki.pl">
 	<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdn.ckeditor.com code.jquery.com; img-src 'self' data: blob:;">
 	<title>{{ title }} — Panel Admina</title>
 	<meta name="color-scheme" content="light dark">
@@ -281,17 +281,13 @@
 <body>
 
 {% set category_icons = {
-	'materialy-budowlane': 'bi-bricks icon-orange',
-	'maszyny-i-sprzet': 'bi-truck icon-yellow',
-	'uslugi-budowlane': 'bi-tools icon-gray',
-	'zlecenia-budowlane': 'bi-clipboard-check icon-cyan',
-	'inne': 'bi-clipboard-check icon-cyan',
-	'praca-w-budownictwie': 'bi-person-workspace icon-purple',
-	'dzialki-budowlane': 'bi-map-fill icon-green',
-	'fotowoltanika': 'bi-sun-fill icon-yellow',
-	'noclegi': 'bi-house-door-fill icon-blue',
-	'design-i-antyki': 'bi-house-heart icon-orange',
+	'militaria-do-1945': 'bi-shield-shaded',
+	'militaria-wspolczesne': 'bi-shield-fill',
+	'numizmatyka-i-falerystyka': 'bi-coin',
+	'starodruki-i-dokumenty': 'bi-book-half',
+	'znaleziska-wykrywacz': 'bi-compass',
 	'sztuka-i-rekodzielo': 'bi-palette icon-orange',
+	'design-i-antyki': 'bi-house-heart icon-orange',
 	'kolekcje-hobby': 'bi-bookmark-star icon-orange'
 } %}
 

@@ -11,14 +11,17 @@
 
 
 {% block content %}	
-<div class="page-header mb-4">
-	<h1><span class="bi bi-megaphone"></span> {{ 'Ads settings'|lang }}</h1>
-	<p class="text-muted">Zarządzaj reklamami w postaci obrazków. Dodaj odnośnik, wybierz daty wyświetlania i włącz/wyłącz reklamę.</p>
+<div class="page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+	<div>
+		<h1 class="h3 mb-1"><span class="bi bi-megaphone text-primary me-2"></span> {{ 'Ads settings'|lang }}</h1>
+		<p class="text-muted mb-0">Zarządzaj reklamami w postaci obrazków. Dodaj odnośnik, wybierz daty wyświetlania i włącz/wyłącz reklamę.</p>
+	</div>
+	<button type="submit" form="ads_form" class="btn btn-primary text-uppercase fw-bold px-4 shadow-sm"><i class="bi bi-check2-circle me-1"></i> {{ 'Save'|lang }}</button>
 </div>
 
 {% include 'alert.tpl' %}
 
-<form method="post" class="form" role="form" enctype="multipart/form-data">
+<form id="ads_form" method="post" class="form" role="form" enctype="multipart/form-data">
 	<input type="hidden" name="action" value="save_settings_ads">
 	<input type="hidden" name="token" value="{{ generateToken('admin_save_settings_ads') }}">
 	

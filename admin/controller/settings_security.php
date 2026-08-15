@@ -10,7 +10,7 @@ if(!isset($admin)){
 
 if($admin->is_logged()){
 
-	if(!_ADMIN_TEST_MODE_ and isset($_POST['action']) and $_POST['action']=='save_settings'){
+	if(!_ADMIN_TEST_MODE_ and isset($_POST['action']) and $_POST['action']=='save_settings' and checkToken('admin_save_settings')){
 		
 		// Zapisywanie ustawień z opcją INSERT ON DUPLICATE KEY UPDATE
 		$sth = $db->prepare('INSERT INTO `'._DB_PREFIX_.'settings` (name, value) VALUES (:name, :value) ON DUPLICATE KEY UPDATE value=VALUES(value)');
