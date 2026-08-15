@@ -769,21 +769,23 @@ html, body {
 .offer-card-promoted{
 	border: 1.5px solid #f59e0b !important;
 	box-shadow: 0 10px 25px rgba(245, 158, 11, 0.18) !important;
-	background: #fffdfa !important;
+	background: linear-gradient(180deg, #fffdf5 0%, #fef4dc 100%) !important;
 }
 .offer-card-promoted:hover{
 	border-color: #d97706 !important;
 	box-shadow: 0 14px 32px rgba(217, 119, 6, 0.25) !important;
+	background: linear-gradient(180deg, #fffaf0 0%, #fdeec7 100%) !important;
 }
 
 /* Wyróżnienie ogłoszenia promowanego na stronie szczegółowej oferty */
 .border-promoted-offer {
 	border: 2px solid #f59e0b !important;
 	box-shadow: 0 10px 25px rgba(245, 158, 11, 0.15) !important;
+	background: linear-gradient(180deg, #fffdf5 0%, #fef7e4 100%) !important;
 }
 
 .promoted-offer-banner {
-	background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+	background: linear-gradient(135deg, #fff8e1 0%, #fef0c7 100%);
 	border: 1.5px solid #f59e0b;
 }
 .offer-card-image{
@@ -1146,11 +1148,12 @@ html, body {
 .offer-list-card.offer-card-promoted {
     border: 1.5px solid #f59e0b !important;
     box-shadow: 0 10px 25px rgba(245, 158, 11, 0.18) !important;
-    background-color: #fffdfa !important;
+    background: linear-gradient(180deg, #fffdf5 0%, #fef4dc 100%) !important;
 }
 .offer-list-card.offer-card-promoted:hover {
     border-color: #d97706 !important;
     box-shadow: 0 14px 32px rgba(217, 119, 6, 0.25) !important;
+    background: linear-gradient(180deg, #fffaf0 0%, #fdeec7 100%) !important;
 }
 .offer-list-img-wrapper {
     overflow: hidden;
